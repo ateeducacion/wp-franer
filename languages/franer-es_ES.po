@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-06-02T22:21:45+00:00\n"
-"PO-Revision-Date: 2026-06-02T23:16:15+00:00\n"
+"PO-Revision-Date: 2026-06-02T23:43:16+00:00\n"
 "Language: es_ES\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Domain: franer\n"
@@ -81,6 +81,21 @@ msgstr "Identificador de sitio no válido."
 msgid "The requested activity does not exist."
 msgstr "La actividad solicitada no existe."
 
+msgid "Add this to your request. Generate ONE complete, self-contained HTML document (HTML, CSS and JS inline)."
+msgstr "Añade esto a tu petición. Genera UN único documento HTML completo y autocontenido (HTML, CSS y JS en línea)."
+
+msgid "No external resources, no network calls (fetch/XHR/WebSocket), no cookies or storage."
+msgstr "Sin recursos externos, sin llamadas de red (fetch/XHR/WebSocket), sin cookies ni almacenamiento."
+
+msgid "It runs inside a sandboxed iframe and talks to the page ONLY via window.parent.postMessage."
+msgstr "Se ejecuta dentro de un iframe aislado y se comunica con la página SOLO mediante window.parent.postMessage."
+
+msgid "Replace REPLACE_WITH_SLUG with the activity slug and implement these globals:"
+msgstr "Sustituye REPLACE_WITH_SLUG por el slug de la actividad e implementa estas funciones globales:"
+
+msgid "Add a clearly visible button that calls FranerSubmit(). Return only the HTML document."
+msgstr "Añade un botón claramente visible que llame a FranerSubmit(). Devuelve solo el documento HTML."
+
 msgid "Franer logo"
 msgstr "Logo de Franer"
 
@@ -123,17 +138,23 @@ msgstr "valida y envía { type:\"franer_submit\", payload:FranerCollect() } a wi
 msgid "A \"message\" listener handling { type:\"franer_submit_result\", ok, result } from the host page."
 msgstr "Un escuchador de «message» que gestiona { type:\"franer_submit_result\", ok, result } de la página anfitriona."
 
-msgid "Reusable AI prompt"
-msgstr "Prompt de IA reutilizable"
+msgid "AI prompt"
+msgstr "Prompt de IA"
 
-msgid "Copy this prompt into your AI assistant. Replace REPLACE_WITH_ACTIVITY_SLUG with the slug of your activity and describe the topic you want."
-msgstr "Copia este prompt en tu asistente de IA. Sustituye REPLACE_WITH_ACTIVITY_SLUG por el slug de tu actividad y describe el tema que quieras."
+msgid "Write your own request describing the activity you want, then paste the Franer spec below into your AI assistant (ChatGPT, Gemini, Claude, …)."
+msgstr "Escribe tu propia petición describiendo la actividad que quieres y luego pega debajo la especificación de Franer en tu asistente de IA (ChatGPT, Gemini, Claude, …)."
 
-msgid "Copy prompt"
-msgstr "Copiar prompt"
+msgid "Example request: “Generate a form with 5 text fields and a dropdown to choose a school, and show a short summary at the end.”"
+msgstr "Ejemplo de petición: «Genera un formulario con 5 campos de texto y un desplegable para elegir un centro, y muestra un breve resumen al final.»"
 
-msgid "AI activity prompt"
-msgstr "Prompt de actividad de IA"
+msgid "Then copy these concise Franer specifications and paste them together with your request:"
+msgstr "Después copia estas especificaciones concisas de Franer y pégalas junto con tu petición:"
+
+msgid "Copy Franer spec"
+msgstr "Copiar especificación de Franer"
+
+msgid "Franer activity spec"
+msgstr "Especificación de actividad de Franer"
 
 msgid "Slug"
 msgstr "Slug"
@@ -231,6 +252,9 @@ msgstr "— Selecciona una actividad —"
 
 msgid "Filter"
 msgstr "Filtrar"
+
+msgid "Export all submissions (JSON)"
+msgstr "Exportar todos los envíos (JSON)"
 
 msgid "Choose an activity to view its submissions."
 msgstr "Elige una actividad para ver sus envíos."

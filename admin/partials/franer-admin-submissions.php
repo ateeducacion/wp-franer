@@ -21,7 +21,8 @@ if ( ! defined( 'WPINC' ) ) {
 <div class="wrap franer-submissions-wrap">
 	<h1 class="wp-heading-inline"><?php esc_html_e( 'Franer Submissions', 'franer' ); ?></h1>
 
-	<form method="get" class="franer-submissions-filter">
+	<?php // Always target edit.php so the filter works regardless of how this page was reached. ?>
+	<form method="get" class="franer-submissions-filter" action="<?php echo esc_url( admin_url( 'edit.php' ) ); ?>">
 		<input type="hidden" name="post_type" value="franer_site" />
 		<input type="hidden" name="page" value="franer-submissions" />
 		<label for="franer-site-filter" class="screen-reader-text"><?php esc_html_e( 'Filter by activity', 'franer' ); ?></label>
@@ -35,8 +36,8 @@ if ( ! defined( 'WPINC' ) ) {
 		</select>
 		<button type="submit" class="button"><?php esc_html_e( 'Filter', 'franer' ); ?></button>
 		<?php if ( $selected_site > 0 && '' !== $export_url ) : ?>
-			<a class="button button-secondary" href="<?php echo esc_url( $export_url ); ?>">
-				<?php esc_html_e( 'Export JSON', 'franer' ); ?>
+			<a class="button button-primary" href="<?php echo esc_url( $export_url ); ?>">
+				<?php esc_html_e( 'Export all submissions (JSON)', 'franer' ); ?>
 			</a>
 		<?php endif; ?>
 	</form>

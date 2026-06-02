@@ -50,17 +50,23 @@ if ( ! defined( 'WPINC' ) ) {
 		<li><?php esc_html_e( 'A "message" listener handling { type:"franer_submit_result", ok, result } from the host page.', 'franer' ); ?></li>
 	</ul>
 
-	<h2><?php esc_html_e( 'Reusable AI prompt', 'franer' ); ?></h2>
+	<h2><?php esc_html_e( 'AI prompt', 'franer' ); ?></h2>
 	<p>
-		<?php esc_html_e( 'Copy this prompt into your AI assistant. Replace REPLACE_WITH_ACTIVITY_SLUG with the slug of your activity and describe the topic you want.', 'franer' ); ?>
+		<?php esc_html_e( 'Write your own request describing the activity you want, then paste the Franer spec below into your AI assistant (ChatGPT, Gemini, Claude, …).', 'franer' ); ?>
+	</p>
+	<p>
+		<em><?php esc_html_e( 'Example request: “Generate a form with 5 text fields and a dropdown to choose a school, and show a short summary at the end.”', 'franer' ); ?></em>
+	</p>
+	<p>
+		<?php esc_html_e( 'Then copy these concise Franer specifications and paste them together with your request:', 'franer' ); ?>
 	</p>
 	<p>
 		<button type="button" class="button button-primary" id="franer-copy-prompt"
 			data-franer-copy-target="franer-prompt-text">
-			<?php esc_html_e( 'Copy prompt', 'franer' ); ?>
+			<?php esc_html_e( 'Copy Franer spec', 'franer' ); ?>
 		</button>
 		<span id="franer-copy-prompt-status" class="franer-copy-status" role="status" aria-live="polite"></span>
 	</p>
-	<label for="franer-prompt-text" class="screen-reader-text"><?php esc_html_e( 'AI activity prompt', 'franer' ); ?></label>
-	<textarea id="franer-prompt-text" class="large-text code" rows="22" readonly><?php echo esc_textarea( $prompt ); ?></textarea>
+	<label for="franer-prompt-text" class="screen-reader-text"><?php esc_html_e( 'Franer activity spec', 'franer' ); ?></label>
+	<textarea id="franer-prompt-text" class="large-text code" rows="16" readonly><?php echo esc_textarea( $prompt ); ?></textarea>
 </div>

@@ -304,6 +304,26 @@ class Franer_Submissions_Repository {
 			$export[] = $entry;
 		}
 
+		/**
+		 * Filters the Franer export rows for a site.
+		 *
+		 * Receives decoded payloads and user metadata prepared for export. Use it
+		 * to add calculated fields, remove fields, anonymize data, or map payloads
+		 * to an institutional format. Admin export capability and nonce checks are
+		 * enforced by the export controller before this method runs.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param array $export  Export rows.
+		 * @param int   $site_id Franer site ID.
+		 * @return array Filtered export rows (non-array returns are reset to empty).
+		 */
+		$export = apply_filters( 'franer_export_rows', $export, (int) $site_id );
+
+		if ( ! is_array( $export ) ) {
+			$export = array();
+		}
+
 		return $export;
 	}
 }

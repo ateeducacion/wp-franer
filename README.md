@@ -164,6 +164,88 @@ self-contained HTML document that implements:
   `{ type:"franer_submit", payload: FranerCollect() }` to `window.parent`.
 - A `message` listener that handles `{ type:"franer_submit_result", ok, result }` from the host.
 
+## Developer hooks
+
+Franer exposes a small, documented set of actions and filters (all prefixed
+`franer_`) so institutional integrations can observe lifecycle events and adapt
+presentation, submitted payloads and exports — **without weakening the security
+model**. No hook can bypass authentication, the REST nonce, capability or role
+checks, site visibility, schema/size validation, duplicate handling, the
+sandboxed iframe, or the export capability/nonce checks. Filters are defensively
+validated (return types checked, required keys restored), and the payload filter
+runs *before* size validation, so it can never exceed the configured limit.
+
+### Rendering
+
+| Hook | Type | Fires / Returns |
+|------|------|-----------------|
+| `franer_shortcode_atts` | filter | `[franer]` attributes after defaults; presentation only. Returns array. |
+| `franer_before_render` | action | Before rendering, only for a viewable activity. Params: `$site, $settings, $context` (`'shortcode'`/`'pretty_url'`). |
+| `franer_render_markup` | filter | The shared render markup; wrap/augment only — must keep the sandboxed iframe intact. Params: `$markup, $site, $settings, $context`. Returns string. |
+| `franer_after_render` | action | After markup is built. Params: `$site, $settings, $context, $markup`. |
+| `franer_public_shell_data` | filter | Data localized to the parent shell JS; required `restUrl`/`myUrl`/`nonce`/`slug` are always restored. Params: `$shell_data, $settings, $slug`. Returns array. |
+
+### Submission lifecycle
+
+| Hook | Type | Fires / Returns |
+|------|------|-----------------|
+| `franer_before_process_submission` | action | After auth/visibility/role/open checks, before validation. Params: `$body, $site, $settings, $user_id, $request`. |
+| `franer_submission_payload` | filter | Submitted `data` before encode; still encoded and **size-validated** afterwards. Params: `$data, $body, $site, $settings, $user_id, $request`. Returns array (non-array ignored). |
+| `franer_before_save_submission` | action | After validation, before save. Params: `$site_id, $user_id, $payload_json, $settings`. |
+| `franer_after_save_submission` | action | Only after a successful save. Params: `$submission_id, $status, $site_id, $user_id, $payload_json, $settings`. |
+| `franer_submission_response` | filter | Successful REST response data; add non-sensitive metadata only. Params: `$response_data, $result, $settings, $user_id`. Returns array. |
+| `franer_my_submission_payload` | filter | Decoded payload returned by `my-submission`. Params: `$payload, $submission, $settings, $user_id`. Returns array. |
+
+### Export
+
+| Hook | Type | Fires / Returns |
+|------|------|-----------------|
+| `franer_before_export` | action | Only after capability + nonce checks. Params: `$site_id, $site_post, $settings`. |
+| `franer_export_rows` | filter | Prepared export rows (decoded payloads + user meta). Params: `$export, $site_id`. Returns array. |
+| `franer_export_payload` | filter | The full export structure before download. Params: `$export, $site_id, $site_post, $settings`. Returns array. |
+| `franer_after_export_payload_generated` | action | After the payload is built/filtered, before streaming. Params: `$export, $site_id, $site_post, $settings`. |
+| `franer_export_filename` | filter | Download filename (sanitized; forced to end in `.json`). Params: `$filename, $slug, $export`. Returns string. |
+| `franer_export_json_flags` | filter | `wp_json_encode` flags. Params: `$json_flags, $export, $slug`. Returns int. |
+| `franer_before_export_download` | action | Before headers are sent (logging/audit; do not echo). Params: `$export, $slug, $filename`. |
+
+### Examples
+
+```php
+// Add a field to every submitted payload (still size-validated before storage).
+add_filter(
+    'franer_submission_payload',
+    function ( $data, $body, $site, $settings, $user_id, $request ) {
+        $data['_institution'] = array( 'site_slug' => $settings['slug'], 'user_id' => (int) $user_id );
+        return $data;
+    },
+    10,
+    6
+);
+
+// Log a successful submission.
+add_action(
+    'franer_after_save_submission',
+    function ( $submission_id, $status, $site_id, $user_id ) {
+        error_log( sprintf( 'Franer submission %d (%s) site %d user %d', $submission_id, $status, $site_id, $user_id ) );
+    },
+    10,
+    4
+);
+
+// Anonymize export rows.
+add_filter(
+    'franer_export_rows',
+    function ( $rows, $site_id ) {
+        foreach ( $rows as &$row ) {
+            unset( $row['user_email'], $row['user_login'] );
+        }
+        return $rows;
+    },
+    10,
+    2
+);
+```
+
 ## Testing
 
 ```bash

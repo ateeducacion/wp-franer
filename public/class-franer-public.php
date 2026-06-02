@@ -100,7 +100,24 @@ class Franer_Public {
 			'franer'
 		);
 
-		$slug = sanitize_title( $atts['slug'] );
+		/**
+		 * Filters the Franer shortcode attributes before resolving the activity.
+		 *
+		 * Presentation/integration use only. Security-sensitive: it must not be
+		 * used to bypass visibility, permission or role checks (those run after).
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param array $atts Shortcode attributes after defaults are merged.
+		 * @return array Filtered attributes (non-array returns are reset to empty).
+		 */
+		$atts = apply_filters( 'franer_shortcode_atts', $atts );
+
+		if ( ! is_array( $atts ) ) {
+			$atts = array();
+		}
+
+		$slug = isset( $atts['slug'] ) ? sanitize_title( $atts['slug'] ) : '';
 		if ( '' === $slug ) {
 			return '';
 		}
@@ -121,7 +138,21 @@ class Franer_Public {
 
 		$this->enqueue_assets( $settings );
 
-		return $this->get_render_markup( $site, $settings );
+		/**
+		 * Fires before a Franer activity is rendered.
+		 *
+		 * Runs only after the site is resolved and view permissions pass.
+		 * Security-sensitive: it must not be used to bypass access control.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param WP_Post $site     The Franer site post.
+		 * @param array   $settings Typed Franer site settings.
+		 * @param string  $context  Render context: 'shortcode' or 'pretty_url'.
+		 */
+		do_action( 'franer_before_render', $site, $settings, 'shortcode' );
+
+		return $this->get_render_markup( $site, $settings, 'shortcode' );
 	}
 
 	/**
@@ -191,6 +222,9 @@ class Franer_Public {
 	public function render_site( WP_Post $site, array $settings ) {
 		$this->enqueue_assets( $settings );
 
+		/** This action is documented in public/class-franer-public.php */
+		do_action( 'franer_before_render', $site, $settings, 'pretty_url' );
+
 		nocache_headers();
 		?>
 <!DOCTYPE html>
@@ -208,7 +242,7 @@ class Franer_Public {
 		}
 
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Markup is escaped within the partial.
-		echo $this->get_render_markup( $site, $settings );
+		echo $this->get_render_markup( $site, $settings, 'pretty_url' );
 
 		wp_footer();
 		?>
@@ -225,9 +259,10 @@ class Franer_Public {
 	 *
 	 * @param WP_Post $site     The site post object.
 	 * @param array   $settings The typed site settings.
+	 * @param string  $context  Render context: 'shortcode' or 'pretty_url'.
 	 * @return string The captured markup.
 	 */
-	protected function get_render_markup( WP_Post $site, array $settings ) {
+	protected function get_render_markup( WP_Post $site, array $settings, $context = 'pretty_url' ) {
 		$partial = plugin_dir_path( __FILE__ ) . 'partials/franer-public-render.php';
 
 		if ( ! file_exists( $partial ) ) {
@@ -237,7 +272,43 @@ class Franer_Public {
 		ob_start();
 		// $site and $settings are available inside the partial scope.
 		include $partial;
-		return (string) ob_get_clean();
+		$markup = (string) ob_get_clean();
+
+		/**
+		 * Filters the final Franer render markup.
+		 *
+		 * Shared by the shortcode and the pretty URL renderer. Intended for
+		 * wrapping or adding presentation markup around the existing shell.
+		 * Security-sensitive: callbacks must not remove the sandboxed iframe
+		 * security attributes or expose the untrusted activity HTML outside it.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param string  $markup   Rendered Franer markup.
+		 * @param WP_Post $site     The Franer site post.
+		 * @param array   $settings Typed Franer site settings.
+		 * @param string  $context  Render context: 'shortcode' or 'pretty_url'.
+		 * @return string Filtered render markup.
+		 */
+		$markup = apply_filters( 'franer_render_markup', $markup, $site, $settings, $context );
+
+		if ( ! is_string( $markup ) ) {
+			$markup = '';
+		}
+
+		/**
+		 * Fires after a Franer activity render markup has been built.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param WP_Post $site     The Franer site post.
+		 * @param array   $settings Typed Franer site settings.
+		 * @param string  $context  Render context: 'shortcode' or 'pretty_url'.
+		 * @param string  $markup   Final render markup.
+		 */
+		do_action( 'franer_after_render', $site, $settings, $context, $markup );
+
+		return $markup;
 	}
 
 	/**
@@ -268,22 +339,43 @@ class Franer_Public {
 
 		$base = 'franer/v1/sites/' . rawurlencode( $slug );
 
-		wp_localize_script(
-			'franer-shell',
-			'FranerShell',
-			array(
-				'restUrl'  => esc_url_raw( rest_url( $base . '/submissions' ) ),
-				'myUrl'    => esc_url_raw( rest_url( $base . '/my-submission' ) ),
-				'nonce'    => wp_create_nonce( 'wp_rest' ),
-				'slug'     => $slug,
-				'messages' => array(
-					'saved'   => __( 'Your response has been saved.', 'franer' ),
-					'updated' => __( 'Your response has been updated.', 'franer' ),
-					'error'   => __( 'There was a problem saving your response. Please try again.', 'franer' ),
-					'network' => __( 'A network error occurred. Please check your connection and try again.', 'franer' ),
-				),
-			)
+		$default_shell_data = array(
+			'restUrl'  => esc_url_raw( rest_url( $base . '/submissions' ) ),
+			'myUrl'    => esc_url_raw( rest_url( $base . '/my-submission' ) ),
+			'nonce'    => wp_create_nonce( 'wp_rest' ),
+			'slug'     => $slug,
+			'messages' => array(
+				'saved'   => __( 'Your response has been saved.', 'franer' ),
+				'updated' => __( 'Your response has been updated.', 'franer' ),
+				'error'   => __( 'There was a problem saving your response. Please try again.', 'franer' ),
+				'network' => __( 'A network error occurred. Please check your connection and try again.', 'franer' ),
+			),
 		);
+
+		/**
+		 * Filters the public Franer shell data localized to JavaScript.
+		 *
+		 * Intended for adding presentation messages or integration metadata.
+		 * Security-sensitive: the required restUrl, myUrl, nonce and slug values
+		 * must remain valid. Missing required keys are restored from the defaults.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param array  $shell_data Localized shell data.
+		 * @param array  $settings   Typed Franer site settings.
+		 * @param string $slug       Franer site slug.
+		 * @return array Filtered shell data.
+		 */
+		$shell_data = apply_filters( 'franer_public_shell_data', $default_shell_data, $settings, $slug );
+
+		if ( ! is_array( $shell_data ) ) {
+			$shell_data = array();
+		}
+
+		// Required REST keys are always restored so callbacks cannot break security.
+		$shell_data = wp_parse_args( $shell_data, $default_shell_data );
+
+		wp_localize_script( 'franer-shell', 'FranerShell', $shell_data );
 	}
 
 	/**

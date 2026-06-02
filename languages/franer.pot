@@ -81,6 +81,21 @@ msgstr ""
 msgid "The requested activity does not exist."
 msgstr ""
 
+msgid "Add this to your request. Generate ONE complete, self-contained HTML document (HTML, CSS and JS inline)."
+msgstr ""
+
+msgid "No external resources, no network calls (fetch/XHR/WebSocket), no cookies or storage."
+msgstr ""
+
+msgid "It runs inside a sandboxed iframe and talks to the page ONLY via window.parent.postMessage."
+msgstr ""
+
+msgid "Replace REPLACE_WITH_SLUG with the activity slug and implement these globals:"
+msgstr ""
+
+msgid "Add a clearly visible button that calls FranerSubmit(). Return only the HTML document."
+msgstr ""
+
 msgid "Franer logo"
 msgstr ""
 
@@ -123,16 +138,22 @@ msgstr ""
 msgid "A \"message\" listener handling { type:\"franer_submit_result\", ok, result } from the host page."
 msgstr ""
 
-msgid "Reusable AI prompt"
+msgid "AI prompt"
 msgstr ""
 
-msgid "Copy this prompt into your AI assistant. Replace REPLACE_WITH_ACTIVITY_SLUG with the slug of your activity and describe the topic you want."
+msgid "Write your own request describing the activity you want, then paste the Franer spec below into your AI assistant (ChatGPT, Gemini, Claude, …)."
 msgstr ""
 
-msgid "Copy prompt"
+msgid "Example request: “Generate a form with 5 text fields and a dropdown to choose a school, and show a short summary at the end.”"
 msgstr ""
 
-msgid "AI activity prompt"
+msgid "Then copy these concise Franer specifications and paste them together with your request:"
+msgstr ""
+
+msgid "Copy Franer spec"
+msgstr ""
+
+msgid "Franer activity spec"
 msgstr ""
 
 msgid "Slug"
@@ -230,6 +251,9 @@ msgid "— Select an activity —"
 msgstr ""
 
 msgid "Filter"
+msgstr ""
+
+msgid "Export all submissions (JSON)"
 msgstr ""
 
 msgid "Choose an activity to view its submissions."
