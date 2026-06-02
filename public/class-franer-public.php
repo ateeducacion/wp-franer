@@ -151,8 +151,8 @@ class Franer_Public {
 
 		$settings = $repository->get_settings( $site->ID );
 
-		// A hidden site behaves as if it does not exist.
-		if ( empty( $settings['is_visible'] ) ) {
+		// A hidden or disabled site behaves as if it does not exist.
+		if ( empty( $settings['is_visible'] ) || empty( $settings['enabled'] ) ) {
 			$this->trigger_not_found();
 			return;
 		}
@@ -199,7 +199,7 @@ class Franer_Public {
 	<meta charset="<?php bloginfo( 'charset' ); ?>" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<title><?php echo esc_html( get_the_title( $site ) ); ?></title>
-	<?php wp_head(); ?>
+		<?php wp_head(); ?>
 </head>
 <body <?php body_class( 'franer-activity-page' ); ?>>
 		<?php

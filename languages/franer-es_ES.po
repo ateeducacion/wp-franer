@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-06-02T22:21:45+00:00\n"
-"PO-Revision-Date: 2026-06-02T22:45:09+00:00\n"
+"PO-Revision-Date: 2026-06-02T22:57:55+00:00\n"
 "Language: es_ES\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Domain: franer\n"
@@ -141,11 +141,32 @@ msgstr "Slug"
 msgid "Lowercase letters, numbers and hyphens only. Used in the public URL."
 msgstr "Solo letras minúsculas, números y guiones. Se usa en la URL pública."
 
+msgid "Status"
+msgstr "Estado"
+
+msgid "Enabled"
+msgstr "Habilitado"
+
+msgid "When disabled, the activity is unavailable to everyone."
+msgstr "Cuando está deshabilitado, la actividad no está disponible para nadie."
+
 msgid "Visibility"
 msgstr "Visibilidad"
 
 msgid "Visible to allowed users"
 msgstr "Visible para los usuarios permitidos"
+
+msgid "Availability window"
+msgstr "Periodo de disponibilidad"
+
+msgid "Start"
+msgstr "Inicio"
+
+msgid "End"
+msgstr "Fin"
+
+msgid "Optional. Submissions are only accepted within this window (site time). Leave empty for no limit."
+msgstr "Opcional. Los envíos solo se aceptan dentro de este periodo (hora del sitio). Déjalo vacío para no tener límite."
 
 msgid "Accept new submissions"
 msgstr "Aceptar nuevos envíos"
@@ -273,13 +294,13 @@ msgid "Franer"
 msgstr "Franer"
 
 msgid "Add New"
-msgstr "Añadir nueva"
+msgstr "Añadir nuevo"
 
 msgid "Add New Franer"
-msgstr "Añadir nueva Franer"
+msgstr "Añadir nuevo Franer"
 
 msgid "New Franer"
-msgstr "Nueva Franer"
+msgstr "Nuevo Franer"
 
 msgid "Edit Franer"
 msgstr "Editar Franer"
@@ -288,7 +309,7 @@ msgid "View Franer"
 msgstr "Ver Franer"
 
 msgid "All Franers"
-msgstr "Todas las Franer"
+msgstr "Todos los Franer"
 
 msgid "Search Franers"
 msgstr "Buscar Franer"
@@ -307,6 +328,12 @@ msgstr "Actividad no encontrada."
 
 msgid "You are not allowed to access this activity."
 msgstr "No tienes permiso para acceder a esta actividad."
+
+msgid "This activity is not open yet."
+msgstr "Esta actividad aún no está abierta."
+
+msgid "This activity is closed."
+msgstr "Esta actividad está cerrada."
 
 msgid "This activity is not accepting submissions."
 msgstr "Esta actividad no admite envíos."

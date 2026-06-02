@@ -55,8 +55,8 @@ class Franer_Permissions {
 	/**
 	 * Whether a user can view a Franer site.
 	 *
-	 * Requires the user to be logged in, the site to be visible and the user
-	 * to hold an allowed role.
+	 * Requires the user to be logged in, the site to be enabled and visible,
+	 * and the user to hold an allowed role.
 	 *
 	 * @param array $settings The site settings array.
 	 * @param int   $user_id  The user ID to check. Defaults to current user.
@@ -73,6 +73,10 @@ class Franer_Permissions {
 			return false;
 		}
 
+		if ( empty( $settings['enabled'] ) ) {
+			return false;
+		}
+
 		if ( empty( $settings['is_visible'] ) ) {
 			return false;
 		}
@@ -80,5 +84,39 @@ class Franer_Permissions {
 		$allowed_roles = isset( $settings['allowed_roles'] ) ? (array) $settings['allowed_roles'] : array();
 
 		return self::user_has_allowed_role( $allowed_roles, $user_id );
+	}
+
+	/**
+	 * Determine the scheduling/availability state of a site.
+	 *
+	 * Compares the optional start/end dates (stored as local 'Y-m-d H:i:s'
+	 * strings) against the current local time using string comparison, which is
+	 * chronologically correct for that format and avoids timezone conversions.
+	 *
+	 * @param array  $settings The site settings array.
+	 * @param string $now      Optional 'Y-m-d H:i:s' time; defaults to now.
+	 * @return string One of 'disabled', 'not_yet', 'ended' or 'open'.
+	 */
+	public static function schedule_state( $settings, $now = '' ) {
+		if ( empty( $settings['enabled'] ) ) {
+			return 'disabled';
+		}
+
+		if ( '' === $now ) {
+			$now = current_time( 'mysql' );
+		}
+
+		$start = isset( $settings['start_date'] ) ? (string) $settings['start_date'] : '';
+		$end   = isset( $settings['end_date'] ) ? (string) $settings['end_date'] : '';
+
+		if ( '' !== $start && $now < $start ) {
+			return 'not_yet';
+		}
+
+		if ( '' !== $end && $now > $end ) {
+			return 'ended';
+		}
+
+		return 'open';
 	}
 }

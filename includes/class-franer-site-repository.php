@@ -71,6 +71,9 @@ class Franer_Site_Repository {
 		$allow_overwrite     = get_post_meta( $site_id, '_franer_allow_overwrite', true );
 		$max_payload_size    = get_post_meta( $site_id, '_franer_max_payload_size', true );
 		$schema_version      = get_post_meta( $site_id, '_franer_schema_version', true );
+		$enabled             = get_post_meta( $site_id, '_franer_enabled', true );
+		$start_date          = (string) get_post_meta( $site_id, '_franer_start_date', true );
+		$end_date            = (string) get_post_meta( $site_id, '_franer_end_date', true );
 
 		return array(
 			'id'                  => $site_id,
@@ -84,6 +87,10 @@ class Franer_Site_Repository {
 			'allow_overwrite'     => Franer_Sanitizer::sanitize_bool( $allow_overwrite ),
 			'max_payload_size'    => '' === $max_payload_size ? 256 : (int) $max_payload_size,
 			'schema_version'      => '' === $schema_version ? '1.0' : (string) $schema_version,
+			// Unset enabled meta (legacy/demo sites) defaults to enabled.
+			'enabled'             => ( '0' !== (string) $enabled ),
+			'start_date'          => $start_date,
+			'end_date'            => $end_date,
 		);
 	}
 

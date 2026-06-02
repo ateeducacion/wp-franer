@@ -119,6 +119,38 @@ class Franer_Sanitizer {
 	}
 
 	/**
+	 * Sanitize a date-time value into a comparable 'Y-m-d H:i:s' string.
+	 *
+	 * Accepts the HTML datetime-local format ('Y-m-d\TH:i') or 'Y-m-d H:i:s'.
+	 * Stored as local wall-clock time so it can be compared, as a string, with
+	 * current_time( 'mysql' ) without timezone conversions. Invalid or empty
+	 * values return an empty string (meaning "no limit").
+	 *
+	 * @param mixed $value The raw date-time value.
+	 * @return string A 'Y-m-d H:i:s' string, or '' when empty/invalid.
+	 */
+	public static function sanitize_datetime( $value ) {
+		$value = trim( (string) $value );
+
+		if ( '' === $value ) {
+			return '';
+		}
+
+		// datetime-local inputs use a "T" separator.
+		$value = str_replace( 'T', ' ', $value );
+
+		if ( ! preg_match( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(:\d{2})?$/', $value ) ) {
+			return '';
+		}
+
+		if ( 16 === strlen( $value ) ) {
+			$value .= ':00';
+		}
+
+		return $value;
+	}
+
+	/**
 	 * Validate and decode a JSON payload.
 	 *
 	 * @param string $raw_json  The raw JSON string submitted.

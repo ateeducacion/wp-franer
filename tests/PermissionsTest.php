@@ -47,14 +47,76 @@ class PermissionsTest extends WP_UnitTestCase {
 	/**
 	 * Build a settings array for testing.
 	 *
-	 * @param bool  $visible Whether the site is visible.
-	 * @param array $roles   Allowed roles.
+	 * @param bool   $visible Whether the site is visible.
+	 * @param array  $roles   Allowed roles.
+	 * @param bool   $enabled Whether the site is enabled.
+	 * @param string $start   Optional start date ('Y-m-d H:i:s').
+	 * @param string $end     Optional end date ('Y-m-d H:i:s').
 	 * @return array Settings array.
 	 */
-	private function settings( $visible, array $roles ) {
+	private function settings( $visible, array $roles, $enabled = true, $start = '', $end = '' ) {
 		return array(
 			'is_visible'    => $visible,
 			'allowed_roles' => $roles,
+			'enabled'       => $enabled,
+			'start_date'    => $start,
+			'end_date'      => $end,
+		);
+	}
+
+	/**
+	 * A disabled site should never be viewable, even by an allowed role.
+	 *
+	 * @return void
+	 */
+	public function test_disabled_site_not_viewable() {
+		$settings = $this->settings( true, array( 'subscriber' ), false );
+
+		$this->assertFalse(
+			Franer_Permissions::user_can_view( $settings, $this->subscriber_id )
+		);
+	}
+
+	/**
+	 * schedule_state should reflect enabled flag and the start/end window.
+	 *
+	 * @return void
+	 */
+	public function test_schedule_state() {
+		// Disabled overrides everything.
+		$this->assertSame(
+			'disabled',
+			Franer_Permissions::schedule_state( $this->settings( true, array(), false ) )
+		);
+
+		// No window means always open.
+		$this->assertSame(
+			'open',
+			Franer_Permissions::schedule_state( $this->settings( true, array() ) )
+		);
+
+		// Before the start date.
+		$this->assertSame(
+			'not_yet',
+			Franer_Permissions::schedule_state(
+				$this->settings( true, array(), true, '2999-01-01 00:00:00', '' )
+			)
+		);
+
+		// After the end date.
+		$this->assertSame(
+			'ended',
+			Franer_Permissions::schedule_state(
+				$this->settings( true, array(), true, '', '2000-01-01 00:00:00' )
+			)
+		);
+
+		// Inside the window.
+		$this->assertSame(
+			'open',
+			Franer_Permissions::schedule_state(
+				$this->settings( true, array(), true, '2000-01-01 00:00:00', '2999-01-01 00:00:00' )
+			)
 		);
 	}
 

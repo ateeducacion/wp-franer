@@ -141,10 +141,31 @@ msgstr ""
 msgid "Lowercase letters, numbers and hyphens only. Used in the public URL."
 msgstr ""
 
+msgid "Status"
+msgstr ""
+
+msgid "Enabled"
+msgstr ""
+
+msgid "When disabled, the activity is unavailable to everyone."
+msgstr ""
+
 msgid "Visibility"
 msgstr ""
 
 msgid "Visible to allowed users"
+msgstr ""
+
+msgid "Availability window"
+msgstr ""
+
+msgid "Start"
+msgstr ""
+
+msgid "End"
+msgstr ""
+
+msgid "Optional. Submissions are only accepted within this window (site time). Leave empty for no limit."
 msgstr ""
 
 msgid "Accept new submissions"
@@ -306,6 +327,12 @@ msgid "Activity not found."
 msgstr ""
 
 msgid "You are not allowed to access this activity."
+msgstr ""
+
+msgid "This activity is not open yet."
+msgstr ""
+
+msgid "This activity is closed."
 msgstr ""
 
 msgid "This activity is not accepting submissions."

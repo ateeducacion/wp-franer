@@ -98,6 +98,9 @@ class Franer_Post_Types {
 			'_franer_allow_overwrite'            => 'boolean',
 			'_franer_max_payload_size'           => 'integer',
 			'_franer_schema_version'             => 'string',
+			'_franer_enabled'                    => 'boolean',
+			'_franer_start_date'                 => 'string',
+			'_franer_end_date'                   => 'string',
 		);
 
 		foreach ( $meta_keys as $meta_key => $type ) {

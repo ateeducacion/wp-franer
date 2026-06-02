@@ -144,6 +144,24 @@ class Franer_Rest_Controller {
 			);
 		}
 
+		$schedule_state = Franer_Permissions::schedule_state( $settings );
+
+		if ( 'not_yet' === $schedule_state ) {
+			return new WP_Error(
+				'franer_not_open',
+				__( 'This activity is not open yet.', 'franer' ),
+				array( 'status' => 403 )
+			);
+		}
+
+		if ( 'ended' === $schedule_state ) {
+			return new WP_Error(
+				'franer_closed',
+				__( 'This activity is closed.', 'franer' ),
+				array( 'status' => 403 )
+			);
+		}
+
 		if ( ! $settings['accepts_submissions'] ) {
 			return new WP_Error(
 				'franer_submissions_closed',

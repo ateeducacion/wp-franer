@@ -316,6 +316,16 @@ class Franer_Admin {
 		$raw_schema = isset( $_POST['franer_schema_version'] ) ? sanitize_text_field( wp_unslash( $_POST['franer_schema_version'] ) ) : '1.0';
 		update_post_meta( $post_id, '_franer_schema_version', '' !== $raw_schema ? $raw_schema : '1.0' );
 
+		// Enabled master switch (stored as '1'/'0' so an unset legacy value can default to enabled).
+		update_post_meta( $post_id, '_franer_enabled', isset( $_POST['franer_enabled'] ) ? '1' : '0' );
+
+		// Availability window (optional start/end date-times).
+		$raw_start = isset( $_POST['franer_start_date'] ) ? sanitize_text_field( wp_unslash( $_POST['franer_start_date'] ) ) : '';
+		update_post_meta( $post_id, '_franer_start_date', Franer_Sanitizer::sanitize_datetime( $raw_start ) );
+
+		$raw_end = isset( $_POST['franer_end_date'] ) ? sanitize_text_field( wp_unslash( $_POST['franer_end_date'] ) ) : '';
+		update_post_meta( $post_id, '_franer_end_date', Franer_Sanitizer::sanitize_datetime( $raw_end ) );
+
 		// Persist any notices for display on redirect.
 		if ( ! empty( $this->notices ) ) {
 			set_transient( 'franer_admin_notices_' . get_current_user_id(), $this->notices, 60 );

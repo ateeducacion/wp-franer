@@ -40,12 +40,39 @@ if ( ! function_exists( 'franer_render_settings_metabox' ) ) {
 					</td>
 				</tr>
 				<tr>
+					<th scope="row"><?php esc_html_e( 'Status', 'franer' ); ?></th>
+					<td>
+						<label>
+							<input type="checkbox" name="franer_enabled" value="1" <?php checked( ! empty( $settings['enabled'] ) ); ?> />
+							<?php esc_html_e( 'Enabled', 'franer' ); ?>
+						</label>
+						<p class="description">
+							<?php esc_html_e( 'When disabled, the activity is unavailable to everyone.', 'franer' ); ?>
+						</p>
+					</td>
+				</tr>
+				<tr>
 					<th scope="row"><?php esc_html_e( 'Visibility', 'franer' ); ?></th>
 					<td>
 						<label>
 							<input type="checkbox" name="franer_is_visible" value="1" <?php checked( $settings['is_visible'] ); ?> />
 							<?php esc_html_e( 'Visible to allowed users', 'franer' ); ?>
 						</label>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Availability window', 'franer' ); ?></th>
+					<td>
+						<label for="franer_start_date"><?php esc_html_e( 'Start', 'franer' ); ?></label>
+						<input type="datetime-local" id="franer_start_date" name="franer_start_date"
+							value="<?php echo esc_attr( '' === $settings['start_date'] ? '' : str_replace( ' ', 'T', substr( $settings['start_date'], 0, 16 ) ) ); ?>" />
+						&nbsp;
+						<label for="franer_end_date"><?php esc_html_e( 'End', 'franer' ); ?></label>
+						<input type="datetime-local" id="franer_end_date" name="franer_end_date"
+							value="<?php echo esc_attr( '' === $settings['end_date'] ? '' : str_replace( ' ', 'T', substr( $settings['end_date'], 0, 16 ) ) ); ?>" />
+						<p class="description">
+							<?php esc_html_e( 'Optional. Submissions are only accepted within this window (site time). Leave empty for no limit.', 'franer' ); ?>
+						</p>
 					</td>
 				</tr>
 				<tr>
