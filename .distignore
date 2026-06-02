@@ -1,0 +1,40 @@
+# Directories
+.git
+.github
+.idea
+.vscode
+.wordpress-org
+bin
+build
+docs
+examples
+node_modules
+tests
+vendor
+
+# Language stuff (ship only compiled .mo files)
+languages/*.pot
+languages/*.po
+
+# Files
+*.DS_Store
+.DS_Store
+.distignore
+.editorconfig
+.gitattributes
+.gitignore
+.phpcs.xml.dist
+.phpunit.result.cache
+.wp-env.json
+.wp-env.override.json
+blueprint.json
+composer.json
+composer.lock
+Makefile
+package.json
+package-lock.json
+phpmd.xml
+phpunit.xml
+phpunit.xml.dist
+README.md
+.franer-build-workflow.js

@@ -1,0 +1,359 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Franer 0.0.0\n"
+"Report-Msgid-Bugs-To: https://github.com/ateeducacion/wp-franer\n"
+"Last-Translator: Área de Tecnología Educativa <ate.educacion@gobiernodecanarias.org>\n"
+"Language-Team: Español <es_ES@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-06-02T22:21:45+00:00\n"
+"PO-Revision-Date: 2026-06-02T22:26:58+00:00\n"
+"Language: es_ES\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Domain: franer\n"
+
+#. Plugin Name of the plugin
+msgid "Franer"
+msgstr "Franer"
+
+#. Plugin URI of the plugin
+msgid "https://github.com/ateeducacion/wp-franer"
+msgstr "https://github.com/ateeducacion/wp-franer"
+
+#. Description of the plugin
+msgid "Franer is a secure environment to publish AI-generated forms. It renders self-contained AI-generated HTML activities inside a sandboxed iframe and collects users' JSON submissions safely server-side."
+msgstr "Franer es un entorno seguro para publicar formularios generados por IA. Renderiza actividades HTML autocontenidas generadas por IA dentro de un iframe aislado (sandbox) y recopila de forma segura los envíos JSON de los usuarios en el servidor."
+
+#. Author of the plugin
+msgid "Área de Tecnología Educativa"
+msgstr "Área de Tecnología Educativa"
+
+#. Author URI of the plugin
+msgid "https://www3.gobiernodecanarias.org/medusa/ecoescuela/ate/"
+msgstr "https://www3.gobiernodecanarias.org/medusa/ecoescuela/ate/"
+
+msgid "Franer Submissions"
+msgstr "Envíos de Franer"
+
+msgid "Submissions"
+msgstr "Envíos"
+
+msgid "Franer Help"
+msgstr "Ayuda de Franer"
+
+msgid "Help"
+msgstr "Ayuda"
+
+msgid "Site settings"
+msgstr "Ajustes del sitio"
+
+msgid "HTML source"
+msgstr "Código HTML"
+
+msgid "Public URL"
+msgstr "URL pública"
+
+msgid "The slug is invalid. Use only lowercase letters, numbers and hyphens."
+msgstr "El slug no es válido. Usa solo letras minúsculas, números y guiones."
+
+msgid "That slug is already in use by another activity. Please choose a different one."
+msgstr "Ese slug ya está en uso por otra actividad. Elige uno diferente."
+
+msgid "Copied to clipboard."
+msgstr "Copiado al portapapeles."
+
+msgid "Could not copy. Please copy manually."
+msgstr "No se pudo copiar. Cópialo manualmente."
+
+msgid "You do not have permission to access this page."
+msgstr "No tienes permiso para acceder a esta página."
+
+msgid "You do not have permission to export submissions."
+msgstr "No tienes permiso para exportar los envíos."
+
+msgid "Forbidden"
+msgstr "Prohibido"
+
+msgid "Invalid site identifier."
+msgstr "Identificador de sitio no válido."
+
+msgid "The requested activity does not exist."
+msgstr "La actividad solicitada no existe."
+
+msgid "Franer is a secure environment to publish AI-generated forms. You paste a self-contained HTML activity, Franer renders it inside a sandboxed iframe, and it safely collects users' JSON submissions on the server."
+msgstr "Franer es un entorno seguro para publicar formularios generados por IA. Pegas una actividad HTML autocontenida, Franer la renderiza dentro de un iframe aislado y recoge de forma segura los envíos JSON de los usuarios en el servidor."
+
+msgid "How it works"
+msgstr "Cómo funciona"
+
+msgid "Create an activity (Franer post type) and paste its HTML in the \"HTML source\" box."
+msgstr "Crea una actividad (tipo de contenido Franer) y pega su HTML en el cuadro «Código HTML»."
+
+msgid "Set the slug, visibility, allowed roles and submission options in \"Site settings\"."
+msgstr "Configura el slug, la visibilidad, los roles permitidos y las opciones de envío en «Ajustes del sitio»."
+
+msgid "Share the public URL or embed it with the [franer slug=\"...\"] shortcode."
+msgstr "Comparte la URL pública o incrústala con el shortcode [franer slug=\"...\"]."
+
+msgid "Review and export collected submissions from the Submissions page."
+msgstr "Revisa y exporta los envíos recogidos desde la página de Envíos."
+
+msgid "Security model"
+msgstr "Modelo de seguridad"
+
+msgid "Activity HTML always runs inside an <iframe srcdoc> with sandbox=\"allow-scripts allow-forms\" and no same-origin access. The iframe cannot read cookies, access the parent page, or make network requests. The parent page (not the iframe) performs the authenticated REST call that stores the submission."
+msgstr "El HTML de la actividad siempre se ejecuta dentro de un <iframe srcdoc> con sandbox=\"allow-scripts allow-forms\" y sin acceso al mismo origen. El iframe no puede leer cookies, acceder a la página principal ni hacer peticiones de red. Es la página principal (no el iframe) la que realiza la llamada REST autenticada que almacena el envío."
+
+msgid "JavaScript contract"
+msgstr "Contrato de JavaScript"
+
+msgid "Each activity must implement two global functions and respond to result messages from the host page:"
+msgstr "Cada actividad debe implementar dos funciones globales y responder a los mensajes de resultado de la página anfitriona:"
+
+msgid "returns the structured submission object."
+msgstr "devuelve el objeto de envío estructurado."
+
+msgid "validates and posts { type:\"franer_submit\", payload:FranerCollect() } to window.parent."
+msgstr "valida y envía { type:\"franer_submit\", payload:FranerCollect() } a window.parent."
+
+msgid "A \"message\" listener handling { type:\"franer_submit_result\", ok, result } from the host page."
+msgstr "Un escuchador de «message» que gestiona { type:\"franer_submit_result\", ok, result } de la página anfitriona."
+
+msgid "Reusable AI prompt"
+msgstr "Prompt de IA reutilizable"
+
+msgid "Copy this prompt into your AI assistant. Replace REPLACE_WITH_ACTIVITY_SLUG with the slug of your activity and describe the topic you want."
+msgstr "Copia este prompt en tu asistente de IA. Sustituye REPLACE_WITH_ACTIVITY_SLUG por el slug de tu actividad y describe el tema que quieras."
+
+msgid "Copy prompt"
+msgstr "Copiar prompt"
+
+msgid "AI activity prompt"
+msgstr "Prompt de actividad de IA"
+
+msgid "Slug"
+msgstr "Slug"
+
+msgid "Lowercase letters, numbers and hyphens only. Used in the public URL."
+msgstr "Solo letras minúsculas, números y guiones. Se usa en la URL pública."
+
+msgid "Visibility"
+msgstr "Visibilidad"
+
+msgid "Visible to allowed users"
+msgstr "Visible para los usuarios permitidos"
+
+msgid "Accept new submissions"
+msgstr "Aceptar nuevos envíos"
+
+msgid "Allow multiple submissions per user"
+msgstr "Permitir varios envíos por usuario"
+
+msgid "Allow overwriting the previous submission"
+msgstr "Permitir sobrescribir el envío anterior"
+
+msgid "Allowed roles"
+msgstr "Roles permitidos"
+
+msgid "Only logged-in users with one of these roles may view and submit. Administrators are always allowed."
+msgstr "Solo los usuarios identificados con uno de estos roles pueden ver y enviar. Los administradores siempre tienen permiso."
+
+msgid "Max payload size (KB)"
+msgstr "Tamaño máximo de datos (KB)"
+
+msgid "Maximum accepted submission size, between 1 and 5120 KB."
+msgstr "Tamaño máximo de envío aceptado, entre 1 y 5120 KB."
+
+msgid "Schema version"
+msgstr "Versión del esquema"
+
+msgid "Expected payload schema version (currently 1.0)."
+msgstr "Versión del esquema de datos esperada (actualmente 1.0)."
+
+msgid "Security note:"
+msgstr "Nota de seguridad:"
+
+msgid "This HTML is stored exactly as entered and is ONLY ever rendered inside a sandboxed iframe (sandbox=\"allow-scripts allow-forms\", without same-origin access). It cannot read cookies, the page DOM, or make network requests. Paste only trusted, self-contained activities."
+msgstr "Este HTML se almacena exactamente como se introduce y SOLO se renderiza dentro de un iframe aislado (sandbox=\"allow-scripts allow-forms\", sin acceso al mismo origen). No puede leer cookies, el DOM de la página ni hacer peticiones de red. Pega únicamente actividades de confianza y autocontenidas."
+
+msgid "Activity HTML source"
+msgstr "Código HTML de la actividad"
+
+msgid "A complete, self-contained HTML document implementing window.FranerCollect() and window.FranerSubmit(). See the Help page for a ready-to-use AI prompt."
+msgstr "Un documento HTML completo y autocontenido que implemente window.FranerCollect() y window.FranerSubmit(). Consulta la página de Ayuda para obtener un prompt de IA listo para usar."
+
+msgid "Copy"
+msgstr "Copiar"
+
+msgid "Open public page"
+msgstr "Abrir página pública"
+
+msgid "Shortcode"
+msgstr "Shortcode"
+
+#. translators: %s: number of submissions.
+#, php-format
+msgid "%s submission collected."
+msgid_plural "%s submissions collected."
+msgstr[0] "%s envío recogido."
+msgstr[1] "%s envíos recogidos."
+
+msgid "View submissions"
+msgstr "Ver envíos"
+
+msgid "Export JSON"
+msgstr "Exportar JSON"
+
+msgid "Need help creating an activity? The Help page includes a ready-to-use AI prompt and the full JavaScript contract."
+msgstr "¿Necesitas ayuda para crear una actividad? La página de Ayuda incluye un prompt de IA listo para usar y el contrato completo de JavaScript."
+
+msgid "Open Help"
+msgstr "Abrir la Ayuda"
+
+msgid "Filter by activity"
+msgstr "Filtrar por actividad"
+
+msgid "— Select an activity —"
+msgstr "— Selecciona una actividad —"
+
+msgid "Filter"
+msgstr "Filtrar"
+
+msgid "Choose an activity to view its submissions."
+msgstr "Elige una actividad para ver sus envíos."
+
+msgid "No submissions found for this activity yet."
+msgstr "Todavía no hay envíos para esta actividad."
+
+msgid "ID"
+msgstr "ID"
+
+msgid "Activity"
+msgstr "Actividad"
+
+msgid "User"
+msgstr "Usuario"
+
+msgid "Created"
+msgstr "Creado"
+
+msgid "Updated"
+msgstr "Actualizado"
+
+msgid "Payload"
+msgstr "Datos"
+
+msgid "View JSON"
+msgstr "Ver JSON"
+
+msgid "Submission payload"
+msgstr "Datos del envío"
+
+msgid "Close"
+msgstr "Cerrar"
+
+msgctxt "Post type general name"
+msgid "Franer"
+msgstr "Franer"
+
+msgctxt "Post type singular name"
+msgid "Franer"
+msgstr "Franer"
+
+msgctxt "Admin Menu text"
+msgid "Franer"
+msgstr "Franer"
+
+msgctxt "Add New on Toolbar"
+msgid "Franer"
+msgstr "Franer"
+
+msgid "Add New"
+msgstr "Añadir nueva"
+
+msgid "Add New Franer"
+msgstr "Añadir nueva Franer"
+
+msgid "New Franer"
+msgstr "Nueva Franer"
+
+msgid "Edit Franer"
+msgstr "Editar Franer"
+
+msgid "View Franer"
+msgstr "Ver Franer"
+
+msgid "All Franers"
+msgstr "Todas las Franer"
+
+msgid "Search Franers"
+msgstr "Buscar Franer"
+
+msgid "No Franers found."
+msgstr "No se han encontrado Franer."
+
+msgid "No Franers found in Trash."
+msgstr "No se han encontrado Franer en la papelera."
+
+msgid "You must be logged in."
+msgstr "Debes haber iniciado sesión."
+
+msgid "Activity not found."
+msgstr "Actividad no encontrada."
+
+msgid "You are not allowed to access this activity."
+msgstr "No tienes permiso para acceder a esta actividad."
+
+msgid "This activity is not accepting submissions."
+msgstr "Esta actividad no admite envíos."
+
+msgid "Unsupported or missing schema version."
+msgstr "Versión de esquema no admitida o ausente."
+
+msgid "The submitted payload is invalid or empty."
+msgstr "Los datos enviados no son válidos o están vacíos."
+
+msgid "No submission found."
+msgstr "No se ha encontrado ningún envío."
+
+msgid "The slug cannot be empty."
+msgstr "El slug no puede estar vacío."
+
+msgid "The slug may only contain lowercase letters, numbers and hyphens."
+msgstr "El slug solo puede contener letras minúsculas, números y guiones."
+
+msgid "The submitted payload is too large."
+msgstr "Los datos enviados son demasiado grandes."
+
+msgid "Could not update the submission."
+msgstr "No se pudo actualizar el envío."
+
+msgid "Duplicate submission not allowed"
+msgstr "No se permite un envío duplicado."
+
+msgid "Could not save the submission."
+msgstr "No se pudo guardar el envío."
+
+msgid "You do not have permission to view this activity."
+msgstr "No tienes permiso para ver esta actividad."
+
+msgid "Your response has been saved."
+msgstr "Tu respuesta se ha guardado."
+
+msgid "Your response has been updated."
+msgstr "Tu respuesta se ha actualizado."
+
+msgid "There was a problem saving your response. Please try again."
+msgstr "Ha ocurrido un problema al guardar tu respuesta. Inténtalo de nuevo."
+
+msgid "A network error occurred. Please check your connection and try again."
+msgstr "Se ha producido un error de red. Comprueba tu conexión e inténtalo de nuevo."
+
+#. translators: %s: Franer activity title.
+#, php-format
+msgid "Activity: %s"
+msgstr "Actividad: %s"
+
+msgid "Ready."
+msgstr "Listo."

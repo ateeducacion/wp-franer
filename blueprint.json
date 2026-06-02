@@ -1,0 +1,57 @@
+{
+  "$schema": "https://playground.wordpress.net/blueprint-schema.json",
+  "preferredVersions": {
+    "php": "latest",
+    "wp": "latest"
+  },
+  "siteOptions": {
+    "blogname": "WordPress Playground Franer Demo"
+  },
+  "steps": [
+    {
+      "step": "setSiteLanguage",
+      "language": "es_ES"
+    },
+    {
+      "step": "runPHP",
+      "code": "<?php require_once('/wordpress/wp-load.php'); wp_insert_user(array('user_login' => 'editor1', 'user_email' => 'editor1@example.com', 'user_pass' => 'password', 'role' => 'editor', 'display_name' => 'María García', 'first_name' => 'María', 'last_name' => 'García')); ?>"
+    },
+    {
+      "step": "runPHP",
+      "code": "<?php require_once('/wordpress/wp-load.php'); wp_insert_user(array('user_login' => 'author1', 'user_email' => 'author1@example.com', 'user_pass' => 'password', 'role' => 'author', 'display_name' => 'Carlos López', 'first_name' => 'Carlos', 'last_name' => 'López')); ?>"
+    },
+    {
+      "step": "runPHP",
+      "code": "<?php require_once('/wordpress/wp-load.php'); wp_insert_user(array('user_login' => 'subscriber1', 'user_email' => 'subscriber1@example.com', 'user_pass' => 'password', 'role' => 'subscriber', 'display_name' => 'Ana Martínez', 'first_name' => 'Ana', 'last_name' => 'Martínez')); ?>"
+    },
+    {
+      "step": "installPlugin",
+      "pluginData": {
+        "resource": "wordpress.org/plugins",
+        "slug": "user-switching"
+      },
+      "options": {
+        "activate": true
+      }
+    },
+    {
+      "step": "installPlugin",
+      "pluginData": {
+        "resource": "url",
+        "url": "https://github.com/ateeducacion/wp-franer/archive/refs/heads/main.zip"
+      },
+      "options": {
+        "activate": true
+      }
+    },
+    {
+      "step": "runPHP",
+      "code": "<?php require_once('/wordpress/wp-load.php'); if ( class_exists( 'Franer_Demo_Data' ) ) { Franer_Demo_Data::seed( 'mcode40' ); } ?>"
+    }
+  ],
+  "features": {
+    "networking": true
+  },
+  "login": true,
+  "landingPage": "/wp-admin/edit.php?post_type=franer_site"
+}

@@ -1,0 +1,149 @@
+<?php
+/**
+ * Repository for Franer site custom posts.
+ *
+ * @package Franer
+ */
+
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
+
+/**
+ * Reads and types Franer site data from the franer_site CPT and its meta.
+ */
+class Franer_Site_Repository {
+
+	/**
+	 * Retrieve a Franer site post by its slug.
+	 *
+	 * Matches the _franer_slug meta key.
+	 *
+	 * @param string $slug The slug to look up.
+	 * @return WP_Post|null The matching post, or null when not found.
+	 */
+	public function get_by_slug( $slug ) {
+		$slug = (string) $slug;
+
+		if ( '' === $slug ) {
+			return null;
+		}
+
+		$query = new WP_Query(
+			array(
+				'post_type'              => 'franer_site',
+				'post_status'            => 'publish',
+				'posts_per_page'         => 1,
+				'no_found_rows'          => true,
+				'update_post_term_cache' => false,
+				'meta_query'             => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+					array(
+						'key'   => '_franer_slug',
+						'value' => $slug,
+					),
+				),
+			)
+		);
+
+		if ( empty( $query->posts ) ) {
+			return null;
+		}
+
+		return $query->posts[0];
+	}
+
+	/**
+	 * Get the fully typed settings array for a site.
+	 *
+	 * @param int $site_id The site post ID.
+	 * @return array Typed settings for the site.
+	 */
+	public function get_settings( $site_id ) {
+		$site_id = (int) $site_id;
+		$post    = get_post( $site_id );
+
+		$slug                = (string) get_post_meta( $site_id, '_franer_slug', true );
+		$html                = (string) get_post_meta( $site_id, '_franer_html', true );
+		$is_visible          = get_post_meta( $site_id, '_franer_is_visible', true );
+		$accepts_submissions = get_post_meta( $site_id, '_franer_accepts_submissions', true );
+		$allowed_roles       = get_post_meta( $site_id, '_franer_allowed_roles', true );
+		$allow_multiple      = get_post_meta( $site_id, '_franer_allow_multiple_submissions', true );
+		$allow_overwrite     = get_post_meta( $site_id, '_franer_allow_overwrite', true );
+		$max_payload_size    = get_post_meta( $site_id, '_franer_max_payload_size', true );
+		$schema_version      = get_post_meta( $site_id, '_franer_schema_version', true );
+
+		return array(
+			'id'                  => $site_id,
+			'slug'                => $slug,
+			'title'               => $post ? $post->post_title : '',
+			'html'                => $html,
+			'is_visible'          => Franer_Sanitizer::sanitize_bool( $is_visible ),
+			'accepts_submissions' => Franer_Sanitizer::sanitize_bool( $accepts_submissions ),
+			'allowed_roles'       => is_array( $allowed_roles ) ? array_values( $allowed_roles ) : array(),
+			'allow_multiple'      => Franer_Sanitizer::sanitize_bool( $allow_multiple ),
+			'allow_overwrite'     => Franer_Sanitizer::sanitize_bool( $allow_overwrite ),
+			'max_payload_size'    => '' === $max_payload_size ? 256 : (int) $max_payload_size,
+			'schema_version'      => '' === $schema_version ? '1.0' : (string) $schema_version,
+		);
+	}
+
+	/**
+	 * Build the public URL for a site.
+	 *
+	 * @param WP_Post|int|array $site A site post, post ID, or settings array.
+	 * @return string The public URL.
+	 */
+	public function get_public_url( $site ) {
+		$slug = '';
+
+		if ( is_array( $site ) ) {
+			$slug = isset( $site['slug'] ) ? (string) $site['slug'] : '';
+		} elseif ( $site instanceof WP_Post ) {
+			$slug = (string) get_post_meta( $site->ID, '_franer_slug', true );
+		} elseif ( is_numeric( $site ) ) {
+			$slug = (string) get_post_meta( (int) $site, '_franer_slug', true );
+		}
+
+		return home_url( '/franer/' . $slug . '/' );
+	}
+
+	/**
+	 * Check whether a slug already exists.
+	 *
+	 * @param string $slug       The slug to check.
+	 * @param int    $exclude_id Optional post ID to exclude from the check.
+	 * @return bool True when another site already uses the slug.
+	 */
+	public function slug_exists( $slug, $exclude_id = 0 ) {
+		$slug       = (string) $slug;
+		$exclude_id = (int) $exclude_id;
+
+		if ( '' === $slug ) {
+			return false;
+		}
+
+		$args = array(
+			'post_type'              => 'franer_site',
+			'post_status'            => 'any',
+			'posts_per_page'         => 1,
+			'fields'                 => 'ids',
+			'no_found_rows'          => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+			'meta_query'             => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+				array(
+					'key'   => '_franer_slug',
+					'value' => $slug,
+				),
+			),
+		);
+
+		if ( $exclude_id > 0 ) {
+			$args['post__not_in'] = array( $exclude_id );
+		}
+
+		$query = new WP_Query( $args );
+
+		return ! empty( $query->posts );
+	}
+}

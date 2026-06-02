@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+/vendor/
+/composer.lock
+/package-lock.json
+
+# Logs and dumps
+*.log
+*.sql
+*.sql.gz
+*.tar.gz
+*.zip
+*.swp
+*.swo
+*.bak
+*.bkp
+*.tmp
+*~
+~$*
+.~lock.*
+.DS_Store
+Thumbs.db
+sftp-config.json
+
+# Editor / IDE files
+/.idea/
+.vscode/
+.project
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+# Test artifacts
+.phpunit.result.cache
+artifacts/
+test-results/
+playwright-report/
+
+# Build artifacts
+/build/
+franer-*.zip
+
+# OMC
+.omc/
+
+# Environment
+.env
+.wp-env.override.json

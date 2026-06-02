@@ -1,1 +1,188 @@
-# wp-franer
+# Franer
+
+<p align="center">
+  <img src=".github/logo.png" alt="Franer logo" width="220">
+</p>
+
+![CI](https://img.shields.io/github/actions/workflow/status/ateeducacion/wp-franer/ci.yml?label=CI)
+![WordPress Version](https://img.shields.io/badge/WordPress-6.1%2B-blue)
+![Language](https://img.shields.io/badge/Language-PHP-orange)
+![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)
+![Last Commit](https://img.shields.io/github/last-commit/ateeducacion/wp-franer)
+![Open Issues](https://img.shields.io/github/issues/ateeducacion/wp-franer)
+
+**Franer** is a **secure environment to publish AI-generated forms**. The name is a backronym
+for **F**ramework for **R**unning **AI**-ge**N**erated **E**mbedded fo**R**ms.
+
+Franer lets an administrator paste self-contained, AI-generated HTML activities, renders them
+inside a **sandboxed iframe**, and collects users' JSON submissions safely on the server. There
+is no dependency on Formidable Forms or any third-party form engine.
+
+## Demo
+
+Try Franer instantly in your browser with WordPress Playground. The demo includes sample data so
+you can explore the features. All changes are discarded when you close the tab, because everything
+runs locally in your browser.
+
+[<kbd> <br> Preview in WordPress Playground <br> </kbd>](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/ateeducacion/wp-franer/refs/heads/main/blueprint.json)
+
+## Purpose
+
+AI assistants are great at producing rich, interactive single-file HTML activities (quizzes,
+self-assessments, calculators, surveys). The hard part is publishing them safely and collecting
+the data they generate. Franer solves both problems:
+
+- It treats the AI-generated HTML as **untrusted** and never executes it in the context of your
+  site. The markup only ever runs inside a locked-down iframe.
+- It collects each user's structured JSON answer through a **nonced, authenticated REST call made
+  by the parent page**, never by the iframe itself.
+- It stores submissions server-side, keeping only hashes of the IP address and user agent.
+
+## How it works
+
+1. **Author**: an admin pastes an AI-generated, self-contained HTML activity into a Franer site
+   (the `franer_site` custom post type).
+2. **Render**: the activity is rendered inside an `<iframe srcdoc="..." sandbox="allow-scripts allow-forms">`
+   with **no** `allow-same-origin`. The iframe cannot read cookies, touch the parent DOM, or make
+   network requests.
+3. **postMessage**: when the user submits, the activity calls `window.FranerSubmit()`, which posts
+   a `franer_submit` message to the parent page.
+4. **Nonced REST**: the parent shell (`public/js/franer-shell.js`) receives the message and performs
+   an authenticated `POST` to the Franer REST endpoint with the `X-WP-Nonce` header and
+   `credentials: 'same-origin'`.
+5. **Stored JSON**: the server validates permissions, role, payload size and schema version, then
+   stores the submission as a JSON string. The parent shell posts a `franer_submit_result` message
+   back into the iframe so the activity can show a confirmation.
+
+```
+Activity HTML (untrusted)
+   └─ sandboxed iframe ── postMessage(franer_submit) ──▶ parent shell
+                                                            └─ nonced REST POST ──▶ WordPress
+                                                                                      └─ stored JSON
+   ◀── postMessage(franer_submit_result) ── parent shell ◀── REST response ─────────────┘
+```
+
+## Installation
+
+1. **Download the latest release** from the [GitHub Releases page](https://github.com/ateeducacion/wp-franer/releases).
+2. Upload the ZIP file to your WordPress site via **Plugins > Add New > Upload Plugin**.
+3. Activate the plugin through the **Plugins** menu in WordPress.
+4. Activation registers the `/franer/{slug}/` rewrite rule and creates the submissions table.
+   If public URLs return 404, visit **Settings > Permalinks** and save to flush rewrite rules.
+
+## Development setup
+
+Bring up a local WordPress environment with the plugin pre-installed using
+[`@wordpress/env`](https://developer.wordpress.org/block-editor/reference-guides/packages/packages-env/):
+
+```bash
+make up
+```
+
+This starts a Dockerized WordPress instance at [http://localhost:8888](http://localhost:8888)
+(default admin user `admin`, password `password`). The tests environment runs on port `8889`.
+Run `make help` to list every available target.
+
+## Creating a Franer site
+
+1. In the WordPress admin, open **Franer > Add New**.
+2. Give the activity a title.
+3. In **HTML source**, paste your self-contained activity. It is stored exactly as entered and is
+   only ever rendered inside a sandboxed iframe.
+4. In **Site settings**, configure:
+   - **Slug** — lowercase letters, numbers and hyphens only; used in the public URL.
+   - **Visibility** — whether allowed users can see it.
+   - **Submissions** — accept new submissions, allow multiple submissions per user, allow
+     overwriting the previous submission.
+   - **Allowed roles** — only logged-in users with one of these roles may view and submit;
+     administrators are always allowed.
+   - **Max payload size (KB)** — between 1 and 5120 KB.
+   - **Schema version** — currently `1.0`.
+5. Publish. The **Public URL** metabox shows the shareable link and shortcode.
+
+## Public rendering & shortcode
+
+A published, visible activity is reachable in two ways:
+
+- **Pretty URL**: `/franer/{slug}/`. Logged-out visitors are redirected to the login page; users
+  without an allowed role get a 403; hidden activities behave as 404.
+- **Shortcode**: embed it in any post or page with:
+
+  ```
+  [franer slug="your-activity-slug"]
+  ```
+
+  The shortcode renders nothing for users who are not allowed to view the activity, so it never
+  leaks the existence of a hidden or restricted activity.
+
+## Submissions
+
+- Each authenticated submission is stored in the `{$wpdb->prefix}franer_submissions` table as a
+  JSON string, alongside SHA-256 hashes of the IP address and user agent (never the raw values).
+- Review them under **Franer > Submissions**. Filter by activity, then open the **View JSON** modal
+  to inspect any payload.
+- Duplicate handling follows the per-site settings: with "allow multiple" off, a second submission
+  either overwrites the previous one (if overwrite is enabled) or is rejected with `409`.
+- The REST endpoint `GET /franer/v1/sites/{slug}/my-submission` returns the current user's latest
+  submission so activities can pre-fill previously saved answers.
+
+## JSON export
+
+Administrators can export all submissions for an activity as a single JSON file from the
+per-site metabox or the Submissions page. Internally this hits:
+
+```
+admin-post.php?action=franer_export&site_id=123
+```
+
+The action is nonce-protected and restricted to `manage_options`. The download includes the decoded
+payloads plus each user's login and email.
+
+## Security model
+
+- **Untrusted HTML**: the activity markup is stored raw (never sanitized or stripped) and is only
+  rendered inside `<iframe srcdoc="..." sandbox="allow-scripts allow-forms">` with **no**
+  `allow-same-origin`.
+- **Parent-side trust**: the iframe is never trusted; the parent page makes the nonced REST call.
+- **Hashed identifiers**: only SHA-256 hashes of the IP and user agent are stored.
+- **Capabilities**: every admin create/edit/delete/export/submissions screen requires
+  `manage_options`. REST endpoints require a logged-in user, a valid `X-WP-Nonce`, and an allowed
+  role.
+- **Validation**: payloads are validated for object shape, schema version (`1.0`) and maximum byte
+  size before being stored with `wp_json_encode()`.
+
+## AI prompt workflow
+
+Open **Franer > Help** in the admin. The page documents the JavaScript contract and provides a
+ready-to-use **AI prompt** with a **Copy prompt** button. Paste the prompt into your AI assistant,
+replace the activity slug placeholder, describe the topic, and the model returns a single
+self-contained HTML document that implements:
+
+- `window.FranerCollect()` — returns the structured submission object
+  (`schema_version`, `activity_id`, `data`, ...).
+- `window.FranerSubmit()` — validates the form and posts
+  `{ type:"franer_submit", payload: FranerCollect() }` to `window.parent`.
+- A `message` listener that handles `{ type:"franer_submit_result", ok, result }` from the host.
+
+## Testing
+
+```bash
+make test-php    # PHPUnit tests (wp-env tests environment)
+make test-js     # JavaScript unit tests (Jest)
+make test-e2e    # End-to-end tests (Playwright against port 8889)
+```
+
+Other useful targets:
+
+```bash
+make lint               # PHPCS (WordPress Coding Standards)
+make fix                # PHPCBF auto-fix
+make check-plugin       # WordPress Plugin Check
+make check-untranslated # Fail if any Spanish string is untranslated
+make check              # fix + lint + plugin-check + tests + untranslated + mo
+```
+
+## License
+
+Franer is free software, released under the **GPL-3.0+** license. See
+[https://www.gnu.org/licenses/gpl-3.0.html](https://www.gnu.org/licenses/gpl-3.0.html).

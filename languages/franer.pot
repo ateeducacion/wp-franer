@@ -1,0 +1,359 @@
+# Copyright (C) 2026 Área de Tecnología Educativa
+# This file is distributed under the GPL-3.0+.
+msgid ""
+msgstr ""
+"Project-Id-Version: Franer 0.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-franer\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: franer\n"
+
+#. Plugin Name of the plugin
+msgid "Franer"
+msgstr ""
+
+#. Plugin URI of the plugin
+msgid "https://github.com/ateeducacion/wp-franer"
+msgstr ""
+
+#. Description of the plugin
+msgid "Franer is a secure environment to publish AI-generated forms. It renders self-contained AI-generated HTML activities inside a sandboxed iframe and collects users' JSON submissions safely server-side."
+msgstr ""
+
+#. Author of the plugin
+msgid "Área de Tecnología Educativa"
+msgstr ""
+
+#. Author URI of the plugin
+msgid "https://www3.gobiernodecanarias.org/medusa/ecoescuela/ate/"
+msgstr ""
+
+msgid "Franer Submissions"
+msgstr ""
+
+msgid "Submissions"
+msgstr ""
+
+msgid "Franer Help"
+msgstr ""
+
+msgid "Help"
+msgstr ""
+
+msgid "Site settings"
+msgstr ""
+
+msgid "HTML source"
+msgstr ""
+
+msgid "Public URL"
+msgstr ""
+
+msgid "The slug is invalid. Use only lowercase letters, numbers and hyphens."
+msgstr ""
+
+msgid "That slug is already in use by another activity. Please choose a different one."
+msgstr ""
+
+msgid "Copied to clipboard."
+msgstr ""
+
+msgid "Could not copy. Please copy manually."
+msgstr ""
+
+msgid "You do not have permission to access this page."
+msgstr ""
+
+msgid "You do not have permission to export submissions."
+msgstr ""
+
+msgid "Forbidden"
+msgstr ""
+
+msgid "Invalid site identifier."
+msgstr ""
+
+msgid "The requested activity does not exist."
+msgstr ""
+
+msgid "Franer is a secure environment to publish AI-generated forms. You paste a self-contained HTML activity, Franer renders it inside a sandboxed iframe, and it safely collects users' JSON submissions on the server."
+msgstr ""
+
+msgid "How it works"
+msgstr ""
+
+msgid "Create an activity (Franer post type) and paste its HTML in the \"HTML source\" box."
+msgstr ""
+
+msgid "Set the slug, visibility, allowed roles and submission options in \"Site settings\"."
+msgstr ""
+
+msgid "Share the public URL or embed it with the [franer slug=\"...\"] shortcode."
+msgstr ""
+
+msgid "Review and export collected submissions from the Submissions page."
+msgstr ""
+
+msgid "Security model"
+msgstr ""
+
+msgid "Activity HTML always runs inside an <iframe srcdoc> with sandbox=\"allow-scripts allow-forms\" and no same-origin access. The iframe cannot read cookies, access the parent page, or make network requests. The parent page (not the iframe) performs the authenticated REST call that stores the submission."
+msgstr ""
+
+msgid "JavaScript contract"
+msgstr ""
+
+msgid "Each activity must implement two global functions and respond to result messages from the host page:"
+msgstr ""
+
+msgid "returns the structured submission object."
+msgstr ""
+
+msgid "validates and posts { type:\"franer_submit\", payload:FranerCollect() } to window.parent."
+msgstr ""
+
+msgid "A \"message\" listener handling { type:\"franer_submit_result\", ok, result } from the host page."
+msgstr ""
+
+msgid "Reusable AI prompt"
+msgstr ""
+
+msgid "Copy this prompt into your AI assistant. Replace REPLACE_WITH_ACTIVITY_SLUG with the slug of your activity and describe the topic you want."
+msgstr ""
+
+msgid "Copy prompt"
+msgstr ""
+
+msgid "AI activity prompt"
+msgstr ""
+
+msgid "Slug"
+msgstr ""
+
+msgid "Lowercase letters, numbers and hyphens only. Used in the public URL."
+msgstr ""
+
+msgid "Visibility"
+msgstr ""
+
+msgid "Visible to allowed users"
+msgstr ""
+
+msgid "Accept new submissions"
+msgstr ""
+
+msgid "Allow multiple submissions per user"
+msgstr ""
+
+msgid "Allow overwriting the previous submission"
+msgstr ""
+
+msgid "Allowed roles"
+msgstr ""
+
+msgid "Only logged-in users with one of these roles may view and submit. Administrators are always allowed."
+msgstr ""
+
+msgid "Max payload size (KB)"
+msgstr ""
+
+msgid "Maximum accepted submission size, between 1 and 5120 KB."
+msgstr ""
+
+msgid "Schema version"
+msgstr ""
+
+msgid "Expected payload schema version (currently 1.0)."
+msgstr ""
+
+msgid "Security note:"
+msgstr ""
+
+msgid "This HTML is stored exactly as entered and is ONLY ever rendered inside a sandboxed iframe (sandbox=\"allow-scripts allow-forms\", without same-origin access). It cannot read cookies, the page DOM, or make network requests. Paste only trusted, self-contained activities."
+msgstr ""
+
+msgid "Activity HTML source"
+msgstr ""
+
+msgid "A complete, self-contained HTML document implementing window.FranerCollect() and window.FranerSubmit(). See the Help page for a ready-to-use AI prompt."
+msgstr ""
+
+msgid "Copy"
+msgstr ""
+
+msgid "Open public page"
+msgstr ""
+
+msgid "Shortcode"
+msgstr ""
+
+#. translators: %s: number of submissions.
+#, php-format
+msgid "%s submission collected."
+msgid_plural "%s submissions collected."
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "View submissions"
+msgstr ""
+
+msgid "Export JSON"
+msgstr ""
+
+msgid "Need help creating an activity? The Help page includes a ready-to-use AI prompt and the full JavaScript contract."
+msgstr ""
+
+msgid "Open Help"
+msgstr ""
+
+msgid "Filter by activity"
+msgstr ""
+
+msgid "— Select an activity —"
+msgstr ""
+
+msgid "Filter"
+msgstr ""
+
+msgid "Choose an activity to view its submissions."
+msgstr ""
+
+msgid "No submissions found for this activity yet."
+msgstr ""
+
+msgid "ID"
+msgstr ""
+
+msgid "Activity"
+msgstr ""
+
+msgid "User"
+msgstr ""
+
+msgid "Created"
+msgstr ""
+
+msgid "Updated"
+msgstr ""
+
+msgid "Payload"
+msgstr ""
+
+msgid "View JSON"
+msgstr ""
+
+msgid "Submission payload"
+msgstr ""
+
+msgid "Close"
+msgstr ""
+
+msgctxt "Post type general name"
+msgid "Franer"
+msgstr ""
+
+msgctxt "Post type singular name"
+msgid "Franer"
+msgstr ""
+
+msgctxt "Admin Menu text"
+msgid "Franer"
+msgstr ""
+
+msgctxt "Add New on Toolbar"
+msgid "Franer"
+msgstr ""
+
+msgid "Add New"
+msgstr ""
+
+msgid "Add New Franer"
+msgstr ""
+
+msgid "New Franer"
+msgstr ""
+
+msgid "Edit Franer"
+msgstr ""
+
+msgid "View Franer"
+msgstr ""
+
+msgid "All Franers"
+msgstr ""
+
+msgid "Search Franers"
+msgstr ""
+
+msgid "No Franers found."
+msgstr ""
+
+msgid "No Franers found in Trash."
+msgstr ""
+
+msgid "You must be logged in."
+msgstr ""
+
+msgid "Activity not found."
+msgstr ""
+
+msgid "You are not allowed to access this activity."
+msgstr ""
+
+msgid "This activity is not accepting submissions."
+msgstr ""
+
+msgid "Unsupported or missing schema version."
+msgstr ""
+
+msgid "The submitted payload is invalid or empty."
+msgstr ""
+
+msgid "No submission found."
+msgstr ""
+
+msgid "The slug cannot be empty."
+msgstr ""
+
+msgid "The slug may only contain lowercase letters, numbers and hyphens."
+msgstr ""
+
+msgid "The submitted payload is too large."
+msgstr ""
+
+msgid "Could not update the submission."
+msgstr ""
+
+msgid "Duplicate submission not allowed"
+msgstr ""
+
+msgid "Could not save the submission."
+msgstr ""
+
+msgid "You do not have permission to view this activity."
+msgstr ""
+
+msgid "Your response has been saved."
+msgstr ""
+
+msgid "Your response has been updated."
+msgstr ""
+
+msgid "There was a problem saving your response. Please try again."
+msgstr ""
+
+msgid "A network error occurred. Please check your connection and try again."
+msgstr ""
+
+#. translators: %s: Franer activity title.
+#, php-format
+msgid "Activity: %s"
+msgstr ""
+
+msgid "Ready."
+msgstr ""

@@ -1,0 +1,116 @@
+/**
+ * Admin styles for the Franer plugin.
+ *
+ * Styles the metaboxes, submissions list, copy buttons and JSON modal.
+ */
+
+/* Security / warning callout used in metaboxes. */
+.franer-notice-box {
+	border-left: 4px solid #dba617;
+	background: #fcf9e8;
+	padding: 8px 12px;
+	margin: 0 0 12px;
+}
+
+/* Copy rows (public URL / shortcode / prompt). */
+.franer-copy-row {
+	display: flex;
+	gap: 6px;
+	align-items: center;
+}
+
+.franer-copy-row input[type="text"] {
+	flex: 1 1 auto;
+}
+
+.franer-copy-status {
+	margin-left: 8px;
+	color: #008a20;
+	font-weight: 600;
+}
+
+/* Code editor textarea fallback sizing. */
+.franer-code-editor {
+	font-family: Consolas, Monaco, monospace;
+	width: 100%;
+}
+
+/* Submissions table. */
+.franer-submissions-filter {
+	margin: 12px 0;
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.franer-submissions-table {
+	margin-top: 12px;
+}
+
+/* Hidden JSON payload data nodes. */
+.franer-submissions-table script[type="application/json"] {
+	display: none;
+}
+
+/* JSON modal. */
+.franer-modal {
+	position: fixed;
+	inset: 0;
+	z-index: 100000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.franer-modal[hidden] {
+	display: none;
+}
+
+.franer-modal__backdrop {
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.5);
+}
+
+.franer-modal__dialog {
+	position: relative;
+	background: #fff;
+	border-radius: 4px;
+	max-width: 720px;
+	width: 90%;
+	max-height: 80vh;
+	display: flex;
+	flex-direction: column;
+	box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.franer-modal__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 12px 16px;
+	border-bottom: 1px solid #dcdcde;
+}
+
+.franer-modal__header h2 {
+	margin: 0;
+	font-size: 16px;
+}
+
+.franer-modal__close {
+	font-size: 22px;
+	line-height: 1;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.franer-modal__content {
+	margin: 0;
+	padding: 16px;
+	overflow: auto;
+	white-space: pre-wrap;
+	word-break: break-word;
+	font-family: Consolas, Monaco, monospace;
+	font-size: 12px;
+}
