@@ -20,11 +20,10 @@ global $wpdb;
 // Delete all franer_site posts and their meta.
 $franer_posts = get_posts(
 	array(
-		'post_type'      => 'franer_site',
-		'post_status'    => 'any',
-		'numberposts'    => -1,
-		'fields'         => 'ids',
-		'suppress_filters' => true,
+		'post_type'   => 'franer_site',
+		'post_status' => 'any',
+		'numberposts' => -1,
+		'fields'      => 'ids',
 	)
 );
 
