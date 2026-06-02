@@ -45,3 +45,6 @@ franer-*.zip
 # Environment
 .env
 .wp-env.override.json
+
+# composer.lock is resolved fresh in CI (composer install); only the npm lock is committed.
+/composer.lock
