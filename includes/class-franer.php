@@ -177,6 +177,10 @@ class Franer {
 
 		$this->loader->add_action( 'admin_post_franer_delete_submission', $plugin_admin, 'handle_delete_submission' );
 		$this->loader->add_action( 'admin_post_franer_update_submission', $plugin_admin, 'handle_update_submission' );
+
+		$this->loader->add_filter( 'manage_franer_site_posts_columns', $plugin_admin, 'add_list_columns' );
+		$this->loader->add_action( 'manage_franer_site_posts_custom_column', $plugin_admin, 'render_list_column', 10, 2 );
+		$this->loader->add_filter( 'post_row_actions', $plugin_admin, 'add_row_actions', 10, 2 );
 	}
 
 	/**

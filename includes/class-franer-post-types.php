@@ -49,7 +49,8 @@ class Franer_Post_Types {
 			return $keys;
 		}
 
-		$keys[] = '_franer_html';
+		// Note: the activity HTML lives in post_content (natively revisioned and
+		// shown in the revision diff), so it is not listed here.
 		$keys[] = '_franer_slug';
 		$keys[] = '_franer_accepts_submissions';
 		$keys[] = '_franer_allowed_roles';
@@ -120,7 +121,6 @@ class Franer_Post_Types {
 
 		$meta_keys = array(
 			'_franer_slug'                       => 'string',
-			'_franer_html'                       => 'string',
 			'_franer_accepts_submissions'        => 'boolean',
 			'_franer_allowed_roles'              => 'string',
 			'_franer_allow_multiple_submissions' => 'boolean',

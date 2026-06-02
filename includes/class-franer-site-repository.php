@@ -15,6 +15,34 @@ if ( ! defined( 'WPINC' ) ) {
 class Franer_Site_Repository {
 
 	/**
+	 * Persist the activity HTML as raw post_content.
+	 *
+	 * The markup is stored verbatim (KSES is bypassed) because it is arbitrary,
+	 * administrator-provided HTML that is only ever rendered inside a sandboxed
+	 * iframe; the franer_site post type is non-public, non-REST and excluded from
+	 * search, so its post_content is never exposed directly. Storing it in
+	 * post_content makes it appear in the native revision diff.
+	 *
+	 * @param int    $post_id The franer_site post ID.
+	 * @param string $html    The raw activity HTML.
+	 * @return void
+	 */
+	public static function set_raw_html( $post_id, $html ) {
+		$restore_kses = false !== has_filter( 'content_save_pre', 'wp_filter_post_kses' );
+
+		kses_remove_filters();
+		wp_update_post(
+			array(
+				'ID'           => (int) $post_id,
+				'post_content' => (string) $html,
+			)
+		);
+		if ( $restore_kses ) {
+			kses_init_filters();
+		}
+	}
+
+	/**
 	 * Retrieve a Franer site post by its slug.
 	 *
 	 * Matches the _franer_slug meta key.
@@ -63,7 +91,9 @@ class Franer_Site_Repository {
 		$post    = get_post( $site_id );
 
 		$slug                = (string) get_post_meta( $site_id, '_franer_slug', true );
-		$html                = (string) get_post_meta( $site_id, '_franer_html', true );
+		// The activity HTML is stored in post_content so it is revisioned and
+		// shown in the WordPress revision diff.
+		$html                = $post ? (string) $post->post_content : '';
 		$accepts_submissions = get_post_meta( $site_id, '_franer_accepts_submissions', true );
 		$allowed_roles       = get_post_meta( $site_id, '_franer_allowed_roles', true );
 		$allow_multiple      = get_post_meta( $site_id, '_franer_allow_multiple_submissions', true );

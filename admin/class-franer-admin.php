@@ -290,11 +290,16 @@ class Franer_Admin {
 			update_post_meta( $post_id, '_franer_slug', $sanitized_slug );
 		}
 
-		// HTML source: stored RAW (never sanitized). It only ever renders inside a sandboxed iframe.
+		// HTML source: stored RAW in post_content (so it is revisioned and shown in
+		// the revision diff). It only ever renders inside a sandboxed iframe.
 		if ( isset( $_POST['franer_html'] ) ) {
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- HTML is stored raw by design and only rendered inside a sandboxed iframe.
 			$html = wp_unslash( $_POST['franer_html'] );
-			update_post_meta( $post_id, '_franer_html', $html );
+
+			// Avoid recursion: writing post_content fires save_post again.
+			remove_action( 'save_post_franer_site', array( $this, 'save_meta' ), 10 );
+			Franer_Site_Repository::set_raw_html( $post_id, $html );
+			add_action( 'save_post_franer_site', array( $this, 'save_meta' ), 10, 2 );
 		}
 
 		// Booleans. Visibility is the post status (publish = visible), not a meta field.
@@ -555,5 +560,85 @@ class Franer_Admin {
 		$repository->update_submission( $submission_id, (string) $payload_json );
 
 		$this->redirect_to_submissions( $site_id, 'updated' );
+	}
+
+	/**
+	 * Add Author and Submissions columns to the franer_site list table.
+	 *
+	 * @param array $columns Existing columns.
+	 * @return array The filtered columns.
+	 */
+	public function add_list_columns( $columns ) {
+		$new = array();
+
+		foreach ( $columns as $key => $label ) {
+			if ( 'date' === $key ) {
+				$new['franer_author']      = __( 'Author', 'franer' );
+				$new['franer_submissions'] = __( 'Submissions', 'franer' );
+			}
+			$new[ $key ] = $label;
+		}
+
+		// Fallback if there was no date column.
+		if ( ! isset( $new['franer_submissions'] ) ) {
+			$new['franer_author']      = __( 'Author', 'franer' );
+			$new['franer_submissions'] = __( 'Submissions', 'franer' );
+		}
+
+		return $new;
+	}
+
+	/**
+	 * Render the custom franer_site list columns.
+	 *
+	 * @param string $column  The column key.
+	 * @param int    $post_id The post ID for the row.
+	 * @return void
+	 */
+	public function render_list_column( $column, $post_id ) {
+		if ( 'franer_author' === $column ) {
+			$author_id = (int) get_post_field( 'post_author', $post_id );
+			echo esc_html( get_the_author_meta( 'display_name', $author_id ) );
+			return;
+		}
+
+		if ( 'franer_submissions' === $column ) {
+			$count = $this->submissions->count_site_submissions( (int) $post_id );
+			$url   = add_query_arg(
+				array(
+					'post_type' => 'franer_site',
+					'page'      => 'franer-submissions',
+					'site_id'   => (int) $post_id,
+				),
+				admin_url( 'edit.php' )
+			);
+			printf(
+				'<a href="%s">%s</a>',
+				esc_url( $url ),
+				esc_html( number_format_i18n( $count ) )
+			);
+		}
+	}
+
+	/**
+	 * Add a "Visit Franer" row action linking to the public activity URL.
+	 *
+	 * @param array   $actions Existing row actions.
+	 * @param WP_Post $post    The post for the row.
+	 * @return array The filtered row actions.
+	 */
+	public function add_row_actions( $actions, $post ) {
+		if ( $post instanceof WP_Post && 'franer_site' === $post->post_type ) {
+			$slug = get_post_meta( $post->ID, '_franer_slug', true );
+			if ( '' !== (string) $slug ) {
+				$actions['franer_visit'] = sprintf(
+					'<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
+					esc_url( $this->sites->get_public_url( $post ) ),
+					esc_html__( 'Visit Franer', 'franer' )
+				);
+			}
+		}
+
+		return $actions;
 	}
 }

@@ -84,15 +84,15 @@ class RestControllerTest extends WP_UnitTestCase {
 
 		$post_id = self::factory()->post->create(
 			array(
-				'post_type'   => 'franer_site',
+				'post_type'    => 'franer_site',
 				// Visibility is the post status: published = visible, draft = hidden.
-				'post_status' => $args['is_visible'] ? 'publish' : 'draft',
-				'post_title'  => 'Test Activity',
+				'post_status'  => $args['is_visible'] ? 'publish' : 'draft',
+				'post_title'   => 'Test Activity',
+				'post_content' => '<p>activity</p>',
 			)
 		);
 
 		update_post_meta( $post_id, '_franer_slug', $args['slug'] );
-		update_post_meta( $post_id, '_franer_html', '<p>activity</p>' );
 		update_post_meta( $post_id, '_franer_accepts_submissions', $args['accepts_submissions'] ? '1' : '' );
 		update_post_meta( $post_id, '_franer_allowed_roles', $args['allowed_roles'] );
 		update_post_meta( $post_id, '_franer_allow_multiple_submissions', $args['allow_multiple'] ? '1' : '' );

@@ -99,7 +99,9 @@ class Franer_Demo_Data {
 		update_post_meta( $post_id, '_franer_allow_multiple_submissions', '' );
 		update_post_meta( $post_id, '_franer_allow_overwrite', '1' );
 		update_post_meta( $post_id, '_franer_max_payload_size', 256 );
-		update_post_meta( $post_id, '_franer_html', self::get_demo_html() );
+
+		// The activity HTML lives in post_content (revisioned, shown in the diff).
+		Franer_Site_Repository::set_raw_html( $post_id, self::get_demo_html() );
 
 		update_option( self::SEEDED_OPTION, '1' );
 
