@@ -69,6 +69,9 @@ msgstr ""
 msgid "You do not have permission to access this page."
 msgstr ""
 
+msgid "You do not have permission to manage submissions."
+msgstr ""
+
 msgid "You do not have permission to export submissions."
 msgstr ""
 
@@ -244,6 +247,15 @@ msgstr ""
 msgid "Open Help"
 msgstr ""
 
+msgid "Submission deleted."
+msgstr ""
+
+msgid "Submission updated."
+msgstr ""
+
+msgid "The submitted JSON is not a valid object. No changes were saved."
+msgstr ""
+
 msgid "Filter by activity"
 msgstr ""
 
@@ -277,16 +289,34 @@ msgstr ""
 msgid "Updated"
 msgstr ""
 
-msgid "Payload"
+msgid "Actions"
 msgstr ""
 
-msgid "View JSON"
+msgid "View / edit"
 msgstr ""
 
-msgid "Submission payload"
+msgid "Delete this submission? This cannot be undone."
+msgstr ""
+
+msgid "Delete"
+msgstr ""
+
+msgid "Edit submission payload"
 msgstr ""
 
 msgid "Close"
+msgstr ""
+
+msgid "Submission JSON payload"
+msgstr ""
+
+msgid "Edit the JSON payload (must be a valid JSON object), then save."
+msgstr ""
+
+msgid "Save changes"
+msgstr ""
+
+msgid "Cancel"
 msgstr ""
 
 msgctxt "Post type general name"

@@ -479,4 +479,81 @@ class Franer_Admin {
 
 		require plugin_dir_path( __FILE__ ) . 'partials/franer-admin-submissions.php';
 	}
+
+	/**
+	 * Redirect back to the submissions screen with a status message.
+	 *
+	 * @param int    $site_id The site filter to preserve.
+	 * @param string $message The franer_msg status key.
+	 * @return void
+	 */
+	private function redirect_to_submissions( $site_id, $message ) {
+		$url = add_query_arg(
+			array(
+				'post_type'  => 'franer_site',
+				'page'       => 'franer-submissions',
+				'site_id'    => (int) $site_id,
+				'franer_msg' => $message,
+			),
+			admin_url( 'edit.php' )
+		);
+
+		wp_safe_redirect( $url );
+		exit;
+	}
+
+	/**
+	 * Handle deletion of a single submission (admin-post action).
+	 *
+	 * @return void
+	 */
+	public function handle_delete_submission() {
+		if ( ! Franer_Permissions::can_manage() ) {
+			wp_die( esc_html__( 'You do not have permission to manage submissions.', 'franer' ) );
+		}
+
+		$submission_id = isset( $_POST['submission_id'] ) ? absint( wp_unslash( $_POST['submission_id'] ) ) : 0;
+		$site_id       = isset( $_POST['site_id'] ) ? absint( wp_unslash( $_POST['site_id'] ) ) : 0;
+
+		check_admin_referer( 'franer_delete_submission_' . $submission_id );
+
+		if ( $submission_id > 0 ) {
+			$repository = new Franer_Submissions_Repository();
+			$repository->delete_submission( $submission_id );
+		}
+
+		$this->redirect_to_submissions( $site_id, 'deleted' );
+	}
+
+	/**
+	 * Handle editing the JSON payload of a single submission (admin-post action).
+	 *
+	 * @return void
+	 */
+	public function handle_update_submission() {
+		if ( ! Franer_Permissions::can_manage() ) {
+			wp_die( esc_html__( 'You do not have permission to manage submissions.', 'franer' ) );
+		}
+
+		$submission_id = isset( $_POST['submission_id'] ) ? absint( wp_unslash( $_POST['submission_id'] ) ) : 0;
+		$site_id       = isset( $_POST['site_id'] ) ? absint( wp_unslash( $_POST['site_id'] ) ) : 0;
+
+		check_admin_referer( 'franer_update_submission_' . $submission_id );
+
+		// Raw JSON: sanitizing as text would corrupt it; it is validated by decoding.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$raw     = isset( $_POST['payload'] ) ? wp_unslash( $_POST['payload'] ) : '';
+		$decoded = json_decode( is_string( $raw ) ? $raw : '', true );
+
+		if ( $submission_id <= 0 || ! is_array( $decoded ) ) {
+			$this->redirect_to_submissions( $site_id, 'invalid' );
+		}
+
+		$payload_json = wp_json_encode( $decoded );
+
+		$repository = new Franer_Submissions_Repository();
+		$repository->update_submission( $submission_id, (string) $payload_json );
+
+		$this->redirect_to_submissions( $site_id, 'updated' );
+	}
 }

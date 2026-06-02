@@ -273,6 +273,54 @@ class Franer_Submissions_Repository {
 	}
 
 	/**
+	 * Delete a single submission by ID.
+	 *
+	 * @param int $submission_id The submission ID.
+	 * @return int Number of rows deleted (0 or 1).
+	 */
+	public function delete_submission( $submission_id ) {
+		global $wpdb;
+
+		$table   = self::get_table_name();
+		$deleted = $wpdb->delete( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$table,
+			array( 'id' => (int) $submission_id ),
+			array( '%d' )
+		);
+
+		return (int) $deleted;
+	}
+
+	/**
+	 * Update the stored payload of a single submission.
+	 *
+	 * Recomputes the payload hash and sets updated_at. The caller is responsible
+	 * for validating that $payload_json is a valid JSON object before saving.
+	 *
+	 * @param int    $submission_id The submission ID.
+	 * @param string $payload_json  The new JSON payload string.
+	 * @return int Number of rows updated (0 or 1).
+	 */
+	public function update_submission( $submission_id, $payload_json ) {
+		global $wpdb;
+
+		$table   = self::get_table_name();
+		$updated = $wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$table,
+			array(
+				'payload_json' => $payload_json,
+				'payload_hash' => hash( 'sha256', $payload_json ),
+				'updated_at'   => current_time( 'mysql' ),
+			),
+			array( 'id' => (int) $submission_id ),
+			array( '%s', '%s', '%s' ),
+			array( '%d' )
+		);
+
+		return (int) $updated;
+	}
+
+	/**
 	 * Export all submissions for a site with decoded payloads and user data.
 	 *
 	 * @param int $site_id The site post ID.

@@ -85,6 +85,37 @@ class SubmissionsRepositoryTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * delete_submission should remove a single row.
+	 *
+	 * @return void
+	 */
+	public function test_delete_submission() {
+		$result = $this->repo->save_submission( $this->site_id, $this->user_id, wp_json_encode( array( 'q1' => 'a' ) ), false, false );
+		$id     = (int) $result['submission_id'];
+
+		$this->assertSame( 1, $this->repo->delete_submission( $id ) );
+		$this->assertNull( $this->repo->get_submission( $id ) );
+	}
+
+	/**
+	 * update_submission should replace the payload, rehash and set updated_at.
+	 *
+	 * @return void
+	 */
+	public function test_update_submission() {
+		$result = $this->repo->save_submission( $this->site_id, $this->user_id, wp_json_encode( array( 'q1' => 'a' ) ), false, false );
+		$id     = (int) $result['submission_id'];
+
+		$new_payload = wp_json_encode( array( 'q1' => 'edited' ) );
+		$this->assertSame( 1, $this->repo->update_submission( $id, $new_payload ) );
+
+		$row = $this->repo->get_submission( $id );
+		$this->assertSame( $new_payload, $row['payload_json'] );
+		$this->assertSame( hash( 'sha256', $new_payload ), $row['payload_hash'] );
+		$this->assertNotNull( $row['updated_at'] );
+	}
+
+	/**
 	 * get_latest_user_submission should return the most recent row.
 	 *
 	 * @return void

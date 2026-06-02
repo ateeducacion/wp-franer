@@ -21,6 +21,19 @@ if ( ! defined( 'WPINC' ) ) {
 <div class="wrap franer-submissions-wrap">
 	<h1 class="wp-heading-inline"><?php esc_html_e( 'Franer Submissions', 'franer' ); ?></h1>
 
+	<?php
+	// Read-only status message from a delete/edit redirect (no nonce needed to display it).
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$franer_msg = isset( $_GET['franer_msg'] ) ? sanitize_key( wp_unslash( $_GET['franer_msg'] ) ) : '';
+	if ( 'deleted' === $franer_msg ) {
+		echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Submission deleted.', 'franer' ) . '</p></div>';
+	} elseif ( 'updated' === $franer_msg ) {
+		echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Submission updated.', 'franer' ) . '</p></div>';
+	} elseif ( 'invalid' === $franer_msg ) {
+		echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'The submitted JSON is not a valid object. No changes were saved.', 'franer' ) . '</p></div>';
+	}
+	?>
+
 	<?php // Always target edit.php so the filter works regardless of how this page was reached. ?>
 	<form method="get" class="franer-submissions-filter" action="<?php echo esc_url( admin_url( 'edit.php' ) ); ?>">
 		<input type="hidden" name="post_type" value="franer_site" />
@@ -55,7 +68,7 @@ if ( ! defined( 'WPINC' ) ) {
 					<th scope="col"><?php esc_html_e( 'User', 'franer' ); ?></th>
 					<th scope="col"><?php esc_html_e( 'Created', 'franer' ); ?></th>
 					<th scope="col"><?php esc_html_e( 'Updated', 'franer' ); ?></th>
-					<th scope="col"><?php esc_html_e( 'Payload', 'franer' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'Actions', 'franer' ); ?></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -74,9 +87,22 @@ if ( ! defined( 'WPINC' ) ) {
 						<td><?php echo esc_html( $franer_row['updated_at'] ? $franer_row['updated_at'] : '—' ); ?></td>
 						<td>
 							<button type="button" class="button button-small franer-view-json"
-								data-franer-payload="<?php echo esc_attr( $franer_pretty ); ?>">
-								<?php esc_html_e( 'View JSON', 'franer' ); ?>
+								data-franer-payload="<?php echo esc_attr( $franer_pretty ); ?>"
+								data-franer-id="<?php echo esc_attr( (string) $franer_row['id'] ); ?>"
+								data-franer-nonce="<?php echo esc_attr( wp_create_nonce( 'franer_update_submission_' . (int) $franer_row['id'] ) ); ?>">
+								<?php esc_html_e( 'View / edit', 'franer' ); ?>
 							</button>
+							<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
+								class="franer-inline-form"
+								onsubmit="return confirm( '<?php echo esc_js( __( 'Delete this submission? This cannot be undone.', 'franer' ) ); ?>' );">
+								<input type="hidden" name="action" value="franer_delete_submission" />
+								<input type="hidden" name="submission_id" value="<?php echo esc_attr( (string) $franer_row['id'] ); ?>" />
+								<input type="hidden" name="site_id" value="<?php echo esc_attr( (string) $selected_site ); ?>" />
+								<?php wp_nonce_field( 'franer_delete_submission_' . (int) $franer_row['id'] ); ?>
+								<button type="submit" class="button button-small button-link-delete">
+									<?php esc_html_e( 'Delete', 'franer' ); ?>
+								</button>
+							</form>
 						</td>
 					</tr>
 				<?php endforeach; ?>
@@ -84,17 +110,27 @@ if ( ! defined( 'WPINC' ) ) {
 		</table>
 	<?php endif; ?>
 
-	<!-- JSON detail modal. -->
+	<!-- JSON view / edit modal. -->
 	<div id="franer-json-modal" class="franer-modal" role="dialog" aria-modal="true"
 		aria-labelledby="franer-modal-title" hidden>
 		<div class="franer-modal__backdrop" data-franer-modal-close="1"></div>
-		<div class="franer-modal__dialog">
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="franer-modal__dialog">
 			<div class="franer-modal__header">
-				<h2 id="franer-modal-title"><?php esc_html_e( 'Submission payload', 'franer' ); ?></h2>
+				<h2 id="franer-modal-title"><?php esc_html_e( 'Edit submission payload', 'franer' ); ?></h2>
 				<button type="button" class="button-link franer-modal__close" data-franer-modal-close="1"
 					aria-label="<?php esc_attr_e( 'Close', 'franer' ); ?>">&times;</button>
 			</div>
-			<pre id="franer-modal-content" class="franer-modal__content" tabindex="0"></pre>
-		</div>
+			<input type="hidden" name="action" value="franer_update_submission" />
+			<input type="hidden" name="site_id" value="<?php echo esc_attr( (string) $selected_site ); ?>" />
+			<input type="hidden" name="submission_id" id="franer-edit-id" value="" />
+			<input type="hidden" name="_wpnonce" id="franer-edit-nonce" value="" />
+			<label for="franer-modal-content" class="screen-reader-text"><?php esc_html_e( 'Submission JSON payload', 'franer' ); ?></label>
+			<textarea name="payload" id="franer-modal-content" class="franer-modal__content code" rows="18" spellcheck="false"></textarea>
+			<p class="description"><?php esc_html_e( 'Edit the JSON payload (must be a valid JSON object), then save.', 'franer' ); ?></p>
+			<p class="franer-modal__actions">
+				<button type="submit" class="button button-primary"><?php esc_html_e( 'Save changes', 'franer' ); ?></button>
+				<button type="button" class="button franer-modal__close"><?php esc_html_e( 'Cancel', 'franer' ); ?></button>
+			</p>
+		</form>
 	</div>
 </div>

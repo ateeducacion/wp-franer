@@ -112,18 +112,27 @@
 			return;
 		}
 		var content = document.getElementById( 'franer-modal-content' );
+		var editId = document.getElementById( 'franer-edit-id' );
+		var editNonce = document.getElementById( 'franer-edit-nonce' );
 		var lastFocused = null;
 
-		function openModal( payload ) {
+		function openModal( payload, id, nonce ) {
 			lastFocused = document.activeElement;
-			content.textContent = payload;
+			// content is a <textarea>: set its value, not textContent.
+			content.value = payload;
+			if ( editId ) {
+				editId.value = id || '';
+			}
+			if ( editNonce ) {
+				editNonce.value = nonce || '';
+			}
 			modal.hidden = false;
 			content.focus();
 		}
 
 		function closeModal() {
 			modal.hidden = true;
-			content.textContent = '';
+			content.value = '';
 			if ( lastFocused && typeof lastFocused.focus === 'function' ) {
 				lastFocused.focus();
 			}
@@ -135,7 +144,11 @@
 				// The payload lives in a data attribute: getAttribute decodes
 				// HTML entities back to a real JSON string (script tags do not).
 				var payload = button.getAttribute( 'data-franer-payload' ) || '';
-				openModal( payload.trim() );
+				openModal(
+					payload.trim(),
+					button.getAttribute( 'data-franer-id' ),
+					button.getAttribute( 'data-franer-nonce' )
+				);
 			} );
 		} );
 

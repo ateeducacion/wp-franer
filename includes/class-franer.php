@@ -174,6 +174,9 @@ class Franer {
 
 		$plugin_export = new Franer_Export_Controller();
 		$this->loader->add_action( 'admin_post_franer_export', $plugin_export, 'handle' );
+
+		$this->loader->add_action( 'admin_post_franer_delete_submission', $plugin_admin, 'handle_delete_submission' );
+		$this->loader->add_action( 'admin_post_franer_update_submission', $plugin_admin, 'handle_update_submission' );
 	}
 
 	/**

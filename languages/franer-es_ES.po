@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-06-02T22:21:45+00:00\n"
-"PO-Revision-Date: 2026-06-02T23:43:16+00:00\n"
+"PO-Revision-Date: 2026-06-02T23:49:40+00:00\n"
 "Language: es_ES\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Domain: franer\n"
@@ -68,6 +68,9 @@ msgstr "No se pudo copiar. Cópialo manualmente."
 
 msgid "You do not have permission to access this page."
 msgstr "No tienes permiso para acceder a esta página."
+
+msgid "You do not have permission to manage submissions."
+msgstr "No tienes permiso para gestionar los envíos."
 
 msgid "You do not have permission to export submissions."
 msgstr "No tienes permiso para exportar los envíos."
@@ -244,6 +247,15 @@ msgstr "¿Necesitas ayuda para crear una actividad? La página de Ayuda incluye 
 msgid "Open Help"
 msgstr "Abrir la Ayuda"
 
+msgid "Submission deleted."
+msgstr "Envío eliminado."
+
+msgid "Submission updated."
+msgstr "Envío actualizado."
+
+msgid "The submitted JSON is not a valid object. No changes were saved."
+msgstr "El JSON enviado no es un objeto válido. No se han guardado cambios."
+
 msgid "Filter by activity"
 msgstr "Filtrar por actividad"
 
@@ -277,17 +289,35 @@ msgstr "Creado"
 msgid "Updated"
 msgstr "Actualizado"
 
-msgid "Payload"
-msgstr "Datos"
+msgid "Actions"
+msgstr "Acciones"
 
-msgid "View JSON"
-msgstr "Ver JSON"
+msgid "View / edit"
+msgstr "Ver / editar"
 
-msgid "Submission payload"
-msgstr "Datos del envío"
+msgid "Delete this submission? This cannot be undone."
+msgstr "¿Eliminar este envío? Esta acción no se puede deshacer."
+
+msgid "Delete"
+msgstr "Eliminar"
+
+msgid "Edit submission payload"
+msgstr "Editar los datos del envío"
 
 msgid "Close"
 msgstr "Cerrar"
+
+msgid "Submission JSON payload"
+msgstr "Datos JSON del envío"
+
+msgid "Edit the JSON payload (must be a valid JSON object), then save."
+msgstr "Edita el JSON (debe ser un objeto JSON válido) y guarda."
+
+msgid "Save changes"
+msgstr "Guardar cambios"
+
+msgid "Cancel"
+msgstr "Cancelar"
 
 msgctxt "Post type general name"
 msgid "Franer"
