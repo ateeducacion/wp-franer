@@ -137,7 +137,15 @@ jobs:
         run: npm ci
 
       - name: Start wp-env
-        run: npx wp-env start
+        run: |
+          # Retry to absorb transient Docker Hub registry timeouts/rate limits.
+          for attempt in 1 2 3; do
+            npx wp-env start && exit 0
+            echo "wp-env start failed (attempt ${attempt}); retrying in 20s..."
+            npx wp-env stop || true
+            sleep 20
+          done
+          npx wp-env start
 
       - name: Run plugin check
         run: make check-plugin
@@ -176,7 +184,15 @@ jobs:
         run: npx playwright install-deps chromium
 
       - name: Start wp-env
-        run: npx wp-env start
+        run: |
+          # Retry to absorb transient Docker Hub registry timeouts/rate limits.
+          for attempt in 1 2 3; do
+            npx wp-env start && exit 0
+            echo "wp-env start failed (attempt ${attempt}); retrying in 20s..."
+            npx wp-env stop || true
+            sleep 20
+          done
+          npx wp-env start
 
       - name: Run E2E tests
         run: make test-e2e
