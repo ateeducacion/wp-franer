@@ -52,15 +52,6 @@ if ( ! function_exists( 'franer_render_settings_metabox' ) ) {
 					</td>
 				</tr>
 				<tr>
-					<th scope="row"><?php esc_html_e( 'Visibility', 'franer' ); ?></th>
-					<td>
-						<label>
-							<input type="checkbox" name="franer_is_visible" value="1" <?php checked( $settings['is_visible'] ); ?> />
-							<?php esc_html_e( 'Visible to allowed users', 'franer' ); ?>
-						</label>
-					</td>
-				</tr>
-				<tr>
 					<th scope="row"><?php esc_html_e( 'Availability window', 'franer' ); ?></th>
 					<td>
 						<label for="franer_start_date"><?php esc_html_e( 'Start', 'franer' ); ?></label>
@@ -123,18 +114,6 @@ if ( ! function_exists( 'franer_render_settings_metabox' ) ) {
 							value="<?php echo esc_attr( (string) $settings['max_payload_size'] ); ?>" />
 						<p class="description">
 							<?php esc_html_e( 'Maximum accepted submission size, between 1 and 5120 KB.', 'franer' ); ?>
-						</p>
-					</td>
-				</tr>
-				<tr>
-					<th scope="row">
-						<label for="franer_schema_version"><?php esc_html_e( 'Schema version', 'franer' ); ?></label>
-					</th>
-					<td>
-						<input type="text" id="franer_schema_version" name="franer_schema_version" class="small-text"
-							value="<?php echo esc_attr( $settings['schema_version'] ); ?>" />
-						<p class="description">
-							<?php esc_html_e( 'Expected payload schema version (currently 1.0).', 'franer' ); ?>
 						</p>
 					</td>
 				</tr>

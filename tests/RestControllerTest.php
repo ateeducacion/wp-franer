@@ -78,7 +78,6 @@ class RestControllerTest extends WP_UnitTestCase {
 				'allow_multiple'      => false,
 				'allow_overwrite'     => false,
 				'max_payload_size'    => 256,
-				'schema_version'      => '1.0',
 			),
 			$args
 		);
@@ -86,20 +85,19 @@ class RestControllerTest extends WP_UnitTestCase {
 		$post_id = self::factory()->post->create(
 			array(
 				'post_type'   => 'franer_site',
-				'post_status' => 'publish',
+				// Visibility is the post status: published = visible, draft = hidden.
+				'post_status' => $args['is_visible'] ? 'publish' : 'draft',
 				'post_title'  => 'Test Activity',
 			)
 		);
 
 		update_post_meta( $post_id, '_franer_slug', $args['slug'] );
 		update_post_meta( $post_id, '_franer_html', '<p>activity</p>' );
-		update_post_meta( $post_id, '_franer_is_visible', $args['is_visible'] ? '1' : '' );
 		update_post_meta( $post_id, '_franer_accepts_submissions', $args['accepts_submissions'] ? '1' : '' );
 		update_post_meta( $post_id, '_franer_allowed_roles', $args['allowed_roles'] );
 		update_post_meta( $post_id, '_franer_allow_multiple_submissions', $args['allow_multiple'] ? '1' : '' );
 		update_post_meta( $post_id, '_franer_allow_overwrite', $args['allow_overwrite'] ? '1' : '' );
 		update_post_meta( $post_id, '_franer_max_payload_size', $args['max_payload_size'] );
-		update_post_meta( $post_id, '_franer_schema_version', $args['schema_version'] );
 
 		return $post_id;
 	}
@@ -212,11 +210,12 @@ class RestControllerTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * A hidden site should be forbidden (403).
+	 * A hidden site (unpublished draft) should not be found (404), so its
+	 * existence is never leaked.
 	 *
 	 * @return void
 	 */
-	public function test_hidden_site_returns_403() {
+	public function test_hidden_site_returns_404() {
 		$this->create_site( array( 'is_visible' => false ) );
 		wp_set_current_user( $this->subscriber_id );
 
@@ -229,7 +228,7 @@ class RestControllerTest extends WP_UnitTestCase {
 		);
 		$response = $this->server->dispatch( $request );
 
-		$this->assertSame( 403, $response->get_status() );
+		$this->assertSame( 404, $response->get_status() );
 	}
 
 	/**

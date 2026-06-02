@@ -89,8 +89,8 @@ class Franer_Demo_Data {
 		}
 
 		update_post_meta( $post_id, '_franer_slug', self::DEMO_SLUG );
-		update_post_meta( $post_id, '_franer_is_visible', '1' );
 		update_post_meta( $post_id, '_franer_accepts_submissions', '1' );
+		update_post_meta( $post_id, '_franer_enabled', '1' );
 		update_post_meta(
 			$post_id,
 			'_franer_allowed_roles',
@@ -99,7 +99,6 @@ class Franer_Demo_Data {
 		update_post_meta( $post_id, '_franer_allow_multiple_submissions', '' );
 		update_post_meta( $post_id, '_franer_allow_overwrite', '1' );
 		update_post_meta( $post_id, '_franer_max_payload_size', 256 );
-		update_post_meta( $post_id, '_franer_schema_version', '1.0' );
 		update_post_meta( $post_id, '_franer_html', self::get_demo_html() );
 
 		update_option( self::SEEDED_OPTION, '1' );

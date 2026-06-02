@@ -297,8 +297,7 @@ class Franer_Admin {
 			update_post_meta( $post_id, '_franer_html', $html );
 		}
 
-		// Booleans.
-		update_post_meta( $post_id, '_franer_is_visible', Franer_Sanitizer::sanitize_bool( isset( $_POST['franer_is_visible'] ) ) ? '1' : '' );
+		// Booleans. Visibility is the post status (publish = visible), not a meta field.
 		update_post_meta( $post_id, '_franer_accepts_submissions', Franer_Sanitizer::sanitize_bool( isset( $_POST['franer_accepts_submissions'] ) ) ? '1' : '' );
 		update_post_meta( $post_id, '_franer_allow_multiple_submissions', Franer_Sanitizer::sanitize_bool( isset( $_POST['franer_allow_multiple_submissions'] ) ) ? '1' : '' );
 		update_post_meta( $post_id, '_franer_allow_overwrite', Franer_Sanitizer::sanitize_bool( isset( $_POST['franer_allow_overwrite'] ) ) ? '1' : '' );
@@ -311,10 +310,6 @@ class Franer_Admin {
 		// Max payload size (KB).
 		$raw_size = isset( $_POST['franer_max_payload_size'] ) ? absint( wp_unslash( $_POST['franer_max_payload_size'] ) ) : 256;
 		update_post_meta( $post_id, '_franer_max_payload_size', Franer_Sanitizer::sanitize_payload_size( $raw_size ) );
-
-		// Schema version.
-		$raw_schema = isset( $_POST['franer_schema_version'] ) ? sanitize_text_field( wp_unslash( $_POST['franer_schema_version'] ) ) : '1.0';
-		update_post_meta( $post_id, '_franer_schema_version', '' !== $raw_schema ? $raw_schema : '1.0' );
 
 		// Enabled master switch (stored as '1'/'0' so an unset legacy value can default to enabled).
 		update_post_meta( $post_id, '_franer_enabled', isset( $_POST['franer_enabled'] ) ? '1' : '0' );

@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-06-02T22:21:45+00:00\n"
-"PO-Revision-Date: 2026-06-02T22:57:55+00:00\n"
+"PO-Revision-Date: 2026-06-02T23:16:15+00:00\n"
 "Language: es_ES\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Domain: franer\n"
@@ -150,12 +150,6 @@ msgstr "Habilitado"
 msgid "When disabled, the activity is unavailable to everyone."
 msgstr "Cuando está deshabilitado, la actividad no está disponible para nadie."
 
-msgid "Visibility"
-msgstr "Visibilidad"
-
-msgid "Visible to allowed users"
-msgstr "Visible para los usuarios permitidos"
-
 msgid "Availability window"
 msgstr "Periodo de disponibilidad"
 
@@ -188,12 +182,6 @@ msgstr "Tamaño máximo de datos (KB)"
 
 msgid "Maximum accepted submission size, between 1 and 5120 KB."
 msgstr "Tamaño máximo de envío aceptado, entre 1 y 5120 KB."
-
-msgid "Schema version"
-msgstr "Versión del esquema"
-
-msgid "Expected payload schema version (currently 1.0)."
-msgstr "Versión del esquema de datos esperada (actualmente 1.0)."
 
 msgid "Security note:"
 msgstr "Nota de seguridad:"

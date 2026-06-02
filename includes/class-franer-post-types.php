@@ -31,6 +31,36 @@ class Franer_Post_Types {
 	public function register() {
 		$this->register_post_type();
 		$this->register_meta();
+
+		// Keep the activity HTML (and settings) in the post revisions so previous
+		// versions of a Franer can be viewed and restored (WordPress 6.4+).
+		add_filter( 'wp_post_revision_meta_keys', array( $this, 'add_revisioned_meta_keys' ), 10, 2 );
+	}
+
+	/**
+	 * Register Franer meta keys to be stored with post revisions.
+	 *
+	 * @param array  $keys      Meta keys already flagged for revisioning.
+	 * @param string $post_type The post type being revisioned.
+	 * @return array The filtered list of revisioned meta keys.
+	 */
+	public function add_revisioned_meta_keys( $keys, $post_type ) {
+		if ( 'franer_site' !== $post_type ) {
+			return $keys;
+		}
+
+		$keys[] = '_franer_html';
+		$keys[] = '_franer_slug';
+		$keys[] = '_franer_accepts_submissions';
+		$keys[] = '_franer_allowed_roles';
+		$keys[] = '_franer_allow_multiple_submissions';
+		$keys[] = '_franer_allow_overwrite';
+		$keys[] = '_franer_max_payload_size';
+		$keys[] = '_franer_enabled';
+		$keys[] = '_franer_start_date';
+		$keys[] = '_franer_end_date';
+
+		return $keys;
 	}
 
 	/**
@@ -65,7 +95,7 @@ class Franer_Post_Types {
 			'show_in_rest'        => false,
 			'capability_type'     => 'post',
 			'hierarchical'        => false,
-			'supports'            => array( 'title' ),
+			'supports'            => array( 'title', 'revisions' ),
 			'menu_icon'           => 'dashicons-welcome-widgets-menus',
 			'has_archive'         => false,
 			'rewrite'             => false,
@@ -91,13 +121,11 @@ class Franer_Post_Types {
 		$meta_keys = array(
 			'_franer_slug'                       => 'string',
 			'_franer_html'                       => 'string',
-			'_franer_is_visible'                 => 'boolean',
 			'_franer_accepts_submissions'        => 'boolean',
 			'_franer_allowed_roles'              => 'string',
 			'_franer_allow_multiple_submissions' => 'boolean',
 			'_franer_allow_overwrite'            => 'boolean',
 			'_franer_max_payload_size'           => 'integer',
-			'_franer_schema_version'             => 'string',
 			'_franer_enabled'                    => 'boolean',
 			'_franer_start_date'                 => 'string',
 			'_franer_end_date'                   => 'string',

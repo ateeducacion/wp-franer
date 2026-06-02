@@ -64,13 +64,11 @@ class Franer_Site_Repository {
 
 		$slug                = (string) get_post_meta( $site_id, '_franer_slug', true );
 		$html                = (string) get_post_meta( $site_id, '_franer_html', true );
-		$is_visible          = get_post_meta( $site_id, '_franer_is_visible', true );
 		$accepts_submissions = get_post_meta( $site_id, '_franer_accepts_submissions', true );
 		$allowed_roles       = get_post_meta( $site_id, '_franer_allowed_roles', true );
 		$allow_multiple      = get_post_meta( $site_id, '_franer_allow_multiple_submissions', true );
 		$allow_overwrite     = get_post_meta( $site_id, '_franer_allow_overwrite', true );
 		$max_payload_size    = get_post_meta( $site_id, '_franer_max_payload_size', true );
-		$schema_version      = get_post_meta( $site_id, '_franer_schema_version', true );
 		$enabled             = get_post_meta( $site_id, '_franer_enabled', true );
 		$start_date          = (string) get_post_meta( $site_id, '_franer_start_date', true );
 		$end_date            = (string) get_post_meta( $site_id, '_franer_end_date', true );
@@ -80,13 +78,15 @@ class Franer_Site_Repository {
 			'slug'                => $slug,
 			'title'               => $post ? $post->post_title : '',
 			'html'                => $html,
-			'is_visible'          => Franer_Sanitizer::sanitize_bool( $is_visible ),
+			// Visibility is the post status itself: a published Franer is visible.
+			'is_visible'          => ( $post && 'publish' === $post->post_status ),
 			'accepts_submissions' => Franer_Sanitizer::sanitize_bool( $accepts_submissions ),
 			'allowed_roles'       => is_array( $allowed_roles ) ? array_values( $allowed_roles ) : array(),
 			'allow_multiple'      => Franer_Sanitizer::sanitize_bool( $allow_multiple ),
 			'allow_overwrite'     => Franer_Sanitizer::sanitize_bool( $allow_overwrite ),
 			'max_payload_size'    => '' === $max_payload_size ? 256 : (int) $max_payload_size,
-			'schema_version'      => '' === $schema_version ? '1.0' : (string) $schema_version,
+			// Schema version is a fixed protocol constant, not a per-site setting.
+			'schema_version'      => '1.0',
 			// Unset enabled meta (legacy/demo sites) defaults to enabled.
 			'enabled'             => ( '0' !== (string) $enabled ),
 			'start_date'          => $start_date,

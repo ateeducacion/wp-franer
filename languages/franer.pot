@@ -150,12 +150,6 @@ msgstr ""
 msgid "When disabled, the activity is unavailable to everyone."
 msgstr ""
 
-msgid "Visibility"
-msgstr ""
-
-msgid "Visible to allowed users"
-msgstr ""
-
 msgid "Availability window"
 msgstr ""
 
@@ -187,12 +181,6 @@ msgid "Max payload size (KB)"
 msgstr ""
 
 msgid "Maximum accepted submission size, between 1 and 5120 KB."
-msgstr ""
-
-msgid "Schema version"
-msgstr ""
-
-msgid "Expected payload schema version (currently 1.0)."
 msgstr ""
 
 msgid "Security note:"
