@@ -1,0 +1,64 @@
+stages:
+  # Enable these two again when your runner has Internet access.
+  # - build
+  # - upload
+  - release
+
+# ------------------------------------------
+# build (optional, commented for now)
+# ------------------------------------------
+# build:
+#   stage: build
+#   only:
+#     - tags
+#   before_script:
+#     - apt-get update && apt-get install -y make zip composer
+#     - composer --version
+#   script:
+#     # Strip the leading "v" and pass it to the Makefile.
+#     - VERSION="${CI_COMMIT_TAG#v}" make package
+#     - ls -lh "franer-${CI_COMMIT_TAG#v}.zip"
+#   artifacts:
+#     paths:
+#       - "franer-${CI_COMMIT_TAG#v}.zip"
+#     expire_in: 1 week
+
+# ------------------------------------------
+# upload (optional, commented for now)
+# ------------------------------------------
+# upload:
+#   stage: upload
+#   image: curlimages/curl:latest
+#   only:
+#     - tags
+#   needs: [build]
+#   script:
+#     - PACKAGE_VERSION="${CI_COMMIT_TAG#v}"
+#     - PACKAGE_BINARY="franer-${PACKAGE_VERSION}"
+#     - PACKAGE_REGISTRY_URL="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/franer/${PACKAGE_VERSION}"
+#     - |
+#       curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
+#            --upload-file "${PACKAGE_BINARY}.zip" \
+#            "${PACKAGE_REGISTRY_URL}/${PACKAGE_BINARY}.zip"
+
+# ------------------------------------------
+# release
+# ------------------------------------------
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  only:
+    - tags
+  script:
+    # Compute version and binary name in shell (it supports "#v").
+    - PACKAGE_VERSION="${CI_COMMIT_TAG#v}"
+    - PACKAGE_BINARY="franer-${PACKAGE_VERSION}"
+    - echo "Creating release for ${PACKAGE_BINARY}.zip"
+    # Create the release and attach the correct asset link.
+    - |
+      release-cli create \
+        --name "Release ${PACKAGE_VERSION}" \
+        --tag-name "${CI_COMMIT_TAG}" \
+        --description "Release for ${PACKAGE_VERSION}" \
+        --assets-link "{\"name\":\"${PACKAGE_BINARY}.zip\",\"url\":\"https://github.com/ateeducacion/wp-franer/releases/download/${CI_COMMIT_TAG}/${PACKAGE_BINARY}.zip\"}"
+

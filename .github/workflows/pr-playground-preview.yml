@@ -1,0 +1,87 @@
+---
+name: PR Playground Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: playground-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  pull-requests: write
+
+jobs:
+  playground-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build Playground URL and post comment
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const fs = require('fs');
+
+            // Read blueprint from the repo.
+            const blueprint = JSON.parse(fs.readFileSync('blueprint.json', 'utf8'));
+
+            // Point the plugin install at this PR branch archive.
+            const headRepo = context.payload.pull_request.head.repo.full_name;
+            const branch = context.payload.pull_request.head.ref;
+            const prNumber = context.payload.pull_request.number;
+            const pluginUrl = `https://github.com/${headRepo}/archive/refs/heads/${branch}.zip`;
+
+            for (const step of blueprint.steps) {
+              // Only swap the URL-based plugin install (the Franer plugin itself),
+              // never the wordpress.org/plugins helper installs.
+              if (step.step === 'installPlugin' && step.pluginData && step.pluginData.resource === 'url') {
+                step.pluginData.url = pluginUrl;
+              }
+            }
+
+            blueprint.siteOptions = blueprint.siteOptions || {};
+            blueprint.siteOptions.blogname = `Franer PR #${prNumber} Preview`;
+
+            // Base64-encode the blueprint into a Playground URL.
+            const encoded = Buffer.from(JSON.stringify(blueprint)).toString('base64');
+            const playgroundUrl = `https://playground.wordpress.net/#${encoded}`;
+
+            const marker = '<!-- wp-playground-preview -->';
+            const buttonSrc = `https://raw.githubusercontent.com/${headRepo}/refs/heads/${branch}/.github/playground-preview-button.svg`;
+            const body = [
+              marker,
+              '## Test in WordPress Playground',
+              '',
+              'Test the plugin **with the code from this branch**:',
+              '',
+              `<a href="${playgroundUrl}"><img src="${buttonSrc}" alt="Preview in WordPress Playground" width="224"></a>`,
+              '',
+              '> The demo seeds an example activity (`mcode40`). Open it at **Franer** in wp-admin, or visit `/franer/mcode40/` while logged in.',
+            ].join('\n');
+
+            // Reuse a single sticky comment per PR.
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+            const existing = comments.find(c => c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body,
+              });
+            }

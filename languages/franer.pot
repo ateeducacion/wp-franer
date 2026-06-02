@@ -81,6 +81,9 @@ msgstr ""
 msgid "The requested activity does not exist."
 msgstr ""
 
+msgid "Franer logo"
+msgstr ""
+
 msgid "Franer is a secure environment to publish AI-generated forms. You paste a self-contained HTML activity, Franer renders it inside a sandboxed iframe, and it safely collects users' JSON submissions on the server."
 msgstr ""
 

@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-06-02T22:21:45+00:00\n"
-"PO-Revision-Date: 2026-06-02T22:26:58+00:00\n"
+"PO-Revision-Date: 2026-06-02T22:45:09+00:00\n"
 "Language: es_ES\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Domain: franer\n"
@@ -80,6 +80,9 @@ msgstr "Identificador de sitio no válido."
 
 msgid "The requested activity does not exist."
 msgstr "La actividad solicitada no existe."
+
+msgid "Franer logo"
+msgstr "Logo de Franer"
 
 msgid "Franer is a secure environment to publish AI-generated forms. You paste a self-contained HTML activity, Franer renders it inside a sandboxed iframe, and it safely collects users' JSON submissions on the server."
 msgstr "Franer es un entorno seguro para publicar formularios generados por IA. Pegas una actividad HTML autocontenida, Franer la renderiza dentro de un iframe aislado y recoge de forma segura los envíos JSON de los usuarios en el servidor."

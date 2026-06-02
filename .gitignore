@@ -1,8 +1,7 @@
 # Dependencies
 node_modules/
 /vendor/
-/composer.lock
-/package-lock.json
+# Lock files are committed so `npm ci` and reproducible installs work in CI.
 
 # Logs and dumps
 *.log
