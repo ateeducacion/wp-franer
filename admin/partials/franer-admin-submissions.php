@@ -8,6 +8,10 @@
  * @var int    $selected_site Currently selected site ID (0 = none).
  * @var array  $rows          Normalized submission rows for the selected site.
  * @var string $export_url    Nonced export URL (empty when no site selected).
+ * @var int    $total         Total submissions for the selected site.
+ * @var int    $per_page      Rows shown per page.
+ * @var int    $paged         Current page number (1-based).
+ * @var int    $total_pages   Total number of pages.
  *
  * @package    Franer
  * @subpackage Franer/admin/partials
@@ -60,6 +64,44 @@ if ( ! defined( 'WPINC' ) ) {
 	<?php elseif ( empty( $rows ) ) : ?>
 		<p><?php esc_html_e( 'No submissions found for this activity yet.', 'franer' ); ?></p>
 	<?php else : ?>
+		<div class="tablenav top">
+			<div class="tablenav-pages">
+				<span class="displaying-num">
+					<?php
+					printf(
+						/* translators: %s: number of submissions. */
+						esc_html( _n( '%s submission', '%s submissions', (int) $total, 'franer' ) ),
+						esc_html( number_format_i18n( (int) $total ) )
+					);
+					?>
+				</span>
+				<?php
+				if ( (int) $total_pages > 1 ) {
+					$franer_pager_base = add_query_arg(
+						array(
+							'post_type' => 'franer_site',
+							'page'      => 'franer-submissions',
+							'site_id'   => (int) $selected_site,
+							'paged'     => '%#%',
+						),
+						admin_url( 'edit.php' )
+					);
+					echo wp_kses_post(
+						paginate_links(
+							array(
+								'base'      => $franer_pager_base,
+								'format'    => '',
+								'prev_text' => __( '&laquo;', 'franer' ),
+								'next_text' => __( '&raquo;', 'franer' ),
+								'total'     => (int) $total_pages,
+								'current'   => (int) $paged,
+							)
+						)
+					);
+				}
+				?>
+			</div>
+		</div>
 		<table class="widefat striped franer-submissions-table">
 			<thead>
 				<tr>

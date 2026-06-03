@@ -36,9 +36,14 @@ define( 'FRANER_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 function franer_activate() {
 	require_once FRANER_PLUGIN_DIR . 'includes/class-franer-activator.php';
 
-	// Set the permalink structure if necessary.
-	if ( '/%postname%/' !== get_option( 'permalink_structure' ) ) {
+	// Franer's pretty activity URLs (/franer/{slug}/) need a non-plain permalink
+	// structure. Only enable one when the site is still on the plain default, so we
+	// never overwrite an administrator's intentional choice (any non-plain structure
+	// works with our rewrite rule, so a custom structure is left untouched). Record
+	// that we set it so deactivation can restore the plain default.
+	if ( '' === (string) get_option( 'permalink_structure' ) ) {
 		update_option( 'permalink_structure', '/%postname%/' );
+		update_option( 'franer_set_permalink_structure', '1' );
 	}
 
 	Franer_Activator::activate();
@@ -56,9 +61,10 @@ function franer_activate() {
  */
 function franer_deactivate() {
 	require_once FRANER_PLUGIN_DIR . 'includes/class-franer-deactivator.php';
-	Franer_Deactivator::deactivate();
 
-	flush_rewrite_rules();
+	// Franer_Deactivator::deactivate() restores the permalink default (if Franer set
+	// it) and flushes the rewrite rules.
+	Franer_Deactivator::deactivate();
 }
 
 /**

@@ -170,6 +170,12 @@ class Franer_Rest_Controller {
 			);
 		}
 
+		$rate_limited = $this->check_rate_limit( (int) $settings['id'], $user_id, $settings );
+
+		if ( is_wp_error( $rate_limited ) ) {
+			return $rate_limited;
+		}
+
 		$body = $request->get_json_params();
 
 		if ( ! is_array( $body ) ) {
@@ -205,7 +211,8 @@ class Franer_Rest_Controller {
 
 		$data = isset( $body['data'] ) ? $body['data'] : null;
 
-		if ( ! is_array( $data ) ) {
+		// The payload must be a JSON object with named fields, not a list or scalar.
+		if ( ! Franer_Sanitizer::is_json_object( $data ) ) {
 			return new WP_Error(
 				'franer_invalid_payload',
 				__( 'The submitted payload is invalid or empty.', 'franer' ),
@@ -335,6 +342,71 @@ class Franer_Rest_Controller {
 		}
 
 		return new WP_REST_Response( $response_data, 201 );
+	}
+
+	/**
+	 * Enforce a per-user, per-site submission rate limit.
+	 *
+	 * Stops a logged-in user — or a runaway/abusive activity script firing
+	 * postMessage in a loop, which the parent shell relays as authenticated POSTs
+	 * — from hammering the endpoint and exhausting submission storage. Uses a
+	 * short-lived transient counter as a sliding window. Both the maximum count
+	 * and the window are filterable; returning a limit of 0 (or less) disables
+	 * Franer's built-in throttle (e.g. to defer to an external rate limiter).
+	 *
+	 * @param int   $site_id  The site post ID.
+	 * @param int   $user_id  The current user ID.
+	 * @param array $settings Typed Franer site settings.
+	 * @return true|WP_Error True when allowed, or a 429 WP_Error when throttled.
+	 */
+	private function check_rate_limit( $site_id, $user_id, $settings ) {
+		/**
+		 * Filters the maximum number of submissions a single user may make to a
+		 * single site within the rate-limit window. Return 0 or less to disable.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int   $limit    Maximum submissions per window. Default 10.
+		 * @param int   $site_id  Franer site ID.
+		 * @param int   $user_id  Current user ID.
+		 * @param array $settings Typed Franer site settings.
+		 */
+		$limit = (int) apply_filters( 'franer_submission_rate_limit', 10, $site_id, $user_id, $settings );
+
+		if ( $limit <= 0 ) {
+			return true;
+		}
+
+		/**
+		 * Filters the rate-limit window, in seconds.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int   $window   Window length in seconds. Default MINUTE_IN_SECONDS.
+		 * @param int   $site_id  Franer site ID.
+		 * @param int   $user_id  Current user ID.
+		 * @param array $settings Typed Franer site settings.
+		 */
+		$window = (int) apply_filters( 'franer_submission_rate_window', MINUTE_IN_SECONDS, $site_id, $user_id, $settings );
+
+		if ( $window < 1 ) {
+			$window = MINUTE_IN_SECONDS;
+		}
+
+		$key   = 'franer_rl_' . $site_id . '_' . $user_id;
+		$count = (int) get_transient( $key );
+
+		if ( $count >= $limit ) {
+			return new WP_Error(
+				'franer_rate_limited',
+				__( 'You are submitting too quickly. Please wait a moment and try again.', 'franer' ),
+				array( 'status' => 429 )
+			);
+		}
+
+		set_transient( $key, $count + 1, $window );
+
+		return true;
 	}
 
 	/**

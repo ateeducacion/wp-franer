@@ -151,6 +151,26 @@ class Franer_Sanitizer {
 	}
 
 	/**
+	 * Whether a decoded value is a non-empty JSON object (associative array).
+	 *
+	 * Submissions are defined as JSON objects with named fields. PHP decodes both
+	 * JSON objects and JSON arrays to PHP arrays, so this also rejects JSON arrays
+	 * (lists) and empty objects, which would otherwise slip through an is_array()
+	 * check and be stored as malformed list payloads.
+	 *
+	 * @param mixed $value The decoded value to inspect.
+	 * @return bool True when the value is a non-empty associative array.
+	 */
+	public static function is_json_object( $value ) {
+		if ( ! is_array( $value ) || array() === $value ) {
+			return false;
+		}
+
+		// A list has sequential integer keys 0..n-1; an object does not.
+		return array_keys( $value ) !== range( 0, count( $value ) - 1 );
+	}
+
+	/**
 	 * Validate and decode a JSON payload.
 	 *
 	 * @param string $raw_json  The raw JSON string submitted.
@@ -170,7 +190,8 @@ class Franer_Sanitizer {
 
 		$decoded = json_decode( $raw_json, true );
 
-		if ( ! is_array( $decoded ) || array() === $decoded ) {
+		// Must be a non-empty JSON object: lists and empty payloads are rejected.
+		if ( ! self::is_json_object( $decoded ) ) {
 			return new WP_Error(
 				'franer_invalid_payload',
 				__( 'The submitted payload is invalid or empty.', 'franer' ),

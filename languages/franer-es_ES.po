@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-06-02T22:21:45+00:00\n"
-"PO-Revision-Date: 2026-06-03T00:11:23+00:00\n"
+"PO-Revision-Date: 2026-06-03T00:47:27+00:00\n"
 "Language: es_ES\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Domain: franer\n"
@@ -289,6 +289,19 @@ msgstr "Elige una actividad para ver sus envíos."
 msgid "No submissions found for this activity yet."
 msgstr "Todavía no hay envíos para esta actividad."
 
+#. translators: %s: number of submissions.
+#, php-format
+msgid "%s submission"
+msgid_plural "%s submissions"
+msgstr[0] "%s envío"
+msgstr[1] "%s envíos"
+
+msgid "&laquo;"
+msgstr "&laquo;"
+
+msgid "&raquo;"
+msgstr "&raquo;"
+
 msgid "ID"
 msgstr "ID"
 
@@ -401,6 +414,9 @@ msgstr "Versión de esquema no admitida o ausente."
 msgid "The submitted payload is invalid or empty."
 msgstr "Los datos enviados no son válidos o están vacíos."
 
+msgid "You are submitting too quickly. Please wait a moment and try again."
+msgstr "Estás enviando demasiado rápido. Espera un momento e inténtalo de nuevo."
+
 msgid "No submission found."
 msgstr "No se ha encontrado ningún envío."
 
@@ -413,11 +429,14 @@ msgstr "El slug solo puede contener letras minúsculas, números y guiones."
 msgid "The submitted payload is too large."
 msgstr "Los datos enviados son demasiado grandes."
 
-msgid "Could not update the submission."
-msgstr "No se pudo actualizar el envío."
+msgid "Could not process the submission right now. Please try again."
+msgstr "No se pudo procesar el envío en este momento. Inténtalo de nuevo."
 
 msgid "Duplicate submission not allowed"
 msgstr "No se permite un envío duplicado."
+
+msgid "Could not update the submission."
+msgstr "No se pudo actualizar el envío."
 
 msgid "Could not save the submission."
 msgstr "No se pudo guardar el envío."

@@ -178,6 +178,12 @@ class Franer {
 		$this->loader->add_action( 'admin_post_franer_delete_submission', $plugin_admin, 'handle_delete_submission' );
 		$this->loader->add_action( 'admin_post_franer_update_submission', $plugin_admin, 'handle_update_submission' );
 
+		// Permanently deleting a franer_site must also remove its submissions, so no
+		// orphaned rows (or PII) survive and a recycled post ID can never inherit
+		// another activity's submissions. Registered unconditionally (not gated on
+		// is_admin) so WP-CLI and programmatic deletes are covered too.
+		$this->loader->add_action( 'before_delete_post', $plugin_admin, 'purge_site_submissions', 10, 2 );
+
 		$this->loader->add_filter( 'manage_franer_site_posts_columns', $plugin_admin, 'add_list_columns' );
 		$this->loader->add_action( 'manage_franer_site_posts_custom_column', $plugin_admin, 'render_list_column', 10, 2 );
 		$this->loader->add_filter( 'manage_edit-franer_site_sortable_columns', $plugin_admin, 'add_sortable_columns' );

@@ -195,6 +195,76 @@ class SubmissionsRepositoryTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * When the per-user lock cannot be acquired, a single submission must fail with
+	 * a 503 rather than fall back to the unguarded (racy) read-then-write.
+	 *
+	 * @return void
+	 */
+	public function test_lock_failure_returns_503_and_writes_nothing() {
+		// A repository whose lock acquisition always fails, simulating contention.
+		$repo = new class() extends Franer_Submissions_Repository {
+			/**
+			 * Always fail to acquire the lock.
+			 *
+			 * @param int $site_id The site post ID.
+			 * @param int $user_id The user ID.
+			 * @return bool Always false.
+			 */
+			protected function acquire_user_lock( $site_id, $user_id ) {
+				return false;
+			}
+		};
+
+		$result = $repo->save_submission(
+			$this->site_id,
+			$this->user_id,
+			wp_json_encode( array( 'q1' => 'a' ) ),
+			false,
+			false
+		);
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'franer_lock_failed', $result->get_error_code() );
+		$this->assertSame( 503, $result->get_error_data()['status'] );
+
+		// The failed save must not have written a row.
+		$this->assertSame( 0, $this->repo->count_site_submissions( $this->site_id ) );
+	}
+
+	/**
+	 * Multiple-submission saves bypass the lock entirely, so a lock failure does not
+	 * affect them.
+	 *
+	 * @return void
+	 */
+	public function test_lock_failure_does_not_block_multiple_submissions() {
+		$repo = new class() extends Franer_Submissions_Repository {
+			/**
+			 * Always fail to acquire the lock.
+			 *
+			 * @param int $site_id The site post ID.
+			 * @param int $user_id The user ID.
+			 * @return bool Always false.
+			 */
+			protected function acquire_user_lock( $site_id, $user_id ) {
+				return false;
+			}
+		};
+
+		$result = $repo->save_submission(
+			$this->site_id,
+			$this->user_id,
+			wp_json_encode( array( 'q1' => 'a' ) ),
+			true,
+			false
+		);
+
+		$this->assertIsArray( $result );
+		$this->assertSame( 'saved', $result['status'] );
+		$this->assertSame( 1, $this->repo->count_site_submissions( $this->site_id ) );
+	}
+
+	/**
 	 * Export should return rows with decoded payload and user data.
 	 *
 	 * @return void

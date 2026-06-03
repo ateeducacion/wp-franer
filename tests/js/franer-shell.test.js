@@ -68,10 +68,22 @@ function flushPromises() {
 
 describe( 'Franer parent shell', () => {
 	let fakeIframe;
+	let frameEl;
 
 	beforeEach( () => {
 		attachedMessageHandlers = [];
 		fakeIframe = { postMessage: jest.fn() };
+
+		// The shell only trusts messages whose source is the contentWindow of an
+		// <iframe class="franer-shell__frame"> in the document. Register fakeIframe
+		// as that contentWindow so a dispatched event.source matches by identity.
+		frameEl = window.document.createElement( 'iframe' );
+		frameEl.className = 'franer-shell__frame';
+		Object.defineProperty( frameEl, 'contentWindow', {
+			value: fakeIframe,
+			configurable: true,
+		} );
+		window.document.body.appendChild( frameEl );
 
 		window.FranerShell = {
 			restUrl: 'https://example.test/wp-json/franer/v1/sites/mcode40/submissions',
@@ -86,6 +98,10 @@ describe( 'Franer parent shell', () => {
 			window.removeEventListener( 'message', fn );
 		} );
 		attachedMessageHandlers = [];
+		if ( frameEl && frameEl.parentNode ) {
+			frameEl.parentNode.removeChild( frameEl );
+		}
+		frameEl = null;
 		delete window.fetch;
 		jest.restoreAllMocks();
 	} );
@@ -194,5 +210,45 @@ describe( 'Franer parent shell', () => {
 		expect( message.ok ).toBe( false );
 		expect( message.result.code ).toBe( 'network' );
 		expect( message.result.message ).toBe( 'Network error' );
+	} );
+
+	test( 'ignores a franer_submit from a source that is not our activity iframe', async () => {
+		window.fetch = jest.fn();
+		loadShell();
+
+		// A foreign window/frame spoofing the franer_submit shape. It is NOT the
+		// contentWindow of a .franer-shell__frame iframe, so it must be ignored.
+		const spoofSource = { postMessage: jest.fn() };
+		dispatchMessage(
+			{ type: 'franer_submit', payload: { schema_version: '1.0', data: { evil: 1 } } },
+			spoofSource
+		);
+
+		await flushPromises();
+
+		// No credentialed REST call, and no result leaked back to the attacker.
+		expect( window.fetch ).not.toHaveBeenCalled();
+		expect( spoofSource.postMessage ).not.toHaveBeenCalled();
+		expect( fakeIframe.postMessage ).not.toHaveBeenCalled();
+	} );
+
+	test( 'still accepts a franer_submit from the real activity iframe', async () => {
+		window.fetch = jest.fn().mockResolvedValue( {
+			ok: true,
+			status: 201,
+			json: () => Promise.resolve( { submission_id: 7, status: 'saved' } ),
+		} );
+
+		loadShell();
+
+		dispatchMessage(
+			{ type: 'franer_submit', payload: { schema_version: '1.0', data: { a: 1 } } },
+			fakeIframe
+		);
+
+		await flushPromises();
+
+		expect( window.fetch ).toHaveBeenCalledTimes( 1 );
+		expect( fakeIframe.postMessage ).toHaveBeenCalledTimes( 1 );
 	} );
 } );
