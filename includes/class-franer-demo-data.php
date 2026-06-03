@@ -321,35 +321,85 @@ class Franer_Demo_Data {
 	}
 
 	/**
-	 * Build a small set of generic MCODE40 sample payloads.
+	 * Build a realistic set of MCODE40 sample payloads.
+	 *
+	 * Mirrors the real activity's FranerCollect() schema (quantitative fields,
+	 * SÍ/NO impact items with justifications, the nine formación Likert levels and
+	 * the calculated coverage values) so the statistics overview has meaningful
+	 * data to aggregate.
+	 *
+	 * Each mentor row: name, CEP, [asignados, visitados, no_visitados,
+	 * mentorizados], [imp1..imp4 (SÍ/NO)], [9 formación levels 1-4].
 	 *
 	 * @return array List of payload arrays.
 	 */
 	private static function sample_mcode_payloads() {
-		$rows = array(
-			array( 'Ana Martínez', '38001234', 'Memoria completada sin incidencias.' ),
-			array( 'Carlos López', '35009876', 'Pendiente de revisión por la dirección.' ),
-			array( 'María García', '38005678', 'Entrega dentro de plazo.' ),
-			array( 'Lucía Hernández', '38004321', 'Faltan datos del segundo trimestre.' ),
-			array( 'Javier Santana', '35001122', 'Todo correcto, revisado dos veces.' ),
-			array( 'Elena Pérez', '38009988', 'Incluye anexo con fotografías.' ),
-			array( 'Pedro Cabrera', '35007766', '' ),
+		$mentors = array(
+			array( 'Ana Martínez', 'CEP La Laguna', array( 12, 10, 2, 9 ), array( 'SÍ', 'SÍ', 'NO', 'SÍ' ), array( 4, 3, 3, 4, 3, 4, 3, 4, 2 ) ),
+			array( 'Carlos López', 'CEP Las Palmas', array( 15, 11, 4, 8 ), array( 'SÍ', 'NO', 'SÍ', 'SÍ' ), array( 3, 3, 2, 3, 4, 3, 4, 3, 3 ) ),
+			array( 'María García', 'CEP Telde', array( 10, 9, 1, 9 ), array( 'SÍ', 'SÍ', 'SÍ', 'SÍ' ), array( 4, 4, 3, 4, 4, 4, 4, 4, 3 ) ),
+			array( 'Lucía Hernández', 'CEP Norte de Tenerife', array( 8, 5, 3, 4 ), array( 'NO', 'SÍ', 'NO', 'NO' ), array( 2, 2, 3, 2, 3, 2, 3, 3, 1 ) ),
+			array( 'Javier Santana', 'CEP Gran Canaria Sur', array( 14, 13, 1, 12 ), array( 'SÍ', 'SÍ', 'SÍ', 'SÍ' ), array( 4, 3, 4, 3, 4, 3, 4, 4, 4 ) ),
+			array( 'Elena Pérez', 'CEP Lanzarote', array( 9, 7, 2, 6 ), array( 'SÍ', 'NO', 'SÍ', 'SÍ' ), array( 3, 2, 3, 3, 3, 4, 3, 3, 2 ) ),
+			array( 'Pedro Cabrera', 'CEP Fuerteventura', array( 11, 8, 3, 7 ), array( 'SÍ', 'SÍ', 'NO', 'SÍ' ), array( 3, 3, 3, 4, 3, 3, 4, 3, 3 ) ),
+		);
+
+		$justifications = array(
+			'Se observa una integración progresiva en las programaciones de aula.',
+			'Mejora en varias áreas del MRCDD, especialmente en creación de contenidos.',
+			'Avances claros en programación y robótica en los centros mentorizados.',
+			'El alumnado muestra mayor motivación con el pensamiento computacional.',
 		);
 
 		$payloads = array();
-		foreach ( $rows as $row ) {
+		foreach ( $mentors as $mentor ) {
+			list( $nombre, $cep, $nums, $impacto_vals, $formacion_levels ) = $mentor;
+			list( $asignados, $visitados, $no_visitados, $mentorizados ) = $nums;
+
+			$impacto = array();
+			foreach ( array( 'imp1', 'imp2', 'imp3', 'imp4' ) as $idx => $key ) {
+				$impacto[ $key ] = array(
+					'value'         => $impacto_vals[ $idx ],
+					'justification' => ( 'SÍ' === $impacto_vals[ $idx ] )
+						? $justifications[ $idx ]
+						: 'No se ha constatado un impacto suficiente este curso.',
+				);
+			}
+
+			$formacion = array();
+			foreach ( $formacion_levels as $idx => $level ) {
+				$formacion[ $idx ] = $level;
+			}
+
 			$payloads[] = array(
 				'schema_version' => '1.0',
 				'activity_id'    => self::DEMO_SLUG,
-				'activity_title' => 'Memoria-Informe MCODE40',
+				'activity_title' => 'Memoria-Informe individual MCODE40',
 				'data'           => array(
-					'answers' => array(
-						'idNombre' => $row[0],
-						'idCep'    => $row[1],
-						'idNotes'  => $row[2],
+					'answers'           => array(
+						'idNombre'         => $nombre,
+						'idCep'            => $cep,
+						'numAsignados'     => (string) $asignados,
+						'numVisitados'     => (string) $visitados,
+						'numNoVisitados'   => (string) $no_visitados,
+						'numMentorizados'  => (string) $mentorizados,
+						'cualLogros'       => 'Buena acogida del programa y alta implicación del profesorado.',
+						'cualDificultades' => 'Disponibilidad horaria en algunos centros rezagados.',
+						'cualMejoras'      => 'Reforzar la coordinación en la recta final del curso.',
+						'cualBuenas'       => 'Sesión de docencia compartida con excelente resultado.',
+						'impacto'          => $impacto,
+						'formacion'        => $formacion,
+						'otroOrg'          => 'Coordinación general adecuada.',
+						'otroEquip'        => 'Equipamiento suficiente, con margen de mejora en robótica.',
+						'otroColab'        => 'Participación en una jornada de buenas prácticas.',
+						'otroCom'          => '',
 					),
-					'report'  => array(
-						'text' => $row[2],
+					'calculated_values' => array(
+						'porc_mentorizados_sobre_visitados' => $visitados > 0 ? (int) round( ( $mentorizados / $visitados ) * 100 ) : 0,
+						'porc_cobertura_mentorizacion'      => $asignados > 0 ? (int) round( ( $mentorizados / $asignados ) * 100 ) : 0,
+					),
+					'report'            => array(
+						'text' => '',
 						'html' => '',
 					),
 				),
