@@ -75,11 +75,25 @@ class Franer_Demo_Data {
 			}
 		}
 
+		// Attribute the demo to an administrator (seeding may run without a
+		// current user, which would otherwise leave post_author as 0).
+		$admins        = get_users(
+			array(
+				'role'   => 'administrator',
+				'number' => 1,
+				'fields' => 'ID',
+				'orderby' => 'ID',
+				'order'  => 'ASC',
+			)
+		);
+		$demo_author   = ! empty( $admins ) ? (int) $admins[0] : 0;
+
 		$post_id = wp_insert_post(
 			array(
 				'post_title'  => 'Memoria-Informe MCODE40',
 				'post_type'   => 'franer_site',
 				'post_status' => 'publish',
+				'post_author' => $demo_author,
 			),
 			true
 		);

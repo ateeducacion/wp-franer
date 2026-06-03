@@ -96,7 +96,7 @@ class Franer_Post_Types {
 			'show_in_rest'        => false,
 			'capability_type'     => 'post',
 			'hierarchical'        => false,
-			'supports'            => array( 'title', 'revisions' ),
+			'supports'            => array( 'title', 'author', 'revisions' ),
 			'menu_icon'           => 'dashicons-welcome-widgets-menus',
 			'has_archive'         => false,
 			'rewrite'             => false,

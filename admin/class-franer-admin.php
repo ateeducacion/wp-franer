@@ -598,7 +598,8 @@ class Franer_Admin {
 	public function render_list_column( $column, $post_id ) {
 		if ( 'franer_author' === $column ) {
 			$author_id = (int) get_post_field( 'post_author', $post_id );
-			echo esc_html( get_the_author_meta( 'display_name', $author_id ) );
+			$name      = $author_id > 0 ? get_the_author_meta( 'display_name', $author_id ) : '';
+			echo esc_html( '' !== $name ? $name : '—' );
 			return;
 		}
 

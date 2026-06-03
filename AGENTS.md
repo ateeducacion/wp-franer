@@ -8,8 +8,10 @@ environment to publish AI-generated forms (Framework for Running AI-geNerated Em
 ## Project conventions
 
 - Follow the **WordPress Coding Standards** (WPCS), enforced by PHPCS via `.phpcs.xml.dist`.
-  - PHP: **4 spaces** indentation (never tabs), Yoda conditions, proper escaping and sanitization,
-    use WordPress APIs.
+  - PHP: **tabs** for indentation (WPCS default — `make fix`/PHPCBF enforce it), Yoda conditions,
+    proper escaping and sanitization, use WordPress APIs.
+  - Global functions declared in `franer.php` must be **prefix-first** (`franer_activate`, not
+    `activate_franer`) to satisfy `WordPress.NamingConventions.PrefixAllGlobals`.
   - Use **English** for all source code: identifiers, comments and docblocks.
   - Use **Spanish** for user-facing translations (`languages/franer-es_ES.po`) and for the
     untranslated-strings assertions.
@@ -17,6 +19,90 @@ environment to publish AI-generated forms (Framework for Running AI-geNerated Em
 - One class per file, named `class-franer-*.php`. The bootstrap file `franer.php` stays small;
   logic lives under `includes/`, admin code under `admin/`, public code under `public/`.
 - First executable line of every PHP file (except tests): `if ( ! defined( 'WPINC' ) ) { die; }`.
+
+## Architecture (how the plugin is built)
+
+Franer uses the classic **loader architecture** (à la WordPress plugin boilerplate):
+
+- **`franer.php`** — bootstrap only. Defines the `FRANER_*` constants, registers
+  activation/deactivation (`franer_activate`/`franer_deactivate`), the upgrade and lazy
+  rewrite-flush guards, then `require`s `includes/class-franer.php` and calls `franer_run()`.
+- **`includes/class-franer.php`** (`Franer`) — the core orchestrator. `load_dependencies()`
+  `require`s every class and instantiates `Franer_Loader`. **All hooks are registered here**, never
+  scattered across classes, in four private methods: `define_i18n_hooks()`, `define_admin_hooks()`,
+  `define_public_hooks()`, `define_rest_hooks()`. `run()` calls `$this->loader->run()`.
+- **`includes/class-franer-loader.php`** (`Franer_Loader`) — collects `add_action`/`add_filter`
+  registrations and applies them in `run()`. To wire a hook, add a `$this->loader->add_action(...)`
+  / `add_filter(...)` line in the relevant `define_*_hooks()` method (component may be an object or a
+  class name string for static callbacks).
+
+### Class responsibilities
+
+- `includes/class-franer-activator.php` / `-deactivator.php` — create the submissions table via
+  `dbDelta()` on activation (option `franer_db_version`); flush rewrites on deactivation.
+- `includes/class-franer-post-types.php` — registers the `franer_site` CPT and its `register_post_meta`
+  keys, and the `wp_post_revision_meta_keys` filter that revisions the settings meta.
+- `includes/class-franer-sanitizer.php` — pure static validation/sanitization helpers
+  (`sanitize_slug`, `sanitize_roles`, `sanitize_bool`, `sanitize_payload_size`, `sanitize_datetime`,
+  `validate_payload`).
+- `includes/class-franer-permissions.php` — static checks: `can_manage()`, `user_can_view()`,
+  `user_has_allowed_role()`, `schedule_state()`.
+- `includes/class-franer-site-repository.php` — reads/writes `franer_site` posts. `get_settings()`
+  returns the **typed** settings array used everywhere. `set_raw_html()` writes the activity HTML to
+  `post_content` (KSES bypassed, see below).
+- `includes/class-franer-submissions-repository.php` — all submissions SQL (`$wpdb->prepare()`), incl.
+  `save_submission`, `get_latest_user_submission`, `get_site_submissions`, `count_site_submissions`,
+  `delete_submission`, `update_submission`, `export_site_submissions`.
+- `includes/class-franer-rest-controller.php` — registers the `franer/v1` routes and validates them.
+- `includes/class-franer-demo-data.php` — idempotent demo seed (slug `mcode40`), gated by the
+  `franer_demo_seeded` option.
+- `admin/class-franer-admin.php` — menus, metaboxes (save via nonce `franer_site_nonce` /
+  action `save_franer_site`), assets, the Submissions screen, list columns + row action, and the
+  edit/delete admin-post handlers.
+- `admin/class-franer-help.php` — the Help page and the copy-paste AI prompt.
+- `admin/class-franer-export-controller.php` — the `admin-post.php` JSON export.
+- `public/class-franer-public.php` — rewrite rule `/franer/{slug}/`, the `[franer]` shortcode, and the
+  theme-independent sandboxed render. `public/js/franer-shell.js` is the parent shell.
+
+### Data model
+
+- **Activity HTML → `post_content`** (raw). It is natively revisioned and shown in the WordPress
+  revision diff. `Franer_Site_Repository::set_raw_html()` bypasses KSES because the markup is
+  arbitrary admin-provided HTML rendered only inside the sandboxed iframe; the CPT is non-public,
+  non-REST and excluded from search, so `post_content` is never exposed directly. The admin save path
+  removes/re-adds its own `save_post` hook around the write to avoid recursion.
+- **Visibility = post status** — a *published* `franer_site` is visible; *draft* is hidden (and 404s
+  everywhere). There is no separate visibility meta.
+- **Settings → post meta** — `_franer_slug`, `_franer_accepts_submissions`, `_franer_allowed_roles`,
+  `_franer_allow_multiple_submissions`, `_franer_allow_overwrite`, `_franer_max_payload_size`,
+  `_franer_enabled` (default true when unset), `_franer_start_date`, `_franer_end_date`. The schema
+  version is a fixed constant (`'1.0'`), not a per-site field.
+- **Availability** — `_franer_enabled` is a master switch; `_franer_start_date`/`_franer_end_date`
+  (local `Y-m-d H:i:s`, compared as strings vs `current_time('mysql')`) gate submissions
+  (`Franer_Permissions::schedule_state()` → `disabled|not_yet|ended|open`).
+- **Submissions → custom table** `{$wpdb->prefix}franer_submissions` (hashed ip/ua, sha256
+  `payload_hash`, no raw PII).
+
+### How to make common changes (follow these patterns)
+
+- **Add a site setting:** register the meta key in `Franer_Post_Types::register_meta()` (and in
+  `add_revisioned_meta_keys()` if it should be revisioned) → read+type it in
+  `Franer_Site_Repository::get_settings()` → render an input in
+  `admin/partials/franer-admin-metaboxes.php` → sanitize+save it in `Franer_Admin::save_meta()`
+  (via a `Franer_Sanitizer` helper) → enforce it where relevant (permissions/REST/public).
+- **Add a developer hook:** place `do_action`/`apply_filters` at the lifecycle point with a full
+  docblock (`@since`, `@param`, return type, security note). **Filters must be defensively validated**
+  (check the return type, restore required keys) and must never bypass auth/nonce/role/visibility/
+  schema/size/duplicate/sandbox checks. Document it in the README "Developer hooks" table and add a
+  test in `tests/HooksTest.php`.
+- **Add a REST route:** register it in `Franer_Rest_Controller::register_routes()` with a permission
+  callback; return `WP_REST_Response`/`WP_Error` with correct status codes; cover it in
+  `tests/RestControllerTest.php`.
+- **Add an admin list column / row action:** extend `Franer_Admin::add_list_columns()` /
+  `render_list_column()` / `add_row_actions()` and wire the corresponding
+  `manage_franer_site_posts_*` / `post_row_actions` hook in `Franer::define_admin_hooks()`.
+- **Add a Makefile/CI step or asset:** keep `make lint`, `make check-untranslated`, `make check-plugin`
+  and the test suites green; the CI `lint_and_test` job runs them in order.
 
 ## Testing and development workflow
 
