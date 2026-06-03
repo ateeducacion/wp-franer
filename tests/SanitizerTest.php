@@ -409,6 +409,26 @@ class SanitizerTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * escape_for_srcdoc double-encodes existing entities so they survive the
+	 * browser's single attribute-decode pass (esc_attr would under-encode them and
+	 * corrupt inline scripts such as an escapeHtml map).
+	 *
+	 * @return void
+	 */
+	public function test_escape_for_srcdoc_double_encodes_entities() {
+		$js   = 'var m = { "&": "&amp;", "<": "&lt;", "\\"": "&quot;" };';
+		$attr = Franer_Sanitizer::escape_for_srcdoc( $js );
+
+		// Existing entities are double-encoded...
+		$this->assertStringContainsString( '&amp;amp;', $attr );
+		$this->assertStringContainsString( '&amp;quot;', $attr );
+		$this->assertStringContainsString( '&amp;lt;', $attr );
+		// ...and a single attribute-decode pass restores the original verbatim.
+		$decoded = html_entity_decode( $attr, ENT_QUOTES, 'UTF-8' );
+		$this->assertSame( $js, $decoded );
+	}
+
+	/**
 	 * prepare_for_srcdoc both strips comments and injects the CSP.
 	 *
 	 * @return void

@@ -47,7 +47,8 @@ $franer_iframe_title = sprintf( __( 'Activity: %s', 'franer' ), $franer_title );
 	<div class="franer-shell__frame-wrap">
 		<iframe
 			class="franer-shell__frame"
-			srcdoc="<?php echo esc_attr( $franer_html ); ?>"
+			<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escape_for_srcdoc() double-encodes the whole document with ENT_QUOTES for the srcdoc attribute; esc_attr() would under-encode existing entities. ?>
+			srcdoc="<?php echo Franer_Sanitizer::escape_for_srcdoc( $franer_html ); ?>"
 			sandbox="allow-scripts allow-forms"
 			referrerpolicy="no-referrer"
 			loading="lazy"

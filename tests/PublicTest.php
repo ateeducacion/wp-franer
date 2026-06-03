@@ -124,4 +124,35 @@ class PublicTest extends WP_UnitTestCase {
 		$this->assertStringContainsString( 'connect-src', $output );
 		$this->assertStringContainsString( 'form-action', $output );
 	}
+
+	/**
+	 * Regression: an activity whose inline script contains literal HTML entities
+	 * (e.g. an escapeHtml map) must reach the iframe intact. The srcdoc attribute
+	 * must double-encode entities so the browser's single decode pass restores the
+	 * original script; otherwise "&amp;"/"&quot;" decode too early and break the JS.
+	 *
+	 * @return void
+	 */
+	public function test_public_render_double_encodes_entities_in_srcdoc() {
+		$html = '<!doctype html><html><head><title>t</title></head><body><div>q</div>'
+			. '<script>var map = { "&": "&amp;", "<": "&lt;", "\\"": "&quot;" };</script>'
+			. '</body></html>';
+
+		$this->create_viewable_site( $html );
+
+		$subscriber = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		wp_set_current_user( $subscriber );
+
+		$output = do_shortcode( '[franer slug="comments-demo"]' );
+
+		// Isolate the srcdoc attribute value and decode it once, exactly like a
+		// browser does before parsing the iframe document.
+		$this->assertSame( 1, preg_match( '/srcdoc="([^"]*)"/s', $output, $m ) );
+		$decoded = html_entity_decode( $m[1], ENT_QUOTES, 'UTF-8' );
+
+		// The inline script's entity strings survive verbatim (not decoded early).
+		$this->assertStringContainsString( '"&": "&amp;"', $decoded );
+		$this->assertStringContainsString( '"&quot;"', $decoded );
+		$this->assertStringNotContainsString( '"\\"": """', $decoded );
+	}
 }

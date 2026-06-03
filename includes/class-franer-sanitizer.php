@@ -176,6 +176,28 @@ class Franer_Sanitizer {
 	}
 
 	/**
+	 * Encode a full HTML document for use as an iframe "srcdoc" attribute value.
+	 *
+	 * The srcdoc attribute holds an entire HTML document verbatim, and the browser
+	 * decodes the attribute's character references exactly once before parsing it.
+	 * esc_attr() must NOT be used here: WordPress's esc_attr() does not re-encode
+	 * existing entities ($double_encode = false), so a document that legitimately
+	 * contains entity text — e.g. an inline `escapeHtml` map like
+	 * `{ "&": "&amp;", "\"": "&quot;" }` — would have those entities decoded by the
+	 * browser ("&amp;" -> "&", "&quot;" -> "\""), corrupting the inline script and
+	 * killing the whole activity (tabs included). Double-encoding ensures one round
+	 * of attribute decoding reproduces the stored document byte-for-byte.
+	 *
+	 * @param mixed $html The prepared HTML document (see prepare_for_srcdoc()).
+	 * @return string The document encoded for safe placement in a srcdoc attribute.
+	 */
+	public static function escape_for_srcdoc( $html ) {
+		// $double_encode = true so existing entities survive the browser's single
+		// attribute-decode pass intact.
+		return _wp_specialchars( (string) $html, ENT_QUOTES, false, true );
+	}
+
+	/**
 	 * Inject the guardrail Content-Security-Policy into an HTML document.
 	 *
 	 * The CSP is added as a <meta http-equiv="Content-Security-Policy"> element so

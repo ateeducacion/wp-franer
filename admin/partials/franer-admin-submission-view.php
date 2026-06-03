@@ -85,7 +85,8 @@ if ( ! defined( 'WPINC' ) ) {
 		<iframe
 			id="franer-view-frame"
 			class="franer-view-frame"
-			srcdoc="<?php echo esc_attr( $view_html ); ?>"
+			<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escape_for_srcdoc() double-encodes the whole document with ENT_QUOTES for the srcdoc attribute; esc_attr() would under-encode existing entities. ?>
+			srcdoc="<?php echo Franer_Sanitizer::escape_for_srcdoc( $view_html ); ?>"
 			sandbox="allow-scripts allow-modals"
 			referrerpolicy="no-referrer"
 			title="<?php esc_attr_e( 'Rendered submissions overview', 'franer' ); ?>"></iframe>
