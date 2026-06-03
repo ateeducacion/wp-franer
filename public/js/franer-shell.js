@@ -49,6 +49,11 @@
 	/**
 	 * Send a result back to the iframe that originated the request.
 	 *
+	 * The target is always one of our own validated activity iframes (see
+	 * onMessage), so it is safe to reply. The sandbox has no allow-same-origin,
+	 * giving the frame an opaque ("null") origin that cannot be named as a
+	 * targetOrigin, so "*" is used to reach our own already-trusted frame.
+	 *
 	 * @param {Window}  target Source contentWindow of the submitting iframe.
 	 * @param {boolean} ok     Whether the submission succeeded.
 	 * @param {Object}  result Result payload (submission_id/status or code/message).
@@ -65,6 +70,32 @@
 			},
 			'*'
 		);
+	}
+
+	/**
+	 * Whether a message source is one of this page's Franer activity iframes.
+	 *
+	 * The activity iframe is sandboxed without allow-same-origin, so its origin is
+	 * opaque ("null") and event.origin cannot be used to authenticate it. Instead
+	 * we pin on window identity: the source must be the contentWindow of an
+	 * <iframe class="franer-shell__frame"> currently in the document. This stops
+	 * any other window/frame from spoofing a franer_submit message and having the
+	 * parent perform a credentialed, nonced REST write on the victim's behalf.
+	 *
+	 * @param {Window} source The event.source to verify.
+	 * @return {boolean} True when source is a known Franer activity iframe.
+	 */
+	function isFranerFrame( source ) {
+		if ( ! source || ! document.querySelectorAll ) {
+			return false;
+		}
+		var frames = document.querySelectorAll( 'iframe.franer-shell__frame' );
+		for ( var i = 0; i < frames.length; i++ ) {
+			if ( frames[ i ].contentWindow === source ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -159,6 +190,12 @@
 	 */
 	function onMessage( event ) {
 		if ( ! isSubmitMessage( event.data ) ) {
+			return;
+		}
+		// Only accept submissions from our own sandboxed activity iframe. Any other
+		// window or frame spoofing a franer_submit message is ignored, so it cannot
+		// trigger a credentialed REST write on the current user's behalf.
+		if ( ! isFranerFrame( event.source ) ) {
 			return;
 		}
 		handleSubmit( event.source, event.data.payload );

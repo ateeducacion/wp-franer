@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Franer 0.0.0\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-franer\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/franer\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -289,6 +289,19 @@ msgstr ""
 msgid "No submissions found for this activity yet."
 msgstr ""
 
+#. translators: %s: number of submissions.
+#, php-format
+msgid "%s submission"
+msgid_plural "%s submissions"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "&laquo;"
+msgstr ""
+
+msgid "&raquo;"
+msgstr ""
+
 msgid "ID"
 msgstr ""
 
@@ -401,6 +414,9 @@ msgstr ""
 msgid "The submitted payload is invalid or empty."
 msgstr ""
 
+msgid "You are submitting too quickly. Please wait a moment and try again."
+msgstr ""
+
 msgid "No submission found."
 msgstr ""
 
@@ -413,10 +429,10 @@ msgstr ""
 msgid "The submitted payload is too large."
 msgstr ""
 
-msgid "Could not update the submission."
+msgid "Duplicate submission not allowed"
 msgstr ""
 
-msgid "Duplicate submission not allowed"
+msgid "Could not update the submission."
 msgstr ""
 
 msgid "Could not save the submission."

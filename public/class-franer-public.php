@@ -226,6 +226,7 @@ class Franer_Public {
 		do_action( 'franer_before_render', $site, $settings, 'pretty_url' );
 
 		nocache_headers();
+		$this->send_frame_protection_headers();
 		?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>
@@ -376,6 +377,53 @@ class Franer_Public {
 		$shell_data = wp_parse_args( $shell_data, $default_shell_data );
 
 		wp_localize_script( 'franer-shell', 'FranerShell', $shell_data );
+	}
+
+	/**
+	 * The anti-framing headers sent with the standalone activity page.
+	 *
+	 * The activity page carries the live REST nonce and runs the parent shell that
+	 * brokers authenticated submissions, so it must not be framed by third-party
+	 * origins (clickjacking / cross-origin framing of the submit shell). These
+	 * headers restrict framing to the same origin. Exposed (and filterable) so the
+	 * value can be inspected in tests and tightened by integrators.
+	 *
+	 * @return array Map of header name => value.
+	 */
+	public function frame_protection_headers() {
+		$headers = array(
+			'X-Frame-Options'         => 'SAMEORIGIN',
+			'Content-Security-Policy' => "frame-ancestors 'self'",
+		);
+
+		/**
+		 * Filters the anti-framing headers for the standalone Franer activity page.
+		 *
+		 * Security-sensitive: callbacks should only tighten framing (e.g. switch to
+		 * 'DENY'), never remove the protection that guards the authenticated shell.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param array $headers Map of header name => value.
+		 */
+		$headers = apply_filters( 'franer_frame_protection_headers', $headers );
+
+		return is_array( $headers ) ? $headers : array();
+	}
+
+	/**
+	 * Send the anti-framing headers for the standalone activity page.
+	 *
+	 * @return void
+	 */
+	protected function send_frame_protection_headers() {
+		if ( headers_sent() ) {
+			return;
+		}
+
+		foreach ( $this->frame_protection_headers() as $name => $value ) {
+			header( $name . ': ' . $value );
+		}
 	}
 
 	/**

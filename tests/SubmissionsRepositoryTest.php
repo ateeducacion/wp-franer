@@ -195,6 +195,75 @@ class SubmissionsRepositoryTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * When advisory locks are unavailable (e.g. SQLite/WordPress Playground, where
+	 * GET_LOCK does not exist), a single submission must still save best-effort
+	 * rather than failing the request.
+	 *
+	 * @return void
+	 */
+	public function test_lock_unavailable_falls_back_to_best_effort_save() {
+		// A repository whose lock acquisition always reports "not locked", as it
+		// would on a database without GET_LOCK.
+		$repo = new class() extends Franer_Submissions_Repository {
+			/**
+			 * Simulate advisory locks being unavailable.
+			 *
+			 * @param int $site_id The site post ID.
+			 * @param int $user_id The user ID.
+			 * @return bool Always false.
+			 */
+			protected function acquire_user_lock( $site_id, $user_id ) {
+				return false;
+			}
+		};
+
+		$result = $repo->save_submission(
+			$this->site_id,
+			$this->user_id,
+			wp_json_encode( array( 'q1' => 'a' ) ),
+			false,
+			false
+		);
+
+		$this->assertIsArray( $result );
+		$this->assertSame( 'saved', $result['status'] );
+		$this->assertSame( 1, $this->repo->count_site_submissions( $this->site_id ) );
+	}
+
+	/**
+	 * Multiple-submission saves bypass the lock entirely, so a lock failure does not
+	 * affect them.
+	 *
+	 * @return void
+	 */
+	public function test_lock_failure_does_not_block_multiple_submissions() {
+		$repo = new class() extends Franer_Submissions_Repository {
+			/**
+			 * Always fail to acquire the lock.
+			 *
+			 * @param int $site_id The site post ID.
+			 * @param int $user_id The user ID.
+			 * @return bool Always false.
+			 */
+			protected function acquire_user_lock( $site_id, $user_id ) {
+				return false;
+			}
+		};
+
+		$result = $repo->save_submission(
+			$this->site_id,
+			$this->user_id,
+			wp_json_encode( array( 'q1' => 'a' ) ),
+			true,
+			false
+		);
+
+		$this->assertIsArray( $result );
+		$this->assertSame( 'saved', $result['status'] );
+		$this->assertSame( 1, $this->repo->count_site_submissions( $this->site_id ) );
+	}
+
+	/**
 	 * Export should return rows with decoded payload and user data.
 	 *
 	 * @return void

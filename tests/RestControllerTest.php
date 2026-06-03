@@ -437,4 +437,90 @@ class RestControllerTest extends WP_UnitTestCase {
 
 		$this->assertSame( 404, $response->get_status() );
 	}
+
+	/**
+	 * A JSON array (list) as the data payload should return 400, not be stored.
+	 *
+	 * @return void
+	 */
+	public function test_list_payload_returns_400() {
+		$this->create_site();
+		wp_set_current_user( $this->subscriber_id );
+
+		$request  = $this->post_request(
+			'mcode40',
+			array(
+				'schema_version' => '1.0',
+				'data'           => array( 'x', 'y', 'z' ),
+			)
+		);
+		$response = $this->server->dispatch( $request );
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'franer_invalid_payload', $response->get_data()['code'] );
+	}
+
+	/**
+	 * Exceeding the per-user/per-site rate limit should return 429.
+	 *
+	 * @return void
+	 */
+	public function test_rate_limit_returns_429() {
+		$this->create_site( array( 'allow_multiple' => true ) );
+		wp_set_current_user( $this->subscriber_id );
+
+		// Tighten the limit to make the test deterministic.
+		add_filter( 'franer_submission_rate_limit', static fn() => 3 );
+
+		for ( $i = 0; $i < 3; $i++ ) {
+			$response = $this->server->dispatch(
+				$this->post_request(
+					'mcode40',
+					array(
+						'schema_version' => '1.0',
+						'data'           => array( 'n' => $i ),
+					)
+				)
+			);
+			$this->assertSame( 201, $response->get_status(), "Submission {$i} should be accepted." );
+		}
+
+		$blocked = $this->server->dispatch(
+			$this->post_request(
+				'mcode40',
+				array(
+					'schema_version' => '1.0',
+					'data'           => array( 'n' => 99 ),
+				)
+			)
+		);
+
+		$this->assertSame( 429, $blocked->get_status() );
+		$this->assertSame( 'franer_rate_limited', $blocked->get_data()['code'] );
+	}
+
+	/**
+	 * A rate limit of 0 (or less) disables Franer's built-in throttle.
+	 *
+	 * @return void
+	 */
+	public function test_rate_limit_disabled_when_zero() {
+		$this->create_site( array( 'allow_multiple' => true ) );
+		wp_set_current_user( $this->subscriber_id );
+
+		add_filter( 'franer_submission_rate_limit', '__return_zero' );
+
+		for ( $i = 0; $i < 12; $i++ ) {
+			$response = $this->server->dispatch(
+				$this->post_request(
+					'mcode40',
+					array(
+						'schema_version' => '1.0',
+						'data'           => array( 'n' => $i ),
+					)
+				)
+			);
+			$this->assertSame( 201, $response->get_status() );
+		}
+	}
 }

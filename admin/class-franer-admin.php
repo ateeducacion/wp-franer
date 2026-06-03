@@ -438,6 +438,7 @@ class Franer_Admin {
 		}
 
 		$selected_site = isset( $_GET['site_id'] ) ? absint( wp_unslash( $_GET['site_id'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only filter.
+		$paged         = isset( $_GET['paged'] ) ? max( 1, absint( wp_unslash( $_GET['paged'] ) ) ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only pager.
 
 		// Build the list of available sites for the filter dropdown.
 		$site_posts = get_posts(
@@ -452,10 +453,20 @@ class Franer_Admin {
 			)
 		);
 
-		$rows       = array();
-		$export_url = '';
+		$rows        = array();
+		$export_url  = '';
+		$per_page    = 50;
+		$total       = 0;
+		$total_pages = 0;
 		if ( $selected_site > 0 ) {
-			$raw_rows = $this->submissions->get_site_submissions( $selected_site, 200, 0 );
+			$total       = $this->submissions->count_site_submissions( $selected_site );
+			$total_pages = (int) ceil( $total / $per_page );
+			// Clamp the requested page to the available range.
+			if ( $total_pages > 0 && $paged > $total_pages ) {
+				$paged = $total_pages;
+			}
+			$offset   = ( $paged - 1 ) * $per_page;
+			$raw_rows = $this->submissions->get_site_submissions( $selected_site, $per_page, $offset );
 			foreach ( $raw_rows as $row ) {
 				$user      = get_userdata( (int) $row['user_id'] );
 				$site_post = get_post( (int) $row['site_id'] );
@@ -550,7 +561,7 @@ class Franer_Admin {
 		$raw     = isset( $_POST['payload'] ) ? wp_unslash( $_POST['payload'] ) : '';
 		$decoded = json_decode( is_string( $raw ) ? $raw : '', true );
 
-		if ( $submission_id <= 0 || ! is_array( $decoded ) ) {
+		if ( $submission_id <= 0 || ! Franer_Sanitizer::is_json_object( $decoded ) ) {
 			$this->redirect_to_submissions( $site_id, 'invalid' );
 		}
 
@@ -560,6 +571,30 @@ class Franer_Admin {
 		$repository->update_submission( $submission_id, (string) $payload_json );
 
 		$this->redirect_to_submissions( $site_id, 'updated' );
+	}
+
+	/**
+	 * Delete a franer_site's submissions when the site is permanently deleted.
+	 *
+	 * Hooked on before_delete_post (which fires for permanent deletes, not for
+	 * trashing, so submissions survive a reversible trash). Without this, deleting
+	 * a site would orphan its submission rows forever and a recycled post ID could
+	 * surface another activity's submissions.
+	 *
+	 * @param int          $post_id The post being deleted.
+	 * @param WP_Post|null $post    The post object being deleted (WordPress 5.5+).
+	 * @return void
+	 */
+	public function purge_site_submissions( $post_id, $post = null ) {
+		if ( ! $post instanceof WP_Post ) {
+			$post = get_post( $post_id );
+		}
+
+		if ( ! $post instanceof WP_Post || 'franer_site' !== $post->post_type ) {
+			return;
+		}
+
+		$this->submissions->delete_site_submissions( (int) $post_id );
 	}
 
 	/**

@@ -72,10 +72,24 @@ test.describe( 'Franer submission flow', () => {
 		expect( sandbox ).toContain( 'allow-scripts' );
 		expect( sandbox ).not.toContain( 'allow-same-origin' );
 
-		// Drive a submit by posting the contract message to the parent window.
-		// The parent shell (franer-shell.js) intercepts it, performs the nonced
-		// REST call, and posts a franer_submit_result back to event.source.
-		const resultOk = await page.evaluate( async ( slug ) => {
+		// Drive a real submit from INSIDE the sandboxed activity iframe, exactly as
+		// window.FranerSubmit() does in a real activity: the iframe posts a
+		// franer_submit message to its parent. The parent shell validates that the
+		// message really comes from this iframe (security check), performs the nonced
+		// REST call, and posts the franer_submit_result back into THIS iframe — so the
+		// listener must live inside the iframe too. (Posting from the parent window
+		// instead is now correctly rejected, which is the whole point of the fix.)
+		const frameHandle = await iframe.elementHandle();
+		const contentFrame = frameHandle ? await frameHandle.contentFrame() : null;
+
+		if ( ! contentFrame ) {
+			test.skip(
+				true,
+				'Could not access the activity iframe content frame.'
+			);
+		}
+
+		const resultOk = await contentFrame.evaluate( async ( slug ) => {
 			return new Promise( ( resolve ) => {
 				function onMessage( event ) {
 					if (
@@ -89,7 +103,8 @@ test.describe( 'Franer submission flow', () => {
 
 				window.addEventListener( 'message', onMessage );
 
-				window.postMessage(
+				// Post to the parent (the shell), as the real activity does.
+				parent.postMessage(
 					{
 						type: 'franer_submit',
 						payload: {

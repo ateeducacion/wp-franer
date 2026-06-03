@@ -125,6 +125,37 @@ class SanitizerTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * is_json_object should accept only non-empty associative arrays.
+	 *
+	 * @return void
+	 */
+	public function test_is_json_object() {
+		$this->assertTrue( Franer_Sanitizer::is_json_object( array( 'a' => 1 ) ) );
+		$this->assertTrue( Franer_Sanitizer::is_json_object( array( 'a' => 1, 'b' => 2 ) ) );
+
+		// Lists, empty arrays, scalars and null are not JSON objects.
+		$this->assertFalse( Franer_Sanitizer::is_json_object( array( 'a', 'b' ) ) );
+		$this->assertFalse( Franer_Sanitizer::is_json_object( array( 0 => 'a', 1 => 'b' ) ) );
+		$this->assertFalse( Franer_Sanitizer::is_json_object( array() ) );
+		$this->assertFalse( Franer_Sanitizer::is_json_object( 'string' ) );
+		$this->assertFalse( Franer_Sanitizer::is_json_object( null ) );
+	}
+
+	/**
+	 * validate_payload should reject a JSON array (list) payload.
+	 *
+	 * @return void
+	 */
+	public function test_validate_payload_rejects_list() {
+		$result = Franer_Sanitizer::validate_payload( wp_json_encode( array( 'a', 'b' ) ), 1024 );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'franer_invalid_payload', $result->get_error_code() );
+		$data = $result->get_error_data();
+		$this->assertSame( 400, $data['status'] );
+	}
+
+	/**
 	 * validate_payload should reject oversize payloads with a 413 error.
 	 *
 	 * @return void

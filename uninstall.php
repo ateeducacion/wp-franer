@@ -41,3 +41,4 @@ delete_option( 'franer_version' );
 delete_option( 'franer_flush_rewrites' );
 delete_option( 'franer_db_version' );
 delete_option( 'franer_demo_seeded' );
+delete_option( 'franer_set_permalink_structure' );

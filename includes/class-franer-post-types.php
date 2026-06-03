@@ -35,6 +35,60 @@ class Franer_Post_Types {
 		// Keep the activity HTML (and settings) in the post revisions so previous
 		// versions of a Franer can be viewed and restored (WordPress 6.4+).
 		add_filter( 'wp_post_revision_meta_keys', array( $this, 'add_revisioned_meta_keys' ), 10, 2 );
+
+		// Lock down every create/edit/publish/delete operation on franer_site posts
+		// to administrators, consistent with the rest of the plugin.
+		add_filter( 'map_meta_cap', array( $this, 'map_franer_site_caps' ), 10, 4 );
+	}
+
+	/**
+	 * Require manage_options for every franer_site capability.
+	 *
+	 * The franer_site post type uses its own capability_type, so all of its
+	 * primitive and meta capabilities are unique. This filter maps every one of
+	 * them to manage_options, so only administrators can list, create, edit,
+	 * publish, view (private) or delete activities — matching the meta save,
+	 * submissions and export screens, which all require manage_options. Other
+	 * post types (including core posts) are returned unchanged.
+	 *
+	 * @param array  $caps    The mapped primitive capabilities.
+	 * @param string $cap     The capability being checked.
+	 * @param int    $user_id The user ID.
+	 * @param array  $args    Additional arguments ($args[0] is the post ID for meta caps).
+	 * @return array The (possibly remapped) primitive capabilities.
+	 */
+	public function map_franer_site_caps( $caps, $cap, $user_id, $args ) {
+		// Meta caps carry the post ID; only intervene for franer_site posts.
+		if ( in_array( $cap, array( 'edit_post', 'delete_post', 'read_post', 'publish_post' ), true ) ) {
+			$post = isset( $args[0] ) ? get_post( $args[0] ) : null;
+
+			if ( $post instanceof WP_Post && 'franer_site' === $post->post_type ) {
+				return array( 'manage_options' );
+			}
+
+			return $caps;
+		}
+
+		// Primitive capabilities generated from the franer_site capability_type.
+		$franer_primitives = array(
+			'edit_franer_sites',
+			'edit_others_franer_sites',
+			'edit_private_franer_sites',
+			'edit_published_franer_sites',
+			'publish_franer_sites',
+			'read_private_franer_sites',
+			'delete_franer_sites',
+			'delete_private_franer_sites',
+			'delete_published_franer_sites',
+			'delete_others_franer_sites',
+			'create_franer_sites',
+		);
+
+		if ( in_array( $cap, $franer_primitives, true ) ) {
+			return array( 'manage_options' );
+		}
+
+		return $caps;
 	}
 
 	/**
@@ -94,7 +148,12 @@ class Franer_Post_Types {
 			'show_ui'             => true,
 			'show_in_menu'        => true,
 			'show_in_rest'        => false,
-			'capability_type'     => 'post',
+			// A dedicated capability_type (not 'post') gives franer_site its own
+			// capabilities, which map_franer_site_caps() restricts to administrators.
+			// Without this, any role with edit_others_posts/delete_others_posts
+			// (e.g. Editor) could unpublish or delete activities.
+			'capability_type'     => array( 'franer_site', 'franer_sites' ),
+			'map_meta_cap'        => true,
 			'hierarchical'        => false,
 			'supports'            => array( 'title', 'author', 'revisions' ),
 			// A flexing "superhero" dashicon matches the Franer strongman mascot and

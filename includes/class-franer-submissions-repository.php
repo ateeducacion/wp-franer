@@ -77,62 +77,116 @@ class Franer_Submissions_Repository {
 	 * @return array|WP_Error Result array, or WP_Error on duplicate/failure.
 	 */
 	public function save_submission( $site_id, $user_id, $payload_json, $allow_multiple, $allow_overwrite ) {
-		global $wpdb;
-
 		$site_id      = (int) $site_id;
 		$user_id      = (int) $user_id;
 		$payload_json = (string) $payload_json;
-		$table        = self::get_table_name();
-		$now          = current_time( 'mysql' );
-		$payload_hash = $this->payload_hash( $payload_json );
+
+		// Multiple-submission sites always insert a fresh row, so concurrent saves
+		// never race against each other and no lock is needed.
+		if ( $allow_multiple ) {
+			return $this->insert_submission( $site_id, $user_id, $payload_json );
+		}
+
+		// Single-submission sites decide between insert / overwrite / reject based on
+		// an existing row. That read-then-write is a TOCTOU race: two concurrent
+		// requests could both observe "no row" and both insert (bypassing duplicate
+		// handling) or clobber each other on overwrite. Serialize per (site, user)
+		// with a MySQL advisory lock so the check and the write are atomic across
+		// concurrent requests, without a schema change that would break multiple
+		// submissions.
+		//
+		// GET_LOCK is MySQL-only. On databases without advisory locks (e.g. SQLite,
+		// used by WordPress Playground) acquisition just returns false; we then fall
+		// back to a best-effort save rather than failing the request — that is the
+		// pre-existing behavior and no worse than not holding a lock. Under real
+		// MySQL contention the second request blocks until the first releases
+		// (milliseconds), so the lock does its job in practice.
+		$locked = $this->acquire_user_lock( $site_id, $user_id );
+
+		try {
+			return $this->save_single_submission( $site_id, $user_id, $payload_json, $allow_overwrite );
+		} finally {
+			if ( $locked ) {
+				$this->release_user_lock( $site_id, $user_id );
+			}
+		}
+	}
+
+	/**
+	 * Insert/overwrite a single submission for a one-per-user site.
+	 *
+	 * Must be called while holding the per-user lock (see save_submission()).
+	 *
+	 * @param int    $site_id         The site post ID.
+	 * @param int    $user_id         The submitting user ID.
+	 * @param string $payload_json    The JSON payload string.
+	 * @param bool   $allow_overwrite Whether overwriting the latest is allowed.
+	 * @return array|WP_Error Result array, or WP_Error on duplicate/failure.
+	 */
+	private function save_single_submission( $site_id, $user_id, $payload_json, $allow_overwrite ) {
+		global $wpdb;
 
 		$existing = $this->get_latest_user_submission( $site_id, $user_id );
 
-		if ( $existing && ! $allow_multiple ) {
-			if ( $allow_overwrite ) {
-				$updated = $wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-					$table,
-					array(
-						'payload_json' => $payload_json,
-						'payload_hash' => $payload_hash,
-						'updated_at'   => $now,
-					),
-					array( 'id' => (int) $existing['id'] ),
-					array( '%s', '%s', '%s' ),
-					array( '%d' )
-				);
-
-				if ( false === $updated ) {
-					return new WP_Error(
-						'franer_db_error',
-						__( 'Could not update the submission.', 'franer' ),
-						array( 'status' => 500 )
-					);
-				}
-
-				return array(
-					'submission_id' => (int) $existing['id'],
-					'status'        => 'updated',
+		if ( $existing ) {
+			if ( ! $allow_overwrite ) {
+				return new WP_Error(
+					'franer_duplicate',
+					__( 'Duplicate submission not allowed', 'franer' ),
+					array( 'status' => 409 )
 				);
 			}
 
-			return new WP_Error(
-				'franer_duplicate',
-				__( 'Duplicate submission not allowed', 'franer' ),
-				array( 'status' => 409 )
+			$updated = $wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+				self::get_table_name(),
+				array(
+					'payload_json' => $payload_json,
+					'payload_hash' => $this->payload_hash( $payload_json ),
+					'updated_at'   => current_time( 'mysql' ),
+				),
+				array( 'id' => (int) $existing['id'] ),
+				array( '%s', '%s', '%s' ),
+				array( '%d' )
+			);
+
+			if ( false === $updated ) {
+				return new WP_Error(
+					'franer_db_error',
+					__( 'Could not update the submission.', 'franer' ),
+					array( 'status' => 500 )
+				);
+			}
+
+			return array(
+				'submission_id' => (int) $existing['id'],
+				'status'        => 'updated',
 			);
 		}
 
+		return $this->insert_submission( $site_id, $user_id, $payload_json );
+	}
+
+	/**
+	 * Insert a new submission row.
+	 *
+	 * @param int    $site_id      The site post ID.
+	 * @param int    $user_id      The submitting user ID.
+	 * @param string $payload_json The JSON payload string.
+	 * @return array|WP_Error Result array, or WP_Error on failure.
+	 */
+	private function insert_submission( $site_id, $user_id, $payload_json ) {
+		global $wpdb;
+
 		$inserted = $wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			$table,
+			self::get_table_name(),
 			array(
 				'site_id'         => $site_id,
 				'user_id'         => $user_id,
 				'payload_json'    => $payload_json,
-				'payload_hash'    => $payload_hash,
+				'payload_hash'    => $this->payload_hash( $payload_json ),
 				'ip_hash'         => $this->hashed_server_value( 'REMOTE_ADDR' ),
 				'user_agent_hash' => $this->hashed_server_value( 'HTTP_USER_AGENT' ),
-				'created_at'      => $now,
+				'created_at'      => current_time( 'mysql' ),
 				'updated_at'      => null,
 			),
 			array( '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s' )
@@ -150,6 +204,64 @@ class Franer_Submissions_Repository {
 			'submission_id' => (int) $wpdb->insert_id,
 			'status'        => 'saved',
 		);
+	}
+
+	/**
+	 * Build the MySQL advisory-lock name for a (site, user) pair.
+	 *
+	 * Hashed so it stays within MySQL's 64-character lock-name limit and is unique
+	 * per database, site and user.
+	 *
+	 * @param int $site_id The site post ID.
+	 * @param int $user_id The user ID.
+	 * @return string The lock name.
+	 */
+	private function user_lock_name( $site_id, $user_id ) {
+		global $wpdb;
+
+		return 'franer_sub_' . md5( $wpdb->dbname . '|' . (int) $site_id . '|' . (int) $user_id );
+	}
+
+	/**
+	 * Acquire the per-user advisory lock, waiting briefly if another request holds it.
+	 *
+	 * GET_LOCK is MySQL-only and returns 1 on success, 0 on timeout and NULL on
+	 * error. On databases without advisory locks (e.g. SQLite, used by WordPress
+	 * Playground) the query fails harmlessly; the error is suppressed and this
+	 * returns false so save_submission() falls back to a best-effort save. Protected
+	 * so tests can simulate the lock being unavailable.
+	 *
+	 * @param int $site_id The site post ID.
+	 * @param int $user_id The user ID.
+	 * @return bool True when the lock was acquired.
+	 */
+	protected function acquire_user_lock( $site_id, $user_id ) {
+		global $wpdb;
+
+		$suppress = $wpdb->suppress_errors( true );
+		$got      = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', $this->user_lock_name( $site_id, $user_id ), 10 )
+		);
+		$wpdb->suppress_errors( $suppress );
+
+		return '1' === (string) $got;
+	}
+
+	/**
+	 * Release the per-user advisory lock (no-op on databases without GET_LOCK).
+	 *
+	 * @param int $site_id The site post ID.
+	 * @param int $user_id The user ID.
+	 * @return void
+	 */
+	protected function release_user_lock( $site_id, $user_id ) {
+		global $wpdb;
+
+		$suppress = $wpdb->suppress_errors( true );
+		$wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $this->user_lock_name( $site_id, $user_id ) )
+		);
+		$wpdb->suppress_errors( $suppress );
 	}
 
 	/**
