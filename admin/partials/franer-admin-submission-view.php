@@ -8,7 +8,7 @@
  * (franer-submission-view.js); they are never interpolated into the iframe
  * markup. The iframe carries no REST nonce and no privileged URL.
  *
- * Expects the following variables from Franer_Admin::render_submission_view_page():
+ * Expects the following variables from Franer_Admin_Submissions::render_submission_view_page():
  *
  * @var string $back_url     URL back to the submissions list.
  * @var string $error        Error/notice message (empty when a template renders).
@@ -68,7 +68,7 @@ if ( ! defined( 'WPINC' ) ) {
 					printf(
 						/* translators: %s: maximum number of submissions delivered to the view. */
 						esc_html__( 'This activity has more submissions than can be rendered at once. The view received the %s most recent submissions.', 'franer' ),
-						esc_html( number_format_i18n( Franer_Admin::VIEW_MAX_SUBMISSIONS ) )
+						esc_html( number_format_i18n( Franer_Admin_Submissions::VIEW_MAX_SUBMISSIONS ) )
 					);
 					?>
 				</p>

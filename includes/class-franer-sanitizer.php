@@ -190,178 +190,288 @@ class Franer_Sanitizer {
 	 */
 	private static function strip_js_comments( $js ) {
 		$len = strlen( $js );
-		$out = '';
-		$i   = 0;
 
-		// Current scanning mode and the last significant (non-space, non-comment)
-		// character, used to disambiguate a leading "/" (regex vs division).
-		$mode     = 'normal';
-		$last_sig = '';
+		// The scanner state is threaded through the per-mode helpers by reference.
+		// 'out' is the accumulated output, 'i' the read cursor, 'mode' the active
+		// context, 'last_sig' the last significant character (for regex/division
+		// disambiguation), 'brace_depth'/'tpl_stack' the ${ ... } bookkeeping and
+		// 'in_class' whether the regex scanner is inside a [ ... ] character class.
+		$state = array(
+			'out'         => '',
+			'i'           => 0,
+			'mode'        => 'normal',
+			'last_sig'    => '',
+			'brace_depth' => 0,
+			'tpl_stack'   => array(),
+			'in_class'    => false,
+		);
 
-		// Brace depth inside the current "normal" context and a stack used to
-		// return to template-literal mode when a ${ ... } interpolation closes.
-		$brace_depth = 0;
-		$tpl_stack   = array();
+		while ( $state['i'] < $len ) {
+			$c    = $js[ $state['i'] ];
+			$next = ( $state['i'] + 1 < $len ) ? $js[ $state['i'] + 1 ] : '';
 
-		// Whether the regex scanner is currently inside a [ ... ] character class.
-		$in_class = false;
-
-		while ( $i < $len ) {
-			$c    = $js[ $i ];
-			$next = ( $i + 1 < $len ) ? $js[ $i + 1 ] : '';
-
-			switch ( $mode ) {
-				case 'normal':
-					if ( '/' === $c && '/' === $next ) {
-						$mode = 'line';
-						$i   += 2;
-						break;
-					}
-					if ( '/' === $c && '*' === $next ) {
-						$mode = 'block';
-						$i   += 2;
-						break;
-					}
-					if ( '/' === $c && self::js_regex_can_start( $last_sig ) ) {
-						$mode     = 'regex';
-						$in_class = false;
-						$out     .= $c;
-						$i++;
-						break;
-					}
-					if ( "'" === $c ) {
-						$mode     = 'sq';
-						$out     .= $c;
-						$last_sig = $c;
-						$i++;
-						break;
-					}
-					if ( '"' === $c ) {
-						$mode     = 'dq';
-						$out     .= $c;
-						$last_sig = $c;
-						$i++;
-						break;
-					}
-					if ( '`' === $c ) {
-						$mode     = 'tpl';
-						$out     .= $c;
-						$last_sig = $c;
-						$i++;
-						break;
-					}
-					if ( '{' === $c ) {
-						$brace_depth++;
-						$out     .= $c;
-						$last_sig = $c;
-						$i++;
-						break;
-					}
-					if ( '}' === $c ) {
-						if ( 0 === $brace_depth && ! empty( $tpl_stack ) ) {
-							// Close a ${ ... } interpolation and resume the template.
-							$brace_depth = (int) array_pop( $tpl_stack );
-							$mode        = 'tpl';
-						} elseif ( $brace_depth > 0 ) {
-							$brace_depth--;
-						}
-						$out     .= $c;
-						$last_sig = $c;
-						$i++;
-						break;
-					}
-					$out .= $c;
-					if ( '' === trim( $c ) ) {
-						// Whitespace does not change the "last significant" char.
-						$i++;
-						break;
-					}
-					$last_sig = $c;
-					$i++;
-					break;
-
+			switch ( $state['mode'] ) {
 				case 'line':
-					if ( "\n" === $c ) {
-						$mode     = 'normal';
-						$out     .= $c;
-						$last_sig = "\n";
-					}
-					$i++;
+					self::js_scan_line( $state, $c );
 					break;
-
 				case 'block':
-					if ( '*' === $c && '/' === $next ) {
-						$mode = 'normal';
-						$out .= ' ';
-						$i   += 2;
-						break;
-					}
-					$i++;
+					self::js_scan_block( $state, $c, $next );
 					break;
-
 				case 'sq':
 				case 'dq':
-					$out .= $c;
-					if ( '\\' === $c ) {
-						$out .= $next;
-						$i   += 2;
-						break;
-					}
-					if ( ( 'sq' === $mode && "'" === $c ) || ( 'dq' === $mode && '"' === $c ) ) {
-						$mode     = 'normal';
-						$last_sig = $c;
-					}
-					$i++;
+					self::js_scan_string( $state, $c, $next );
 					break;
-
 				case 'tpl':
-					if ( '\\' === $c ) {
-						$out .= $c . $next;
-						$i   += 2;
-						break;
-					}
-					if ( '`' === $c ) {
-						$out     .= $c;
-						$mode     = 'normal';
-						$last_sig = $c;
-						$i++;
-						break;
-					}
-					if ( '$' === $c && '{' === $next ) {
-						// Enter an interpolation: remember the outer brace depth and
-						// scan the expression as normal code until its matching }.
-						$tpl_stack[] = $brace_depth;
-						$brace_depth = 0;
-						$mode        = 'normal';
-						$out        .= '${';
-						$i          += 2;
-						break;
-					}
-					$out .= $c;
-					$i++;
+					self::js_scan_template( $state, $c, $next );
 					break;
-
 				case 'regex':
-					$out .= $c;
-					if ( '\\' === $c ) {
-						$out .= $next;
-						$i   += 2;
-						break;
-					}
-					if ( '[' === $c ) {
-						$in_class = true;
-					} elseif ( ']' === $c ) {
-						$in_class = false;
-					} elseif ( '/' === $c && ! $in_class ) {
-						$mode     = 'normal';
-						$last_sig = $c;
-					}
-					$i++;
+					self::js_scan_regex( $state, $c, $next );
+					break;
+				default:
+					self::js_scan_normal( $state, $c, $next );
 					break;
 			}
 		}
 
-		return $out;
+		return $state['out'];
+	}
+
+	/**
+	 * Scan one character in "normal" (code) mode.
+	 *
+	 * Detects the start of comments, regex literals, strings, template literals
+	 * and brace bookkeeping; any other character is copied verbatim.
+	 *
+	 * @param array  $state The scanner state (by reference).
+	 * @param string $c     The current character.
+	 * @param string $next  The next character ('' at end of input).
+	 * @return void
+	 */
+	private static function js_scan_normal( &$state, $c, $next ) {
+		if ( '/' === $c && self::js_normal_slash( $state, $next ) ) {
+			return;
+		}
+		if ( self::js_normal_opener( $state, $c ) ) {
+			return;
+		}
+		if ( self::js_normal_brace( $state, $c ) ) {
+			return;
+		}
+
+		// Any other character is copied verbatim. Whitespace does not change the
+		// "last significant" character used to disambiguate regex from division.
+		$state['out'] .= $c;
+		if ( '' !== trim( $c ) ) {
+			$state['last_sig'] = $c;
+		}
+		$state['i']++;
+	}
+
+	/**
+	 * Handle a "/" in normal mode (line/block comment or regex literal).
+	 *
+	 * @param array  $state The scanner state (by reference).
+	 * @param string $next  The next character.
+	 * @return bool True when the "/" started a comment or regex; false for division.
+	 */
+	private static function js_normal_slash( &$state, $next ) {
+		if ( '/' === $next ) {
+			$state['mode'] = 'line';
+			$state['i']   += 2;
+			return true;
+		}
+		if ( '*' === $next ) {
+			$state['mode'] = 'block';
+			$state['i']   += 2;
+			return true;
+		}
+		if ( self::js_regex_can_start( $state['last_sig'] ) ) {
+			$state['mode']     = 'regex';
+			$state['in_class'] = false;
+			$state['out']     .= '/';
+			$state['i']++;
+			return true;
+		}
+
+		// A "/" that is none of the above is the division operator; let the caller
+		// copy it as an ordinary character.
+		return false;
+	}
+
+	/**
+	 * Handle a string/template-literal opener (', " or `) in normal mode.
+	 *
+	 * @param array  $state The scanner state (by reference).
+	 * @param string $c     The current character.
+	 * @return bool True when an opener was consumed; false otherwise.
+	 */
+	private static function js_normal_opener( &$state, $c ) {
+		$modes = array(
+			"'" => 'sq',
+			'"' => 'dq',
+			'`' => 'tpl',
+		);
+
+		if ( ! isset( $modes[ $c ] ) ) {
+			return false;
+		}
+
+		$state['mode']     = $modes[ $c ];
+		$state['out']     .= $c;
+		$state['last_sig'] = $c;
+		$state['i']++;
+		return true;
+	}
+
+	/**
+	 * Track "{" / "}" depth in normal mode, resuming a template on the closing }.
+	 *
+	 * @param array  $state The scanner state (by reference).
+	 * @param string $c     The current character.
+	 * @return bool True when a brace was consumed; false otherwise.
+	 */
+	private static function js_normal_brace( &$state, $c ) {
+		if ( '{' === $c ) {
+			$state['brace_depth']++;
+		} elseif ( '}' === $c ) {
+			if ( 0 === $state['brace_depth'] && ! empty( $state['tpl_stack'] ) ) {
+				// Close a ${ ... } interpolation and resume the template literal.
+				$state['brace_depth'] = (int) array_pop( $state['tpl_stack'] );
+				$state['mode']        = 'tpl';
+			} elseif ( $state['brace_depth'] > 0 ) {
+				$state['brace_depth']--;
+			}
+		} else {
+			return false;
+		}
+
+		$state['out']     .= $c;
+		$state['last_sig'] = $c;
+		$state['i']++;
+		return true;
+	}
+
+	/**
+	 * Scan one character inside a // line comment (dropped until newline).
+	 *
+	 * @param array  $state The scanner state (by reference).
+	 * @param string $c     The current character.
+	 * @return void
+	 */
+	private static function js_scan_line( &$state, $c ) {
+		if ( "\n" === $c ) {
+			$state['mode']     = 'normal';
+			$state['out']     .= $c;
+			$state['last_sig'] = "\n";
+		}
+		$state['i']++;
+	}
+
+	/**
+	 * Scan one character inside a block comment (replaced with a single space).
+	 *
+	 * @param array  $state The scanner state (by reference).
+	 * @param string $c     The current character.
+	 * @param string $next  The next character.
+	 * @return void
+	 */
+	private static function js_scan_block( &$state, $c, $next ) {
+		if ( '*' === $c && '/' === $next ) {
+			$state['mode'] = 'normal';
+			$state['out'] .= ' ';
+			$state['i']   += 2;
+			return;
+		}
+		$state['i']++;
+	}
+
+	/**
+	 * Scan one character inside a single- or double-quoted string (preserved).
+	 *
+	 * @param array  $state The scanner state (by reference).
+	 * @param string $c     The current character.
+	 * @param string $next  The next character.
+	 * @return void
+	 */
+	private static function js_scan_string( &$state, $c, $next ) {
+		$state['out'] .= $c;
+
+		if ( '\\' === $c ) {
+			$state['out'] .= $next;
+			$state['i']   += 2;
+			return;
+		}
+
+		$quote = ( 'sq' === $state['mode'] ) ? "'" : '"';
+		if ( $c === $quote ) {
+			$state['mode']     = 'normal';
+			$state['last_sig'] = $c;
+		}
+		$state['i']++;
+	}
+
+	/**
+	 * Scan one character inside a template literal (preserved, ${ } aware).
+	 *
+	 * @param array  $state The scanner state (by reference).
+	 * @param string $c     The current character.
+	 * @param string $next  The next character.
+	 * @return void
+	 */
+	private static function js_scan_template( &$state, $c, $next ) {
+		if ( '\\' === $c ) {
+			$state['out'] .= $c . $next;
+			$state['i']   += 2;
+			return;
+		}
+		if ( '`' === $c ) {
+			$state['out']     .= $c;
+			$state['mode']     = 'normal';
+			$state['last_sig'] = $c;
+			$state['i']++;
+			return;
+		}
+		if ( '$' === $c && '{' === $next ) {
+			// Enter an interpolation: remember the outer brace depth and scan the
+			// expression as normal code until its matching }.
+			$state['tpl_stack'][] = $state['brace_depth'];
+			$state['brace_depth'] = 0;
+			$state['mode']        = 'normal';
+			$state['out']        .= '${';
+			$state['i']          += 2;
+			return;
+		}
+
+		$state['out'] .= $c;
+		$state['i']++;
+	}
+
+	/**
+	 * Scan one character inside a regex literal (preserved, [ ] class aware).
+	 *
+	 * @param array  $state The scanner state (by reference).
+	 * @param string $c     The current character.
+	 * @param string $next  The next character.
+	 * @return void
+	 */
+	private static function js_scan_regex( &$state, $c, $next ) {
+		$state['out'] .= $c;
+
+		if ( '\\' === $c ) {
+			$state['out'] .= $next;
+			$state['i']   += 2;
+			return;
+		}
+
+		if ( '[' === $c ) {
+			$state['in_class'] = true;
+		} elseif ( ']' === $c ) {
+			$state['in_class'] = false;
+		} elseif ( '/' === $c && ! $state['in_class'] ) {
+			$state['mode']     = 'normal';
+			$state['last_sig'] = $c;
+		}
+		$state['i']++;
 	}
 
 	/**

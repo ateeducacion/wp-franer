@@ -2,7 +2,7 @@
 /**
  * Submissions list admin page template.
  *
- * Expects the following variables from Franer_Admin::render_submissions_page():
+ * Expects the following variables from Franer_Admin_Submissions::render_submissions_page():
  *
  * @var array  $site_posts    Array of franer_site WP_Post objects for the filter.
  * @var int    $selected_site Currently selected site ID (0 = none).

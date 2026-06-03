@@ -131,6 +131,7 @@ class Franer {
 		 * The classes responsible for the admin area.
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-franer-admin.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/class-franer-admin-submissions.php';
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-franer-help.php';
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-franer-export-controller.php';
 
@@ -175,8 +176,9 @@ class Franer {
 		$plugin_export = new Franer_Export_Controller();
 		$this->loader->add_action( 'admin_post_franer_export', $plugin_export, 'handle' );
 
-		$this->loader->add_action( 'admin_post_franer_delete_submission', $plugin_admin, 'handle_delete_submission' );
-		$this->loader->add_action( 'admin_post_franer_update_submission', $plugin_admin, 'handle_update_submission' );
+		$plugin_submissions = new Franer_Admin_Submissions( $this->get_version() );
+		$this->loader->add_action( 'admin_post_franer_delete_submission', $plugin_submissions, 'handle_delete_submission' );
+		$this->loader->add_action( 'admin_post_franer_update_submission', $plugin_submissions, 'handle_update_submission' );
 
 		// Permanently deleting a franer_site must also remove its submissions, so no
 		// orphaned rows (or PII) survive and a recycled post ID can never inherit

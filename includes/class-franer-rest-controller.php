@@ -114,6 +114,114 @@ class Franer_Rest_Controller {
 			);
 		}
 
+		// Resolve and authorize the target activity (slug, visibility, schedule,
+		// submissions-open and rate-limit checks). Returns a WP_Error on any gate.
+		$context = $this->resolve_submission_context( $request, $user_id );
+
+		if ( is_wp_error( $context ) ) {
+			return $context;
+		}
+
+		$post     = $context['post'];
+		$settings = $context['settings'];
+
+		$body = $request->get_json_params();
+
+		if ( ! is_array( $body ) ) {
+			$body = array();
+		}
+
+		/**
+		 * Fires before a Franer submission payload is processed.
+		 *
+		 * Runs after authentication, site resolution, visibility/role checks and
+		 * the submission-open checks. Security-sensitive: it must not be used to
+		 * bypass validation or permission logic.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param array           $body     Raw request JSON body as an array.
+		 * @param WP_Post         $post     Franer site post.
+		 * @param array           $settings Typed Franer site settings.
+		 * @param int             $user_id  Current user ID.
+		 * @param WP_REST_Request $request  Original REST request.
+		 */
+		do_action( 'franer_before_process_submission', $body, $post, $settings, $user_id, $request );
+
+		// Validate the schema version and payload, applying the payload filter and
+		// enforcing the size limit. Returns the validated JSON string or a WP_Error.
+		$payload_json = $this->build_validated_payload( $body, $post, $settings, $user_id, $request );
+
+		if ( is_wp_error( $payload_json ) ) {
+			return $payload_json;
+		}
+
+		/**
+		 * Fires immediately before a Franer submission is saved.
+		 *
+		 * The payload has already passed schema and size validation.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int    $site_id      Franer site ID.
+		 * @param int    $user_id      Current user ID.
+		 * @param string $payload_json Validated JSON payload string.
+		 * @param array  $settings     Typed Franer site settings.
+		 */
+		do_action( 'franer_before_save_submission', (int) $settings['id'], $user_id, $payload_json, $settings );
+
+		$result = $this->submissions->save_submission(
+			(int) $settings['id'],
+			$user_id,
+			$payload_json,
+			$settings['allow_multiple'],
+			$settings['allow_overwrite']
+		);
+
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		/**
+		 * Fires after a Franer submission has been saved successfully.
+		 *
+		 * Only fires on a successful save; never when saving returns an error.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int    $submission_id Saved submission ID.
+		 * @param string $status        Save status ('saved' or 'updated').
+		 * @param int    $site_id       Franer site ID.
+		 * @param int    $user_id       Current user ID.
+		 * @param string $payload_json  Stored JSON payload string.
+		 * @param array  $settings      Typed Franer site settings.
+		 */
+		do_action(
+			'franer_after_save_submission',
+			(int) $result['submission_id'],
+			(string) $result['status'],
+			(int) $settings['id'],
+			$user_id,
+			$payload_json,
+			$settings
+		);
+
+		return new WP_REST_Response( $this->build_submission_response( $result, $settings, $user_id ), 201 );
+	}
+
+	/**
+	 * Resolve and authorize the activity targeted by a submission request.
+	 *
+	 * Runs every pre-payload gate in order — slug, existence, visibility/role,
+	 * schedule window, submissions-open and the per-user rate limit — so
+	 * create_submission() stays readable. Each failed gate returns the WP_Error
+	 * (with the correct HTTP status) that the endpoint must surface.
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @param int             $user_id The authenticated user ID.
+	 * @return array|WP_Error { @type WP_Post $post; @type array $settings } or WP_Error.
+	 */
+	private function resolve_submission_context( WP_REST_Request $request, $user_id ) {
 		$slug = Franer_Sanitizer::sanitize_slug( $request['slug'] );
 
 		if ( is_wp_error( $slug ) ) {
@@ -176,29 +284,27 @@ class Franer_Rest_Controller {
 			return $rate_limited;
 		}
 
-		$body = $request->get_json_params();
+		return array(
+			'post'     => $post,
+			'settings' => $settings,
+		);
+	}
 
-		if ( ! is_array( $body ) ) {
-			$body = array();
-		}
-
-		/**
-		 * Fires before a Franer submission payload is processed.
-		 *
-		 * Runs after authentication, site resolution, visibility/role checks and
-		 * the submission-open checks. Security-sensitive: it must not be used to
-		 * bypass validation or permission logic.
-		 *
-		 * @since 1.0.0
-		 *
-		 * @param array           $body     Raw request JSON body as an array.
-		 * @param WP_Post         $post     Franer site post.
-		 * @param array           $settings Typed Franer site settings.
-		 * @param int             $user_id  Current user ID.
-		 * @param WP_REST_Request $request  Original REST request.
-		 */
-		do_action( 'franer_before_process_submission', $body, $post, $settings, $user_id, $request );
-
+	/**
+	 * Validate a submission body and return its stored JSON payload string.
+	 *
+	 * Checks the schema version, requires a JSON-object payload, applies the
+	 * `franer_submission_payload` filter, re-encodes and enforces the site's
+	 * maximum payload size. Returns a WP_Error (with HTTP status) on any failure.
+	 *
+	 * @param array           $body     Decoded request body.
+	 * @param WP_Post         $post     Franer site post.
+	 * @param array           $settings Typed Franer site settings.
+	 * @param int             $user_id  Current user ID.
+	 * @param WP_REST_Request $request  Original REST request.
+	 * @return string|WP_Error Validated JSON payload string, or WP_Error.
+	 */
+	private function build_validated_payload( $body, $post, $settings, $user_id, WP_REST_Request $request ) {
 		$schema_version = isset( $body['schema_version'] ) ? (string) $body['schema_version'] : '';
 
 		if ( '1.0' !== $schema_version ) {
@@ -265,56 +371,18 @@ class Franer_Rest_Controller {
 			return $validated;
 		}
 
-		/**
-		 * Fires immediately before a Franer submission is saved.
-		 *
-		 * The payload has already passed schema and size validation.
-		 *
-		 * @since 1.0.0
-		 *
-		 * @param int    $site_id      Franer site ID.
-		 * @param int    $user_id      Current user ID.
-		 * @param string $payload_json Validated JSON payload string.
-		 * @param array  $settings     Typed Franer site settings.
-		 */
-		do_action( 'franer_before_save_submission', (int) $settings['id'], $user_id, $payload_json, $settings );
+		return $payload_json;
+	}
 
-		$result = $this->submissions->save_submission(
-			(int) $settings['id'],
-			$user_id,
-			$payload_json,
-			$settings['allow_multiple'],
-			$settings['allow_overwrite']
-		);
-
-		if ( is_wp_error( $result ) ) {
-			return $result;
-		}
-
-		/**
-		 * Fires after a Franer submission has been saved successfully.
-		 *
-		 * Only fires on a successful save; never when saving returns an error.
-		 *
-		 * @since 1.0.0
-		 *
-		 * @param int    $submission_id Saved submission ID.
-		 * @param string $status        Save status ('saved' or 'updated').
-		 * @param int    $site_id       Franer site ID.
-		 * @param int    $user_id       Current user ID.
-		 * @param string $payload_json  Stored JSON payload string.
-		 * @param array  $settings      Typed Franer site settings.
-		 */
-		do_action(
-			'franer_after_save_submission',
-			(int) $result['submission_id'],
-			(string) $result['status'],
-			(int) $settings['id'],
-			$user_id,
-			$payload_json,
-			$settings
-		);
-
+	/**
+	 * Build the successful-submission REST response data (with the filter applied).
+	 *
+	 * @param array $result   Save result from the submissions repository.
+	 * @param array $settings Typed Franer site settings.
+	 * @param int   $user_id  Current user ID.
+	 * @return array The response data array.
+	 */
+	private function build_submission_response( $result, $settings, $user_id ) {
 		$response_data = array(
 			'submission_id' => (int) $result['submission_id'],
 			'status'        => $result['status'],
@@ -341,7 +409,7 @@ class Franer_Rest_Controller {
 			$response_data = $filtered_response;
 		}
 
-		return new WP_REST_Response( $response_data, 201 );
+		return $response_data;
 	}
 
 	/**

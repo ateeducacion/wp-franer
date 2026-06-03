@@ -19,6 +19,16 @@ environment to publish AI-generated forms (Framework for Running AI-geNerated Em
 - One class per file, named `class-franer-*.php`. The bootstrap file `franer.php` stays small;
   logic lives under `includes/`, admin code under `admin/`, public code under `public/`.
 - First executable line of every PHP file (except tests): `if ( ! defined( 'WPINC' ) ) { die; }`.
+- **Keep methods and classes simple** so they stay under the PHPMD thresholds in `phpmd.xml`
+  (enforced by the PHPMD GitHub workflow and surfaced as code-scanning alerts). Per method:
+  **cyclomatic complexity ≤ 15**, **NPath complexity ≤ 500**, **length ≤ 150 lines**; per class:
+  **overall complexity ≤ 100**. When a method approaches a limit, extract cohesive private helpers
+  (guard/early-return checks, one helper per saved field, per-mode scanners, row mappers) instead of
+  growing one long body — note that splitting a method only moves complexity *within* the class, so
+  when the **class** is too complex, move a whole responsibility into its own `class-franer-*.php`
+  file (e.g. the Submissions admin screens live in `Franer_Admin_Submissions`, not `Franer_Admin`).
+  Prefer many small, single-purpose methods over deeply nested conditionals. Verify locally with
+  `php -d error_reporting=0 vendor/bin/phpmd . text phpmd.xml` (or `make lint` for WPCS) before pushing.
 
 ## Architecture (how the plugin is built)
 
@@ -57,8 +67,13 @@ Franer uses the classic **loader architecture** (à la WordPress plugin boilerpl
 - `includes/class-franer-demo-data.php` — idempotent demo seed (slug `mcode40`), gated by the
   `franer_demo_seeded` option.
 - `admin/class-franer-admin.php` — menus, metaboxes (save via nonce `franer_site_nonce` /
-  action `save_franer_site`), assets, the Submissions screen, list columns + row action, and the
-  edit/delete admin-post handlers.
+  action `save_franer_site`; `save_meta()` dispatches to focused `save_*_meta()` helpers), assets,
+  the list columns/filters/sorting + row action, and the `before_delete_post` submissions purge.
+- `admin/class-franer-admin-submissions.php` (`Franer_Admin_Submissions`) — the Submissions admin
+  screens: the standalone Submissions list page, the per-Franer submissions-overview page
+  (`prepare_submission_view()` builds the iframe context) and the edit/delete admin-post handlers.
+  Its page callbacks are wired from `Franer_Admin::add_menu()`; its admin-post handlers and the
+  overview page are registered in `Franer::define_admin_hooks()`.
 - `admin/class-franer-help.php` — the Help page and the two copy-paste AI prompts
   (`get_default_activity_prompt()` and `get_default_view_prompt()`).
 - `admin/class-franer-export-controller.php` — the `admin-post.php` JSON export.
@@ -104,8 +119,9 @@ Franer uses the classic **loader architecture** (à la WordPress plugin boilerpl
 - **Add a site setting:** register the meta key in `Franer_Post_Types::register_meta()` (and in
   `add_revisioned_meta_keys()` if it should be revisioned) → read+type it in
   `Franer_Site_Repository::get_settings()` → render an input in
-  `admin/partials/franer-admin-metaboxes.php` → sanitize+save it in `Franer_Admin::save_meta()`
-  (via a `Franer_Sanitizer` helper) → enforce it where relevant (permissions/REST/public).
+  `admin/partials/franer-admin-metaboxes.php` → sanitize+save it in the relevant
+  `Franer_Admin::save_*_meta()` helper dispatched from `save_meta()` (via a `Franer_Sanitizer`
+  helper) → enforce it where relevant (permissions/REST/public).
 - **Add a developer hook:** place `do_action`/`apply_filters` at the lifecycle point with a full
   docblock (`@since`, `@param`, return type, security note). **Filters must be defensively validated**
   (check the return type, restore required keys) and must never bypass auth/nonce/role/visibility/
