@@ -1,14 +1,14 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Franer 0.0.0\n"
-"Report-Msgid-Bugs-To: https://github.com/ateeducacion/wp-franer\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-franer\n"
 "Last-Translator: Área de Tecnología Educativa <ate.educacion@gobiernodecanarias.org>\n"
 "Language-Team: Español <es_ES@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-06-02T22:21:45+00:00\n"
-"PO-Revision-Date: 2026-06-03T00:57:23+00:00\n"
+"PO-Revision-Date: 2026-06-03T07:15:29+00:00\n"
 "Language: es_ES\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Domain: franer\n"
@@ -45,6 +45,9 @@ msgstr "Ayuda de Franer"
 msgid "Help"
 msgstr "Ayuda"
 
+msgid "Submissions overview"
+msgstr "Resumen de envíos"
+
 msgid "Site settings"
 msgstr "Ajustes del sitio"
 
@@ -68,6 +71,12 @@ msgstr "No se pudo copiar. Cópialo manualmente."
 
 msgid "You do not have permission to access this page."
 msgstr "No tienes permiso para acceder a esta página."
+
+msgid "The requested Franer could not be found."
+msgstr "No se ha podido encontrar el Franer solicitado."
+
+msgid "No submission view template has been configured for this Franer."
+msgstr "No se ha configurado una plantilla de vista para este Franer."
 
 msgid "You do not have permission to manage submissions."
 msgstr "No tienes permiso para gestionar los envíos."
@@ -116,6 +125,57 @@ msgstr "Sustituye REPLACE_WITH_SLUG por el slug de la actividad e implementa est
 
 msgid "Add a clearly visible button that calls FranerSubmit(). Return only the HTML document."
 msgstr "Añade un botón claramente visible que llame a FranerSubmit(). Devuelve solo el documento HTML."
+
+msgid "Add clear comments to the HTML, CSS and JavaScript to make future maintenance easier."
+msgstr "Añade comentarios claros al HTML, CSS y JavaScript para facilitar el mantenimiento futuro."
+
+msgid "Include the prompt that generated this activity as an HTML comment near the top of the document when possible. Do not include secrets, private data, credentials, API keys or personal data in that comment."
+msgstr "Incluye el prompt que generó esta actividad como comentario HTML cerca del inicio del documento cuando sea posible. No incluyas secretos, datos privados, credenciales, claves de API ni datos personales en ese comentario."
+
+msgid "Franer will strip HTML and JavaScript comments before rendering the activity to users, so comments are for administrator maintenance only."
+msgstr "Franer eliminará los comentarios HTML y JavaScript antes de mostrar la actividad a los usuarios, por lo que los comentarios son solo para el mantenimiento por parte de la administración."
+
+msgid "You are generating a self-contained HTML template for Franer, a WordPress plugin that stores JSON submissions from AI-generated activities."
+msgstr "Estás generando una plantilla HTML autocontenida para Franer, un plugin de WordPress que almacena envíos JSON de actividades generadas por IA."
+
+msgid "This HTML document is not the activity form. It is an administrator-only template that renders an OVERVIEW of all submissions for one activity: totals, charts and summary tables."
+msgstr "Este documento HTML no es el formulario de la actividad. Es una plantilla solo para administradores que muestra un RESUMEN de todos los envíos de una actividad: totales, gráficas y tablas de resumen."
+
+msgid "Generate ONE complete HTML document with HTML, CSS and JavaScript in a single file."
+msgstr "Genera UN único documento HTML completo con HTML, CSS y JavaScript en un mismo archivo."
+
+msgid "No external scripts, external CSS, CDNs, remote fonts, tracking pixels, cookies or localStorage for personal data. Draw any charts yourself with inline SVG or <canvas> — do not load a charting library."
+msgstr "Sin scripts externos, CSS externo, CDN, fuentes remotas, píxeles de seguimiento, cookies ni localStorage para datos personales. Dibuja las gráficas tú mismo con SVG en línea o <canvas>; no cargues ninguna librería de gráficas."
+
+msgid "It must not call fetch(), XMLHttpRequest, navigator.sendBeacon(), WebSockets or any external endpoint, must not include a form action URL, and must not read or modify the parent window DOM."
+msgstr "No debe llamar a fetch(), XMLHttpRequest, navigator.sendBeacon(), WebSockets ni a ningún endpoint externo, no debe incluir una URL de acción de formulario y no debe leer ni modificar el DOM de la ventana superior."
+
+msgid "It receives data only through window.postMessage(). The parent admin page sends this message:"
+msgstr "Recibe los datos únicamente mediante window.postMessage(). La página de administración superior envía este mensaje:"
+
+msgid "Implement this global and listener:"
+msgstr "Implementa esta función global y este listener:"
+
+msgid "The overview must show the activity title and the total number of submissions, then aggregate the submissions into a readable report."
+msgstr "El resumen debe mostrar el título de la actividad y el número total de envíos, y después agregar los envíos en un informe legible."
+
+msgid "Iterate context.submissions and read each submission.payload.data. Summarize answers (counts, averages, distributions) and visualize the most relevant fields as charts. Show submissions over time when timestamps are available."
+msgstr "Recorre context.submissions y lee cada submission.payload.data. Resume las respuestas (recuentos, medias, distribuciones) y visualiza los campos más relevantes como gráficas. Muestra los envíos a lo largo del tiempo cuando haya marcas de tiempo disponibles."
+
+msgid "If context.truncated is true, state that only the most recent submissions are shown. If there are no submissions or a field is missing, show a friendly fallback instead of crashing."
+msgstr "Si context.truncated es true, indica que solo se muestran los envíos más recientes. Si no hay envíos o falta un campo, muestra una alternativa amable en lugar de fallar."
+
+msgid "Include a collapsible raw JSON section using <details> and a print button using window.print()."
+msgstr "Incluye una sección plegable con el JSON en bruto mediante <details> y un botón de impresión con window.print()."
+
+msgid "Use semantic, accessible HTML that works on mobile screens, and add clear comments to the HTML, CSS and JavaScript."
+msgstr "Usa HTML semántico y accesible que funcione en pantallas móviles, y añade comentarios claros al HTML, CSS y JavaScript."
+
+msgid "Include this prompt as an HTML comment near the top of the document when possible, excluding any secrets, credentials, API keys or personal data. Do not invent backend URLs and do not include WordPress nonces."
+msgstr "Incluye este prompt como comentario HTML cerca del inicio del documento cuando sea posible, excluyendo cualquier secreto, credencial, clave de API o dato personal. No inventes URL de backend ni incluyas nonces de WordPress."
+
+msgid "Return only the complete HTML document. Do not add explanations before or after it."
+msgstr "Devuelve únicamente el documento HTML completo. No añadas explicaciones antes ni después."
 
 msgid "Franer logo"
 msgstr "Logo de Franer"
@@ -177,6 +237,18 @@ msgstr "Copiar especificación de Franer"
 msgid "Franer activity spec"
 msgstr "Especificación de actividad de Franer"
 
+msgid "Prompt for generating a submission view template"
+msgstr "Prompt para generar una plantilla de vista de envíos"
+
+msgid "A submission view template is not a form. It is an admin-only HTML document that renders an overview of all of an activity's submissions (totals, charts, summary tables). Configure it in the \"Submission View HTML\" tab of a Franer, then open it with the \"View overview\" button on the Submissions screen. The template receives every submission as JSON through postMessage and runs inside a sandboxed iframe, exactly like an activity."
+msgstr "Una plantilla de vista de envíos no es un formulario. Es un documento HTML solo para administradores que muestra un resumen de todos los envíos de una actividad (totales, gráficas, tablas de resumen). Configúrala en la pestaña «Submission View HTML» de un Franer y ábrela con el botón «Ver resumen» de la pantalla de envíos. La plantilla recibe todos los envíos como JSON mediante postMessage y se ejecuta dentro de un iframe aislado (sandbox), igual que una actividad."
+
+msgid "Copy submission view prompt"
+msgstr "Copiar prompt de vista de envíos"
+
+msgid "Franer submission view spec"
+msgstr "Especificación de la vista de envíos de Franer"
+
 msgid "Slug"
 msgstr "Slug"
 
@@ -222,6 +294,18 @@ msgstr "Tamaño máximo de datos (KB)"
 msgid "Maximum accepted submission size, between 1 and 5120 KB."
 msgstr "Tamaño máximo de envío aceptado, entre 1 y 5120 KB."
 
+msgid "Copy"
+msgstr "Copiar"
+
+msgid "HTML editors"
+msgstr "Editores HTML"
+
+msgid "Activity HTML"
+msgstr "HTML de la actividad"
+
+msgid "Submission View HTML"
+msgstr "HTML de la vista de envíos"
+
 msgid "Security note:"
 msgstr "Nota de seguridad:"
 
@@ -234,8 +318,26 @@ msgstr "Código HTML de la actividad"
 msgid "A complete, self-contained HTML document implementing window.FranerCollect() and window.FranerSubmit(). See the Help page for a ready-to-use AI prompt."
 msgstr "Un documento HTML completo y autocontenido que implemente window.FranerCollect() y window.FranerSubmit(). Consulta la página de Ayuda para obtener un prompt de IA listo para usar."
 
-msgid "Copy"
-msgstr "Copiar"
+msgid "Prompt used to generate this activity"
+msgstr "Prompt utilizado para generar esta actividad"
+
+msgid "Optional field. Store here the prompt used to generate this HTML. It can help with future modifications, adjustments or regeneration of the activity."
+msgstr "Campo opcional. Guarda aquí el prompt utilizado para generar este HTML. Puede facilitar futuras modificaciones, ajustes o regeneraciones de la actividad."
+
+msgid "Like the activity HTML, this template is stored raw and only ever rendered inside a sandboxed iframe. It is shown only to administrators and receives every submission JSON through postMessage. It never receives REST nonces, admin URLs or network access."
+msgstr "Al igual que el HTML de la actividad, esta plantilla se almacena tal cual y solo se renderiza dentro de un iframe aislado (sandbox). Se muestra únicamente a administradores y recibe el JSON de todos los envíos mediante postMessage. Nunca recibe nonces REST, URL de administración ni acceso a la red."
+
+msgid "Submission view HTML source"
+msgstr "Código HTML de la vista de envíos"
+
+msgid "Optional HTML used to render an overview of all submissions for this Franer (totals, charts, …). It is only shown to administrators from the submissions screen and receives every submission JSON through postMessage."
+msgstr "HTML opcional para representar un resumen de todos los envíos de este Franer (totales, gráficas, …). Solo se muestra a administradores desde la pantalla de envíos y recibe el JSON de todos los envíos mediante postMessage."
+
+msgid "Prompt used to generate this submission view"
+msgstr "Prompt utilizado para generar esta vista de envíos"
+
+msgid "Optional field. Store here the prompt used to generate the submission-view template. It can help with future modifications, adjustments or regeneration of the view."
+msgstr "Campo opcional. Guarda aquí el prompt utilizado para generar la plantilla de vista de envíos. Puede facilitar futuras modificaciones, ajustes o regeneraciones de la vista."
 
 msgid "Open public page"
 msgstr "Abrir página pública"
@@ -256,11 +358,46 @@ msgstr "Ver envíos"
 msgid "Export JSON"
 msgstr "Exportar JSON"
 
+msgid "View overview"
+msgstr "Ver resumen"
+
+msgid "Renders all submissions with the Submission View HTML template."
+msgstr "Representa todos los envíos con la plantilla HTML de la vista de envíos."
+
 msgid "Need help creating an activity? The Help page includes a ready-to-use AI prompt and the full JavaScript contract."
 msgstr "¿Necesitas ayuda para crear una actividad? La página de Ayuda incluye un prompt de IA listo para usar y el contrato completo de JavaScript."
 
 msgid "Open Help"
 msgstr "Abrir la Ayuda"
+
+msgid "Back to submissions"
+msgstr "Volver a los envíos"
+
+msgid "Print"
+msgstr "Imprimir"
+
+msgid "Activity"
+msgstr "Actividad"
+
+msgid "Total submissions"
+msgstr "Total de envíos"
+
+#. translators: %s: maximum number of submissions delivered to the view.
+#, php-format
+msgid "This activity has more submissions than can be rendered at once. The view received the %s most recent submissions."
+msgstr "Esta actividad tiene más envíos de los que se pueden representar a la vez. La vista recibió los %s envíos más recientes."
+
+msgid "View JSON"
+msgstr "Ver JSON"
+
+msgid "Submissions JSON payload"
+msgstr "Datos JSON de los envíos"
+
+msgid "Rendered overview"
+msgstr "Resumen representado"
+
+msgid "Rendered submissions overview"
+msgstr "Resumen de envíos representado"
 
 msgid "Submission deleted."
 msgstr "Envío eliminado."
@@ -304,9 +441,6 @@ msgstr "&raquo;"
 
 msgid "ID"
 msgstr "ID"
-
-msgid "Activity"
-msgstr "Actividad"
 
 msgid "User"
 msgstr "Usuario"

@@ -102,6 +102,12 @@ class Franer_Site_Repository {
 		$enabled             = get_post_meta( $site_id, '_franer_enabled', true );
 		$start_date          = (string) get_post_meta( $site_id, '_franer_start_date', true );
 		$end_date            = (string) get_post_meta( $site_id, '_franer_end_date', true );
+		// Admin-only fields. They are never rendered publicly, sent to the activity
+		// iframe, or included in submission exports; the public render partial uses
+		// only 'html', 'title' and 'slug'.
+		$generation_prompt      = (string) get_post_meta( $site_id, '_franer_generation_prompt', true );
+		$view_html              = (string) get_post_meta( $site_id, '_franer_view_html', true );
+		$view_generation_prompt = (string) get_post_meta( $site_id, '_franer_view_generation_prompt', true );
 
 		return array(
 			'id'                  => $site_id,
@@ -121,6 +127,10 @@ class Franer_Site_Repository {
 			'enabled'             => ( '0' !== (string) $enabled ),
 			'start_date'          => $start_date,
 			'end_date'            => $end_date,
+			// Admin-only; see the reads above.
+			'generation_prompt'      => $generation_prompt,
+			'view_html'              => $view_html,
+			'view_generation_prompt' => $view_generation_prompt,
 		);
 	}
 

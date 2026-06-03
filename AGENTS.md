@@ -44,7 +44,7 @@ Franer uses the classic **loader architecture** (à la WordPress plugin boilerpl
   keys, and the `wp_post_revision_meta_keys` filter that revisions the settings meta.
 - `includes/class-franer-sanitizer.php` — pure static validation/sanitization helpers
   (`sanitize_slug`, `sanitize_roles`, `sanitize_bool`, `sanitize_payload_size`, `sanitize_datetime`,
-  `validate_payload`).
+  `validate_payload`, `sanitize_generation_prompt`, `sanitize_view_html`, `strip_activity_comments`).
 - `includes/class-franer-permissions.php` — static checks: `can_manage()`, `user_can_view()`,
   `user_has_allowed_role()`, `schedule_state()`.
 - `includes/class-franer-site-repository.php` — reads/writes `franer_site` posts. `get_settings()`
@@ -59,7 +59,8 @@ Franer uses the classic **loader architecture** (à la WordPress plugin boilerpl
 - `admin/class-franer-admin.php` — menus, metaboxes (save via nonce `franer_site_nonce` /
   action `save_franer_site`), assets, the Submissions screen, list columns + row action, and the
   edit/delete admin-post handlers.
-- `admin/class-franer-help.php` — the Help page and the copy-paste AI prompt.
+- `admin/class-franer-help.php` — the Help page and the two copy-paste AI prompts
+  (`get_default_activity_prompt()` and `get_default_view_prompt()`).
 - `admin/class-franer-export-controller.php` — the `admin-post.php` JSON export.
 - `public/class-franer-public.php` — rewrite rule `/franer/{slug}/`, the `[franer]` shortcode, and the
   theme-independent sandboxed render. `public/js/franer-shell.js` is the parent shell.
@@ -77,6 +78,21 @@ Franer uses the classic **loader architecture** (à la WordPress plugin boilerpl
   `_franer_allow_multiple_submissions`, `_franer_allow_overwrite`, `_franer_max_payload_size`,
   `_franer_enabled` (default true when unset), `_franer_start_date`, `_franer_end_date`. The schema
   version is a fixed constant (`'1.0'`), not a per-site field.
+- **Admin-only meta** — `_franer_generation_prompt` (free-form text; the prompt used to generate the
+  activity), `_franer_view_html` (raw HTML for the submissions-overview template), and
+  `_franer_view_generation_prompt`. All three are revisioned, never `show_in_rest`, never rendered
+  publicly, sent to the activity iframe, or exported. The prompts are normalized + size-capped by
+  `Franer_Sanitizer::sanitize_generation_prompt()` (NOT KSES'd — they may contain code); the view
+  HTML is stored raw like the activity HTML.
+- **Render-time comment stripping** — `Franer_Sanitizer::strip_activity_comments()` removes HTML and
+  inline-JS comments (string/template/regex-aware; CSS comments kept) when building the iframe
+  `srcdoc` for both the public activity render and the admin submissions-overview render. The stored
+  source/revisions/editor keep all comments.
+- **Submissions overview** — an optional admin page (`page=franer-submission-view&site_id=…`,
+  `manage_options`) renders `_franer_view_html` in a sandboxed iframe and posts ALL of the Franer's
+  decoded submissions to it via `postMessage` (`type:"franer_view_payload"`, payload
+  `{ site, count, truncated, submissions:[…] }`; the template implements
+  `window.FranerRenderSubmissions(context)`). The frame gets no nonce, admin URL or stored PII.
 - **Availability** — `_franer_enabled` is a master switch; `_franer_start_date`/`_franer_end_date`
   (local `Y-m-d H:i:s`, compared as strings vs `current_time('mysql')`) gate submissions
   (`Franer_Permissions::schedule_state()` → `disabled|not_yet|ended|open`).

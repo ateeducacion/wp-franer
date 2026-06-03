@@ -169,4 +169,137 @@ class SanitizerTest extends WP_UnitTestCase {
 		$data = $result->get_error_data();
 		$this->assertSame( 413, $data['status'] );
 	}
+
+	/**
+	 * The generation prompt must preserve code-like content (angle brackets,
+	 * braces, quotes) and only normalize line endings.
+	 *
+	 * @return void
+	 */
+	public function test_sanitize_generation_prompt_preserves_code() {
+		$prompt = "Use <script>alert('x')</script>\r\nand {a:1} \"quotes\" 'single'\r/* block */";
+		$result = Franer_Sanitizer::sanitize_generation_prompt( $prompt );
+
+		$this->assertStringContainsString( "<script>alert('x')</script>", $result );
+		$this->assertStringContainsString( '{a:1}', $result );
+		$this->assertStringContainsString( '"quotes"', $result );
+		$this->assertStringContainsString( '/* block */', $result );
+
+		// CRLF and lone CR are normalized to LF; no carriage returns survive.
+		$this->assertStringNotContainsString( "\r", $result );
+		$this->assertStringContainsString( "</script>\nand", $result );
+	}
+
+	/**
+	 * The generation prompt must be capped at the documented maximum size.
+	 *
+	 * @return void
+	 */
+	public function test_sanitize_generation_prompt_caps_size() {
+		$max    = Franer_Sanitizer::GENERATION_PROMPT_MAX_BYTES;
+		$prompt = str_repeat( 'a', $max + 5000 );
+		$result = Franer_Sanitizer::sanitize_generation_prompt( $prompt );
+
+		$this->assertLessThanOrEqual( $max, strlen( $result ) );
+	}
+
+	/**
+	 * Non-scalar prompt input degrades to an empty string.
+	 *
+	 * @return void
+	 */
+	public function test_sanitize_generation_prompt_handles_non_scalar() {
+		$this->assertSame( '', Franer_Sanitizer::sanitize_generation_prompt( array( 'x' ) ) );
+		$this->assertSame( '', Franer_Sanitizer::sanitize_generation_prompt( null ) );
+	}
+
+	/**
+	 * strip_activity_comments removes HTML comments outside script/style blocks.
+	 *
+	 * @return void
+	 */
+	public function test_strip_activity_comments_removes_html_comments() {
+		$html    = "<!-- secret prompt -->\n<div>visible</div><!-- another -->";
+		$cleaned = Franer_Sanitizer::strip_activity_comments( $html );
+
+		$this->assertStringNotContainsString( '<!--', $cleaned );
+		$this->assertStringNotContainsString( 'secret prompt', $cleaned );
+		$this->assertStringContainsString( '<div>visible</div>', $cleaned );
+	}
+
+	/**
+	 * strip_activity_comments removes JS line and block comments inside scripts.
+	 *
+	 * @return void
+	 */
+	public function test_strip_activity_comments_removes_js_comments() {
+		$html    = "<script>\n// a line comment\nvar x = 1; /* a block comment */ var y = 2;\n</script>";
+		$cleaned = Franer_Sanitizer::strip_activity_comments( $html );
+
+		$this->assertStringNotContainsString( 'a line comment', $cleaned );
+		$this->assertStringNotContainsString( 'a block comment', $cleaned );
+		$this->assertStringContainsString( 'var x = 1;', $cleaned );
+		$this->assertStringContainsString( 'var y = 2;', $cleaned );
+	}
+
+	/**
+	 * strip_activity_comments must preserve comment-like text and URLs inside
+	 * strings, template literals and regular expressions.
+	 *
+	 * @return void
+	 */
+	public function test_strip_activity_comments_preserves_strings_and_urls() {
+		$html = "<script>\n"
+			. "var url = \"https://example.com/path\";\n"
+			. "var s = '// not a comment';\n"
+			. "var b = \"/* not a comment */\";\n"
+			. "var t = `tpl // not /* a */ comment \${1 + 1}`;\n"
+			. "var re = /https:\\/\\//g;\n"
+			. '</script>';
+
+		$cleaned = Franer_Sanitizer::strip_activity_comments( $html );
+
+		$this->assertStringContainsString( 'https://example.com/path', $cleaned );
+		$this->assertStringContainsString( "'// not a comment'", $cleaned );
+		$this->assertStringContainsString( '"/* not a comment */"', $cleaned );
+		$this->assertStringContainsString( 'tpl // not /* a */ comment ${1 + 1}', $cleaned );
+		$this->assertStringContainsString( '/https:\\/\\//g', $cleaned );
+	}
+
+	/**
+	 * CSS comments inside <style> blocks are intentionally preserved (only HTML
+	 * and JS comments are stripped).
+	 *
+	 * @return void
+	 */
+	public function test_strip_activity_comments_keeps_css_comments() {
+		$html    = '<style>/* keep this css comment */ body { color: red; }</style>';
+		$cleaned = Franer_Sanitizer::strip_activity_comments( $html );
+
+		$this->assertStringContainsString( '/* keep this css comment */', $cleaned );
+	}
+
+	/**
+	 * strip_activity_comments handles non-string and empty input gracefully.
+	 *
+	 * @return void
+	 */
+	public function test_strip_activity_comments_handles_empty_and_non_string() {
+		$this->assertSame( '', Franer_Sanitizer::strip_activity_comments( '' ) );
+		$this->assertSame( '', Franer_Sanitizer::strip_activity_comments( array() ) );
+		$this->assertSame( '', Franer_Sanitizer::strip_activity_comments( null ) );
+	}
+
+	/**
+	 * sanitize_view_html normalizes line endings without altering markup.
+	 *
+	 * @return void
+	 */
+	public function test_sanitize_view_html_normalizes_newlines() {
+		$result = Franer_Sanitizer::sanitize_view_html( "<div>a</div>\r\n<span>b</span>\r" );
+
+		$this->assertStringNotContainsString( "\r", $result );
+		$this->assertStringContainsString( '<div>a</div>', $result );
+		$this->assertStringContainsString( '<span>b</span>', $result );
+	}
 }

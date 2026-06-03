@@ -114,6 +114,11 @@ class Franer_Post_Types {
 		$keys[] = '_franer_enabled';
 		$keys[] = '_franer_start_date';
 		$keys[] = '_franer_end_date';
+		// Optional generation prompt, submission-view template, and the prompt
+		// used to generate that view template (admin-only, never public).
+		$keys[] = '_franer_generation_prompt';
+		$keys[] = '_franer_view_html';
+		$keys[] = '_franer_view_generation_prompt';
 
 		return $keys;
 	}
@@ -190,6 +195,12 @@ class Franer_Post_Types {
 			'_franer_enabled'                    => 'boolean',
 			'_franer_start_date'                 => 'string',
 			'_franer_end_date'                   => 'string',
+			// Optional, admin-only, never exposed via REST (show_in_rest is false
+			// for every key below). The generation prompt and submission-view
+			// template can contain long free-form text and raw HTML respectively.
+			'_franer_generation_prompt'          => 'string',
+			'_franer_view_html'                  => 'string',
+			'_franer_view_generation_prompt'     => 'string',
 		);
 
 		foreach ( $meta_keys as $meta_key => $type ) {

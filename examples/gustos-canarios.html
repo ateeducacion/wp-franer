@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<!--
+	Franer demo activity: "Gustos canarios".
+	A light-hearted Canarian-preferences poll used to showcase the Franer
+	submission pipeline and the submissions-overview template.
+	Comments like this one are stripped before the activity reaches end users.
+-->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gustos canarios</title>
+<style>
+	:root {
+		--blue: #0073e6;
+		--yellow: #ffcc00;
+		--green: #28a745;
+		--ink: #1d2327;
+		--muted: #50575e;
+		--bg: #f4f6f8;
+		--radius: 8px;
+	}
+	* { box-sizing: border-box; }
+	body {
+		font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+		margin: 0;
+		padding: 1.5rem;
+		color: var(--ink);
+		background: var(--bg);
+		line-height: 1.5;
+	}
+	main { max-width: 640px; margin: 0 auto; }
+	h1 { color: var(--blue); margin-top: 0; }
+	.lead { color: var(--muted); margin-top: -0.5rem; }
+	fieldset {
+		border: 1px solid #dcdcde;
+		border-radius: var(--radius);
+		margin: 1rem 0;
+		padding: 1rem;
+		background: #fff;
+	}
+	legend { font-weight: 700; padding: 0 0.4rem; }
+	.option { display: block; margin: 0.35rem 0; }
+	.option input { margin-right: 0.5rem; }
+	label.block { display: block; font-weight: 600; margin: 0.75rem 0 0.25rem; }
+	textarea, input[type="range"] { width: 100%; }
+	textarea { padding: 0.5rem; border-radius: var(--radius); border: 1px solid #dcdcde; }
+	.rating-value { font-weight: 700; color: var(--green); }
+	.error { color: #d63638; min-height: 1.2em; margin-top: 0.5rem; }
+	.status { min-height: 1.2em; margin-top: 0.5rem; color: var(--green); font-weight: 600; }
+	button {
+		margin-top: 1rem;
+		padding: 0.65rem 1.4rem;
+		border: none;
+		border-radius: var(--radius);
+		background: var(--blue);
+		color: #fff;
+		font-size: 1rem;
+		cursor: pointer;
+	}
+	button:hover { background: #005bb5; }
+</style>
+</head>
+<body>
+<main>
+	<h1>Gustos canarios 🌋</h1>
+	<p class="lead">Cuéntanos qué te gusta más de la tierra. Es solo por diversión.</p>
+
+	<form id="franer-activity" novalidate>
+		<fieldset>
+			<legend>Refresco favorito</legend>
+			<label class="option"><input type="radio" name="refresco" value="clipper_fresa"> Clipper de fresa</label>
+			<label class="option"><input type="radio" name="refresco" value="clipper_pina"> Clipper de piña</label>
+			<label class="option"><input type="radio" name="refresco" value="otro"> Otro</label>
+		</fieldset>
+
+		<fieldset>
+			<legend>Para merendar</legend>
+			<label class="option"><input type="radio" name="merienda" value="ambrosias"> Ambrosías (Tirma)</label>
+			<label class="option"><input type="radio" name="merienda" value="tirma"> Chocolate Tirma</label>
+			<label class="option"><input type="radio" name="merienda" value="gofio"> Pan con gofio</label>
+		</fieldset>
+
+		<fieldset>
+			<legend>Mojo favorito</legend>
+			<label class="option"><input type="radio" name="mojo" value="rojo"> Rojo (picón)</label>
+			<label class="option"><input type="radio" name="mojo" value="verde"> Verde (cilantro)</label>
+		</fieldset>
+
+		<fieldset>
+			<legend>¿Para beber?</legend>
+			<label class="option"><input type="radio" name="bebida" value="barraquito"> Barraquito</label>
+			<label class="option"><input type="radio" name="bebida" value="cafe"> Café normal</label>
+		</fieldset>
+
+		<label class="block" for="papas">¿Te gustan las papas arrugadas con mojo?</label>
+		<label class="option"><input type="checkbox" id="papas" name="papas"> ¡Claro que sí!</label>
+
+		<label class="block" for="rating">¿Cuánto te gusta Canarias? (<span class="rating-value" id="rating-value">3</span>/5)</label>
+		<input type="range" id="rating" name="rating" min="1" max="5" step="1" value="3">
+
+		<label class="block" for="comentario">Comentario libre</label>
+		<textarea id="comentario" name="comentario" rows="3" placeholder="Lo que quieras contarnos…"></textarea>
+
+		<p class="error" id="franer-error" role="alert" aria-live="assertive"></p>
+		<button type="button" id="franer-submit-btn">Enviar</button>
+		<p class="status" id="franer-status" role="status" aria-live="polite"></p>
+	</form>
+</main>
+<script>
+	// Keep the visible rating value in sync with the slider.
+	var ratingInput = document.getElementById("rating");
+	var ratingValue = document.getElementById("rating-value");
+	ratingInput.addEventListener("input", function () {
+		ratingValue.textContent = ratingInput.value;
+	});
+
+	function selectedValue(name) {
+		var el = document.querySelector('input[name="' + name + '"]:checked');
+		return el ? el.value : "";
+	}
+
+	// FranerCollect: returns the structured submission object.
+	window.FranerCollect = function () {
+		return {
+			schema_version: "1.0",
+			activity_id: "gustos-canarios",
+			activity_title: "Gustos canarios",
+			submitted_at: new Date().toISOString(),
+			data: {
+				answers: {
+					refresco: selectedValue("refresco"),
+					merienda: selectedValue("merienda"),
+					mojo: selectedValue("mojo"),
+					bebida: selectedValue("bebida"),
+					papas: document.getElementById("papas").checked ? "si" : "no"
+				},
+				rating: parseInt(ratingInput.value, 10),
+				comentario: document.getElementById("comentario").value
+			}
+		};
+	};
+
+	// FranerSubmit: validates required choices, then posts to the parent shell.
+	window.FranerSubmit = function () {
+		var errorEl = document.getElementById("franer-error");
+		errorEl.textContent = "";
+		var needed = ["refresco", "merienda", "mojo", "bebida"];
+		for (var i = 0; i < needed.length; i++) {
+			if (!selectedValue(needed[i])) {
+				errorEl.textContent = "Por favor, responde a todas las preguntas de opción.";
+				return;
+			}
+		}
+		window.parent.postMessage(
+			{ type: "franer_submit", payload: window.FranerCollect() },
+			"*"
+		);
+	};
+
+	document.getElementById("franer-submit-btn")
+		.addEventListener("click", window.FranerSubmit);
+
+	// Result listener from the host page.
+	window.addEventListener("message", function (event) {
+		if (!event.data || typeof event.data !== "object") { return; }
+		if (event.data.type !== "franer_submit_result") { return; }
+		var statusEl = document.getElementById("franer-status");
+		if (event.data.ok) {
+			statusEl.textContent = "¡Gracias! Tu respuesta se ha guardado.";
+		} else {
+			statusEl.style.color = "#d63638";
+			statusEl.textContent = "Error: " +
+				(event.data.result && event.data.result.message);
+		}
+	});
+</script>
+</body>
+</html>

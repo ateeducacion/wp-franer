@@ -114,3 +114,62 @@
 	font-family: Consolas, Monaco, monospace;
 	font-size: 12px;
 }
+
+/* Tabbed HTML editors (activity / submission view). */
+.franer-tabs__list {
+	display: flex;
+	gap: 4px;
+	margin: 0 0 -1px;
+	border-bottom: 1px solid #c3c4c7;
+}
+
+.franer-tabs__tab {
+	margin: 0;
+	padding: 8px 14px;
+	border: 1px solid transparent;
+	border-bottom: none;
+	background: transparent;
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+	color: #50575e;
+}
+
+.franer-tabs__tab[aria-selected="true"] {
+	background: #fff;
+	border-color: #c3c4c7;
+	border-top-left-radius: 4px;
+	border-top-right-radius: 4px;
+	color: #1d2327;
+}
+
+.franer-tabs__panel {
+	padding: 16px 0 0;
+}
+
+/* Collapsible generation-prompt fields. */
+.franer-prompt-details {
+	margin-top: 12px;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	padding: 8px 12px;
+	background: #f6f7f7;
+}
+
+.franer-prompt-details > summary {
+	cursor: pointer;
+	font-weight: 600;
+}
+
+.franer-prompt-details[open] > summary {
+	margin-bottom: 8px;
+}
+
+/* Submission view renderer (admin-only). */
+.franer-view-frame {
+	width: 100%;
+	min-height: 70vh;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	background: #fff;
+}

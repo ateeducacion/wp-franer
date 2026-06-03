@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<!--
+	Franer demo submission-view template for the MCODE40 activity.
+	Admin-only statistics dashboard over ALL of the activity's submissions
+	(mentor memorias). It is NOT a form: it receives every submission through
+	postMessage (type "franer_view_payload") and aggregates them into KPIs,
+	coverage indicators, SÍ/NO impact charts and formación (Likert) averages.
+	Self-contained: no external resources or network calls; charts are inline.
+-->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estadísticas · MCODE40</title>
+<style>
+	:root {
+		--blue-dark: #003366; --blue: #0073e6; --yellow: #ffcc00;
+		--green: #28a745; --red: #dc3545; --ink: #1d2327; --muted: #50575e; --line: #dcdcde;
+	}
+	* { box-sizing: border-box; }
+	body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 1.25rem; color: var(--ink); background: #fff; line-height: 1.5; }
+	h1 { color: var(--blue-dark); margin: 0 0 0.25rem; font-size: 1.5rem; }
+	h2 { margin: 1.75rem 0 0.6rem; font-size: 1.1rem; color: var(--blue-dark); border-bottom: 2px solid var(--yellow); padding-bottom: 4px; }
+	.muted { color: var(--muted); }
+	/* KPI cards */
+	.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; margin-top: 0.75rem; }
+	.kpi { border: 1px solid var(--line); border-top: 4px solid var(--blue); border-radius: 8px; padding: 0.75rem 1rem; text-align: center; }
+	.kpi .num { font-size: 1.9rem; font-weight: 800; color: var(--blue); font-variant-numeric: tabular-nums; }
+	.kpi .lbl { font-size: 0.8rem; color: var(--muted); }
+	/* Bars */
+	.bar-row { display: flex; align-items: center; gap: 0.5rem; margin: 0.35rem 0; }
+	.bar-label { flex: 0 0 16rem; font-size: 0.88rem; }
+	.bar-track { flex: 1; background: #eef0f1; border-radius: 4px; overflow: hidden; min-width: 80px; }
+	.bar-fill { height: 1.1rem; background: var(--blue); }
+	.bar-fill.green { background: var(--green); }
+	.bar-num { flex: 0 0 5.5rem; text-align: right; font-variant-numeric: tabular-nums; font-size: 0.88rem; }
+	/* SÍ/NO split bar */
+	.split { display: flex; height: 1.2rem; border-radius: 4px; overflow: hidden; background: #eef0f1; }
+	.split .yes { background: var(--green); }
+	.split .no { background: var(--red); }
+	.legend { font-size: 0.8rem; color: var(--muted); margin: 0.25rem 0 1rem; }
+	.legend .sw { display: inline-block; width: 0.8rem; height: 0.8rem; border-radius: 2px; vertical-align: middle; margin: 0 0.25rem 0 0.75rem; }
+	table { border-collapse: collapse; width: 100%; margin-top: 0.5rem; }
+	th, td { border: 1px solid var(--line); padding: 0.4rem 0.6rem; text-align: left; font-size: 0.9rem; }
+	th { background: #f4f6f8; }
+	td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+	.empty { padding: 1rem; background: #f6f7f7; border-radius: 8px; }
+	details { margin-top: 1.5rem; }
+	textarea { width: 100%; font-family: Consolas, Monaco, monospace; font-size: 12px; }
+	button { margin: 1rem 0; padding: 0.5rem 1rem; border: 1px solid var(--blue); background: #fff; color: var(--blue); border-radius: 6px; cursor: pointer; }
+	@media print { button, details { display: none; } body { padding: 0; } }
+</style>
+</head>
+<body>
+<main id="app">
+	<h1>Estadísticas · MCODE40</h1>
+	<p class="muted">Esperando datos…</p>
+</main>
+<script>
+	// Labels for the four impact items and the nine formación modules.
+	var IMPACT = [
+		{ key: "imp1", title: "Integración curricular del pensamiento computacional" },
+		{ key: "imp2", title: "Competencia Digital Docente (general)" },
+		{ key: "imp3", title: "Competencia Digital Docente específica (PC y programación)" },
+		{ key: "imp4", title: "Impacto en el alumnado" }
+	];
+	var MODULOS = [
+		"Píldora de mentorización educativa",
+		"Píldora sobre eXeLearning",
+		"Presentación estrategia REA",
+		"Protección de datos y uso seguro de tecnologías",
+		"Presentación estrategia Plan Formativo",
+		"Píldora conocimiento del currículo",
+		"Píldora IA NotebookLM",
+		"Píldora IA Gemini en ámbito educativo",
+		"Fad Juventud"
+	];
+	var LIKERT_MAX = 4;
+
+	// Build entities at runtime from char codes (literal "&amp;"-style strings
+	// would be decoded by the iframe srcdoc and corrupt the script).
+	function escapeHtml(s) {
+		return String(s).replace(/[&<>"']/g, function (c) {
+			return "&#" + c.charCodeAt(0) + ";";
+		});
+	}
+	function num(v) { var n = parseInt(v, 10); return isNaN(n) ? 0 : n; }
+	function answers(s) { return (s && s.payload && s.payload.data && s.payload.data.answers) || {}; }
+	function pct(part, whole) { return whole > 0 ? Math.round((part / whole) * 100) : 0; }
+
+	function bar(label, value, max, suffix, green) {
+		var width = max > 0 ? Math.round((value / max) * 100) : 0;
+		return '<div class="bar-row">' +
+			'<span class="bar-label">' + escapeHtml(label) + '</span>' +
+			'<span class="bar-track"><span class="bar-fill' + (green ? ' green' : '') + '" style="width:' + width + '%"></span></span>' +
+			'<span class="bar-num">' + escapeHtml(value + (suffix || "")) + '</span>' +
+			'</div>';
+	}
+
+	function kpi(num, lbl) {
+		return '<div class="kpi"><div class="num">' + escapeHtml(num) + '</div><div class="lbl">' + escapeHtml(lbl) + '</div></div>';
+	}
+
+	window.FranerRenderSubmissions = function (context) {
+		context = context || {};
+		var subs = context.submissions || [];
+		var total = (typeof context.count === "number") ? context.count : subs.length;
+		var app = document.getElementById("app");
+		var title = (context.site && context.site.title) || "MCODE40";
+
+		var html = '<h1>Estadísticas · ' + escapeHtml(title) + '</h1>' +
+			'<p class="muted">Resumen agregado de las memorias recibidas.</p>';
+
+		if (!subs.length) {
+			html += '<div class="empty">Todavía no hay memorias enviadas para esta actividad.</div>';
+			app.innerHTML = html;
+			return;
+		}
+
+		// --- Aggregate quantitative data. ---
+		var sumAsig = 0, sumVis = 0, sumNoVis = 0, sumMent = 0;
+		// Impact SÍ/NO tallies and formación level sums/counts.
+		var imp = { imp1: { si: 0, no: 0 }, imp2: { si: 0, no: 0 }, imp3: { si: 0, no: 0 }, imp4: { si: 0, no: 0 } };
+		var formSum = [], formCnt = [];
+		for (var i = 0; i < MODULOS.length; i++) { formSum[i] = 0; formCnt[i] = 0; }
+
+		subs.forEach(function (s) {
+			var a = answers(s);
+			sumAsig += num(a.numAsignados);
+			sumVis += num(a.numVisitados);
+			sumNoVis += num(a.numNoVisitados);
+			sumMent += num(a.numMentorizados);
+
+			var impacto = a.impacto || {};
+			IMPACT.forEach(function (it) {
+				var entry = impacto[it.key];
+				var v = entry && entry.value ? entry.value : null;
+				if (v === "SÍ" || v === "Si" || v === "SI" || v === true) { imp[it.key].si += 1; }
+				else if (v === "NO" || v === "No" || v === false) { imp[it.key].no += 1; }
+			});
+
+			var formacion = a.formacion || {};
+			for (var k = 0; k < MODULOS.length; k++) {
+				var lvl = parseInt(formacion[k], 10);
+				if (!isNaN(lvl) && lvl > 0) { formSum[k] += lvl; formCnt[k] += 1; }
+			}
+		});
+
+		// --- KPI cards. ---
+		html += '<div class="kpis">' +
+			kpi(total, "Memorias recibidas") +
+			kpi(sumAsig, "Centros asignados") +
+			kpi(sumVis, "Centros visitados") +
+			kpi(sumMent, "Centros mentorizados") +
+			kpi(pct(sumVis, sumAsig) + "%", "Cobertura de visitas") +
+			kpi(pct(sumMent, sumAsig) + "%", "Cobertura de mentorización") +
+			'</div>';
+
+		// --- Coverage bars (global). ---
+		html += '<h2>Cobertura global</h2>';
+		html += bar("Visitas (visitados / asignados)", pct(sumVis, sumAsig), 100, "%", false);
+		html += bar("Mentorización (mentorizados / asignados)", pct(sumMent, sumAsig), 100, "%", true);
+
+		// --- Impact SÍ/NO per item. ---
+		html += '<h2>Impacto en los objetivos del programa</h2>';
+		html += '<p class="legend"><span class="sw" style="background:#28a745"></span>SÍ' +
+			'<span class="sw" style="background:#dc3545"></span>NO</p>';
+		IMPACT.forEach(function (it) {
+			var t = imp[it.key];
+			var tot = t.si + t.no;
+			var ySplit = tot > 0 ? Math.round((t.si / tot) * 100) : 0;
+			html += '<div class="bar-row">' +
+				'<span class="bar-label">' + escapeHtml(it.title) + '</span>' +
+				'<span class="bar-track"><span class="split">' +
+					'<span class="yes" style="width:' + ySplit + '%"></span>' +
+					'<span class="no" style="width:' + (100 - ySplit) + '%"></span>' +
+				'</span></span>' +
+				'<span class="bar-num">' + t.si + ' / ' + tot + '</span>' +
+				'</div>';
+		});
+
+		// --- Formación (average Likert level per module). ---
+		html += '<h2>Valoración media de la formación (1–' + LIKERT_MAX + ')</h2>';
+		MODULOS.forEach(function (mod, k) {
+			var avg = formCnt[k] > 0 ? (formSum[k] / formCnt[k]) : 0;
+			var avgRounded = Math.round(avg * 10) / 10;
+			html += bar(mod, avgRounded, LIKERT_MAX, " · " + formCnt[k] + " resp.", false);
+		});
+
+		// --- Per-mentor table. ---
+		html += '<h2>Detalle por mentor/a</h2>';
+		html += '<table><thead><tr>' +
+			'<th>Mentor/a</th><th>CEP</th><th class="n">Asig.</th><th class="n">Visit.</th>' +
+			'<th class="n">Ment.</th><th class="n">% Cobertura</th><th>Fecha</th>' +
+			'</tr></thead><tbody>';
+		subs.forEach(function (s) {
+			var a = answers(s);
+			var asig = num(a.numAsignados), ment = num(a.numMentorizados);
+			html += '<tr>' +
+				'<td>' + escapeHtml(a.idNombre || "—") + '</td>' +
+				'<td>' + escapeHtml(a.idCep || "—") + '</td>' +
+				'<td class="n">' + asig + '</td>' +
+				'<td class="n">' + num(a.numVisitados) + '</td>' +
+				'<td class="n">' + ment + '</td>' +
+				'<td class="n">' + pct(ment, asig) + '%</td>' +
+				'<td>' + escapeHtml((s.created_at || "").slice(0, 10) || "—") + '</td>' +
+				'</tr>';
+		});
+		html += '</tbody></table>';
+
+		html += '<button type="button" onclick="window.print()">Imprimir</button>';
+		html += '<details><summary>Ver JSON</summary><textarea rows="14" readonly>' +
+			escapeHtml(JSON.stringify(context, null, 2)) + '</textarea></details>';
+
+		app.innerHTML = html;
+	};
+
+	window.addEventListener("message", function (event) {
+		if (!event.data || event.data.type !== "franer_view_payload") { return; }
+		if (typeof window.FranerRenderSubmissions === "function") {
+			window.FranerRenderSubmissions(event.data.payload);
+		}
+	});
+</script>
+</body>
+</html>

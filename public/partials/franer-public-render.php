@@ -25,7 +25,11 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 $franer_title = isset( $settings['title'] ) ? $settings['title'] : '';
-$franer_html  = isset( $settings['html'] ) ? $settings['html'] : '';
+// Render-time only: HTML and inline-JavaScript comments are stripped before the
+// markup reaches the sandboxed iframe, so maintenance comments (and any embedded
+// generation prompt) never leak to end users. The stored source keeps its
+// comments — only this rendered copy is cleaned.
+$franer_html  = Franer_Sanitizer::strip_activity_comments( isset( $settings['html'] ) ? $settings['html'] : '' );
 $franer_slug  = isset( $settings['slug'] ) ? $settings['slug'] : '';
 
 /* translators: %s: Franer activity title. */
