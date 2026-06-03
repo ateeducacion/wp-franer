@@ -33,6 +33,21 @@ msgstr ""
 msgid "https://www3.gobiernodecanarias.org/medusa/ecoescuela/ate/"
 msgstr ""
 
+msgid "Submissions overview"
+msgstr ""
+
+msgid "You do not have permission to access this page."
+msgstr ""
+
+msgid "The requested Franer could not be found."
+msgstr ""
+
+msgid "No submission view template has been configured for this Franer."
+msgstr ""
+
+msgid "You do not have permission to manage submissions."
+msgstr ""
+
 msgid "Franer Submissions"
 msgstr ""
 
@@ -43,9 +58,6 @@ msgid "Franer Help"
 msgstr ""
 
 msgid "Help"
-msgstr ""
-
-msgid "Submissions overview"
 msgstr ""
 
 msgid "Site settings"
@@ -67,18 +79,6 @@ msgid "Copied to clipboard."
 msgstr ""
 
 msgid "Could not copy. Please copy manually."
-msgstr ""
-
-msgid "You do not have permission to access this page."
-msgstr ""
-
-msgid "The requested Franer could not be found."
-msgstr ""
-
-msgid "No submission view template has been configured for this Franer."
-msgstr ""
-
-msgid "You do not have permission to manage submissions."
 msgstr ""
 
 msgid "Visit Franer"
@@ -111,13 +111,37 @@ msgstr ""
 msgid "The requested activity does not exist."
 msgstr ""
 
-msgid "Add this to your request. Generate ONE complete, self-contained HTML document (HTML, CSS and JS inline)."
+msgid "Add this to your request. Generate ONE complete HTML document with all HTML, CSS and JS inline."
 msgstr ""
 
-msgid "No external resources, no network calls (fetch/XHR/WebSocket), no cookies or storage."
+msgid "It runs inside a sandboxed iframe (sandbox=\"allow-scripts allow-forms\", NO same-origin) and talks to the page ONLY via window.parent.postMessage."
 msgstr ""
 
-msgid "It runs inside a sandboxed iframe and talks to the page ONLY via window.parent.postMessage."
+msgid "RUNTIME RULES (the sandbox blocks these — using them breaks the activity):"
+msgstr ""
+
+msgid "- No localStorage, sessionStorage, IndexedDB or cookies (they throw); keep all state in a plain JS variable in memory."
+msgstr ""
+
+msgid "- No alert(), confirm(), prompt() or window.print() (they are suppressed); build confirmations and notices as in-page HTML/CSS."
+msgstr ""
+
+msgid "- No window.open(), no file downloads. For a printable view, toggle a CSS class and use @media print so the user prints with the browser."
+msgstr ""
+
+msgid "- Never let the script throw while loading: wire the critical UI (tab navigation, listeners) first and guard any optional feature with feature-detection or try/catch."
+msgstr ""
+
+msgid "EXTERNAL RESOURCES: loading libraries, web fonts and images from https (Bootstrap, charting libraries, Google Fonts, remote images, …) IS allowed. Prefer a self-contained document when you can, for privacy, reliability and offline use."
+msgstr ""
+
+msgid "DATA NEVER LEAVES THE ACTIVITY except through window.parent.postMessage. Do not use fetch/XHR/WebSocket/sendBeacon or form actions to send answers anywhere — a Content-Security-Policy blocks them."
+msgstr ""
+
+msgid "TABS/PAGES (if requested) must use plain JS, not a framework: buttons with class \"tab-btn\" and data-tab=\"ID\", sections with class \"tab\" (\".tab{display:none}\", \".tab.active{display:block}\"), toggling the \"active\" class on click. Add role=\"tablist\"/\"tab\"/\"tabpanel\" and keyboard support."
+msgstr ""
+
+msgid "Make it a quality resource: responsive, accessible (labels, contrast, visible focus), CSS variables for the palette, @media print rules, and show field validation in-page (never with alert)."
 msgstr ""
 
 msgid "Replace REPLACE_WITH_SLUG with the activity slug and implement these globals:"
@@ -141,13 +165,13 @@ msgstr ""
 msgid "This HTML document is not the activity form. It is an administrator-only template that renders an OVERVIEW of all submissions for one activity: totals, charts and summary tables."
 msgstr ""
 
-msgid "Generate ONE complete HTML document with HTML, CSS and JavaScript in a single file."
+msgid "Generate ONE complete HTML document with all HTML, CSS and JavaScript inline."
 msgstr ""
 
-msgid "No external scripts, external CSS, CDNs, remote fonts, tracking pixels, cookies or localStorage for personal data. Draw any charts yourself with inline SVG or <canvas> — do not load a charting library."
+msgid "You MAY load a charting library, fonts or images from https (for example Chart.js or D3 from a CDN), or draw charts yourself with inline SVG or <canvas>. Prefer a self-contained document when practical, for privacy and reliability. Do not use cookies or localStorage for personal data."
 msgstr ""
 
-msgid "It must not call fetch(), XMLHttpRequest, navigator.sendBeacon(), WebSockets or any external endpoint, must not include a form action URL, and must not read or modify the parent window DOM."
+msgid "It must not exfiltrate data: no fetch(), XMLHttpRequest, navigator.sendBeacon(), WebSockets, no form action URL, and it must not read or modify the parent window DOM. A Content-Security-Policy blocks those channels; the data arrives only through postMessage."
 msgstr ""
 
 msgid "It receives data only through window.postMessage(). The parent admin page sends this message:"
@@ -201,7 +225,31 @@ msgstr ""
 msgid "Security model"
 msgstr ""
 
-msgid "Activity HTML always runs inside an <iframe srcdoc> with sandbox=\"allow-scripts allow-forms\" and no same-origin access. The iframe cannot read cookies, access the parent page, or make network requests. The parent page (not the iframe) performs the authenticated REST call that stores the submission."
+msgid "Activity HTML always runs inside an <iframe srcdoc> with sandbox=\"allow-scripts allow-forms\" and no same-origin access. It cannot read cookies/storage or access the parent page. The parent page (not the iframe) performs the authenticated REST call that stores the submission. At render time Franer also injects a Content-Security-Policy into the iframe as a guardrail."
+msgstr ""
+
+msgid "What activities CAN do:"
+msgstr ""
+
+msgid "Load external libraries, web fonts and images over https (Bootstrap, charting libraries, Google Fonts, remote images, …). A self-contained document is still recommended for privacy and reliability."
+msgstr ""
+
+msgid "Send the user's answers to WordPress — but ONLY through window.parent.postMessage."
+msgstr ""
+
+msgid "What is blocked:"
+msgstr ""
+
+msgid "Storage and cookies (localStorage/sessionStorage/cookies throw); keep state in memory."
+msgstr ""
+
+msgid "Modal dialogs and printing: alert(), confirm(), prompt(), window.print(), pop-ups and downloads."
+msgstr ""
+
+msgid "Data exfiltration: the Content-Security-Policy blocks fetch(), XMLHttpRequest, WebSockets, sendBeacon() and form submissions, so a remote script cannot phone the answers home."
+msgstr ""
+
+msgid "Because remote scripts run in front of your users, paste only activities you trust. The CSP reduces exfiltration but is defense-in-depth, not a substitute for trust."
 msgstr ""
 
 msgid "JavaScript contract"
@@ -309,7 +357,7 @@ msgstr ""
 msgid "Security note:"
 msgstr ""
 
-msgid "This HTML is stored exactly as entered and is ONLY ever rendered inside a sandboxed iframe (sandbox=\"allow-scripts allow-forms\", without same-origin access). It cannot read cookies, the page DOM, or make network requests. Paste only trusted, self-contained activities."
+msgid "This HTML is stored exactly as entered and is ONLY ever rendered inside a sandboxed iframe (sandbox=\"allow-scripts allow-forms\", without same-origin access). It cannot read cookies/storage or the page DOM. It MAY load external libraries, fonts and images over https, but an injected Content-Security-Policy blocks fetch/XHR/forms so answers can only leave via postMessage. Because remote scripts run in front of your users, paste only activities you trust."
 msgstr ""
 
 msgid "Activity HTML source"
@@ -324,7 +372,7 @@ msgstr ""
 msgid "Optional field. Store here the prompt used to generate this HTML. It can help with future modifications, adjustments or regeneration of the activity."
 msgstr ""
 
-msgid "Like the activity HTML, this template is stored raw and only ever rendered inside a sandboxed iframe. It is shown only to administrators and receives every submission JSON through postMessage. It never receives REST nonces, admin URLs or network access."
+msgid "Like the activity HTML, this template is stored raw and only ever rendered inside a sandboxed iframe. It is shown only to administrators and receives every submission JSON through postMessage. It never receives REST nonces or admin URLs, and an injected Content-Security-Policy blocks fetch/XHR/forms so the aggregated answers cannot be exfiltrated. It may still load libraries, fonts and images over https — paste only templates you trust."
 msgstr ""
 
 msgid "Submission view HTML source"

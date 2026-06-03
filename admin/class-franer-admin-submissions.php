@@ -293,7 +293,9 @@ class Franer_Admin_Submissions {
 		);
 
 		$data['has_template'] = true;
-		$data['view_html']    = Franer_Sanitizer::strip_activity_comments( $raw_view );
+		// Render-time transforms (comment stripping + guardrail CSP); the overview
+		// receives every submission, so blocking exfiltration here matters most.
+		$data['view_html']    = Franer_Sanitizer::prepare_for_srcdoc( $raw_view );
 
 		$data['context'] = array(
 			'site'        => array(

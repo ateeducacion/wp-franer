@@ -187,7 +187,7 @@ if ( ! function_exists( 'franer_render_html_metabox' ) ) {
 				<div class="franer-notice-box">
 					<p>
 						<strong><?php esc_html_e( 'Security note:', 'franer' ); ?></strong>
-						<?php esc_html_e( 'This HTML is stored exactly as entered and is ONLY ever rendered inside a sandboxed iframe (sandbox="allow-scripts allow-forms", without same-origin access). It cannot read cookies, the page DOM, or make network requests. Paste only trusted, self-contained activities.', 'franer' ); ?>
+						<?php esc_html_e( 'This HTML is stored exactly as entered and is ONLY ever rendered inside a sandboxed iframe (sandbox="allow-scripts allow-forms", without same-origin access). It cannot read cookies/storage or the page DOM. It MAY load external libraries, fonts and images over https, but an injected Content-Security-Policy blocks fetch/XHR/forms so answers can only leave via postMessage. Because remote scripts run in front of your users, paste only activities you trust.', 'franer' ); ?>
 					</p>
 				</div>
 				<p>
@@ -211,7 +211,7 @@ if ( ! function_exists( 'franer_render_html_metabox' ) ) {
 				<div class="franer-notice-box">
 					<p>
 						<strong><?php esc_html_e( 'Security note:', 'franer' ); ?></strong>
-						<?php esc_html_e( 'Like the activity HTML, this template is stored raw and only ever rendered inside a sandboxed iframe. It is shown only to administrators and receives every submission JSON through postMessage. It never receives REST nonces, admin URLs or network access.', 'franer' ); ?>
+						<?php esc_html_e( 'Like the activity HTML, this template is stored raw and only ever rendered inside a sandboxed iframe. It is shown only to administrators and receives every submission JSON through postMessage. It never receives REST nonces or admin URLs, and an injected Content-Security-Policy blocks fetch/XHR/forms so the aggregated answers cannot be exfiltrated. It may still load libraries, fonts and images over https — paste only templates you trust.', 'franer' ); ?>
 					</p>
 				</div>
 				<p>

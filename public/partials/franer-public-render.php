@@ -9,7 +9,11 @@
  * The HTML source is intentionally NOT sanitized: it is only ever placed
  * inside an iframe with the "srcdoc" attribute and a restrictive sandbox
  * (allow-scripts allow-forms, NO allow-same-origin), so it cannot touch the
- * parent document, cookies or storage.
+ * parent document, cookies or storage. At render time only two non-destructive
+ * transforms are applied (see Franer_Sanitizer::prepare_for_srcdoc()):
+ * maintenance comments are stripped and a guardrail Content-Security-Policy is
+ * injected, which lets the activity load external libraries/fonts/images over
+ * https while blocking data exfiltration (connect-src/form-action).
  *
  * Expected variables in scope:
  *
@@ -25,11 +29,11 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 $franer_title = isset( $settings['title'] ) ? $settings['title'] : '';
-// Render-time only: HTML and inline-JavaScript comments are stripped before the
-// markup reaches the sandboxed iframe, so maintenance comments (and any embedded
-// generation prompt) never leak to end users. The stored source keeps its
-// comments — only this rendered copy is cleaned.
-$franer_html  = Franer_Sanitizer::strip_activity_comments( isset( $settings['html'] ) ? $settings['html'] : '' );
+// Render-time only: maintenance comments are stripped and a guardrail CSP is
+// injected before the markup reaches the sandboxed iframe, so comments (and any
+// embedded generation prompt) never leak to users and a remote script cannot
+// exfiltrate answers. The stored source is unchanged — only this rendered copy.
+$franer_html  = Franer_Sanitizer::prepare_for_srcdoc( isset( $settings['html'] ) ? $settings['html'] : '' );
 $franer_slug  = isset( $settings['slug'] ) ? $settings['slug'] : '';
 
 /* translators: %s: Franer activity title. */
@@ -51,7 +55,8 @@ $franer_iframe_title = sprintf( __( 'Activity: %s', 'franer' ), $franer_title );
 		</button>
 		<iframe
 			class="franer-shell__frame"
-			srcdoc="<?php echo esc_attr( $franer_html ); ?>"
+			<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escape_for_srcdoc() double-encodes the whole document with ENT_QUOTES for the srcdoc attribute; esc_attr() would under-encode existing entities. ?>
+			srcdoc="<?php echo Franer_Sanitizer::escape_for_srcdoc( $franer_html ); ?>"
 			sandbox="allow-scripts allow-forms"
 			referrerpolicy="no-referrer"
 			loading="lazy"
