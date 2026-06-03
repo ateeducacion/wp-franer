@@ -1,0 +1,18 @@
+Genera una plantilla HTML autocontenida (HTML, CSS y JavaScript en un único archivo, sin recursos externos ni llamadas de red) para Franer.
+
+No es un formulario: es una vista solo para administradores que muestra un RESUMEN de TODOS los envíos de la actividad "Memoria-Informe MCODE40".
+
+La plantilla recibe los datos exclusivamente por window.postMessage con este mensaje:
+{ "type": "franer_view_payload", "payload": { "site": {...}, "count": N, "truncated": false, "submissions": [ { "id", "user_id", "created_at", "updated_at", "payload": { "data": {...} } } ] } }
+
+Implementa window.FranerRenderSubmissions(context) y un listener de "message" para "franer_view_payload".
+
+La vista debe:
+- Mostrar el título de la actividad y el número total de envíos.
+- Dibujar un gráfico de "envíos por día" con SVG/HTML en línea (sin librerías).
+- Listar los envíos en una tabla (ID, fecha, usuario y un resumen legible de payload.data, leyendo data.answers o data.report.text cuando existan).
+- Degradar con elegancia si faltan campos o no hay envíos.
+- Incluir un bloque <details> con el JSON en bruto y un botón de impresión con window.print().
+- Ser semántica, accesible y responsive, con reglas @media print, y con comentarios claros en HTML, CSS y JS.
+
+No uses fetch/XHR/WebSockets, cookies ni almacenamiento; no accedas al DOM de la ventana superior; no inventes URLs ni incluyas nonces de WordPress.

@@ -1,0 +1,17 @@
+Genera UNA actividad Franer: un documento HTML autocontenido (HTML, CSS y JavaScript en un único archivo, sin recursos externos ni llamadas de red) titulado "Gustos canarios".
+
+Es una encuesta breve y desenfadada sobre preferencias canarias, con estética institucional canaria (azules, amarillo, verde, blanco). Preguntas de opción única:
+- Refresco favorito: Clipper de fresa / Clipper de piña / Otro.
+- Para merendar: Ambrosías (Tirma) / Chocolate Tirma / Pan con gofio.
+- Mojo favorito: Rojo (picón) / Verde (cilantro).
+- Para beber: Barraquito / Café normal.
+- Casilla: "¿Te gustan las papas arrugadas con mojo?".
+- Valoración 1-5 de "¿Cuánto te gusta Canarias?" con un control deslizante.
+- Comentario libre.
+
+Cumple el contrato de Franer (se ejecuta dentro de un iframe aislado y habla con la página solo por postMessage):
+- window.FranerCollect() devuelve { schema_version:"1.0", activity_id:"gustos-canarios", activity_title, submitted_at, data:{ answers:{refresco,merienda,mojo,bebida,papas}, rating, comentario } }.
+- window.FranerSubmit() valida las preguntas de opción y publica { type:"franer_submit", payload: FranerCollect() } a window.parent.
+- Un listener de "message" que gestiona { type:"franer_submit_result", ok, result }.
+
+Diseño accesible y responsive, JavaScript limpio y comentado. Devuelve solo el documento HTML.

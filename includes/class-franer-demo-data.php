@@ -92,7 +92,9 @@ class Franer_Demo_Data {
 			'Memoria-Informe MCODE40',
 			self::get_demo_html(),
 			self::load_example( 'mcode40-view.html' ),
-			'' // allow_multiple stays off for MCODE40 (one submission per user).
+			'', // allow_multiple stays off for MCODE40 (one submission per user).
+			self::load_example( 'mcode40.prompt.txt' ),
+			self::load_example( 'mcode40-view.prompt.txt' )
 		);
 
 		return (int) $post_id;
@@ -112,7 +114,9 @@ class Franer_Demo_Data {
 			'Gustos canarios',
 			self::load_example( 'gustos-canarios.html' ),
 			self::load_example( 'gustos-canarios-view.html' ),
-			'1' // allow_multiple: accumulate many responses.
+			'1', // allow_multiple: accumulate many responses.
+			self::load_example( 'gustos-canarios.prompt.txt' ),
+			self::load_example( 'gustos-canarios-view.prompt.txt' )
 		);
 
 		return (int) $post_id;
@@ -121,14 +125,16 @@ class Franer_Demo_Data {
 	/**
 	 * Create (idempotently) a demo franer_site with activity and view HTML.
 	 *
-	 * @param string $slug           The activity slug.
-	 * @param string $title          The activity title.
-	 * @param string $activity_html  Raw activity HTML for post_content.
-	 * @param string $view_html      Raw submissions-overview template HTML.
-	 * @param string $allow_multiple '1' to allow multiple submissions, '' otherwise.
+	 * @param string $slug                   The activity slug.
+	 * @param string $title                  The activity title.
+	 * @param string $activity_html          Raw activity HTML for post_content.
+	 * @param string $view_html              Raw submissions-overview template HTML.
+	 * @param string $allow_multiple         '1' to allow multiple submissions, '' otherwise.
+	 * @param string $generation_prompt      Prompt used to generate the activity HTML.
+	 * @param string $view_generation_prompt Prompt used to generate the view HTML.
 	 * @return int The created (or existing) post ID, or 0 on failure.
 	 */
-	private static function ensure_activity( $slug, $title, $activity_html, $view_html, $allow_multiple ) {
+	private static function ensure_activity( $slug, $title, $activity_html, $view_html, $allow_multiple, $generation_prompt = '', $view_generation_prompt = '' ) {
 		// Bail if the activity already exists (defensive: option may be unset).
 		if ( class_exists( 'Franer_Site_Repository' ) ) {
 			$repository = new Franer_Site_Repository();
@@ -181,6 +187,14 @@ class Franer_Demo_Data {
 		// render time).
 		if ( '' !== trim( (string) $view_html ) ) {
 			update_post_meta( $post_id, '_franer_view_html', $view_html );
+		}
+
+		// Optional, admin-only prompts that generated the activity and the view.
+		if ( '' !== trim( (string) $generation_prompt ) ) {
+			update_post_meta( $post_id, '_franer_generation_prompt', $generation_prompt );
+		}
+		if ( '' !== trim( (string) $view_generation_prompt ) ) {
+			update_post_meta( $post_id, '_franer_view_generation_prompt', $view_generation_prompt );
 		}
 
 		// The activity HTML lives in post_content (revisioned, shown in the diff).

@@ -1,0 +1,65 @@
+Crea una herramienta web interactiva en formato HTML, CSS y JavaScript, contenida en un único archivo .html, sin depender de librerías externas ni de conexión a internet.
+
+La herramienta debe estar en español, con un diseño limpio, profesional, institucional y de estética web moderna, utilizando los colores corporativos asociados a la educación digital de Canarias (tonos azules institucionales, blanco, amarillo, verde y grises suaves de contraste).
+
+La aplicación web debe titularse:
+“Espacio de Reflexión para la elaboración de la Memoria-Informe individual MCODE40 (Curso 2025-2026)”
+
+El propósito principal de esta herramienta es facilitar al equipo de mentorías el registro dinámico, la evaluación y el vaciado cualitativo y cuantitativo de sus intervenciones en los centros educativos antes de generar su informe definitivo.
+
+La interfaz web debe estructurarse en las siguientes secciones:
+
+1. INTRODUCCIÓN
+- Título principal y subtítulo explicativo basado en el propósito del Programa Código Escuela 4.0 (PCT).
+- Bloque de Identificación del Mentor/a con campos de texto para: "Nombre del mentor/a" y "CEP de adscripción" (con un menú desplegable simulado o de selección).
+
+2. PANEL DE SEGUIMIENTO CUANTITATIVO (CÁLCULO AUTOMÁTICO)
+Formulario con validación de datos numéricos para introducir:
+- Número de centros asignados.
+- Número de centros visitados.
+- Número de centros no visitados.
+- Número de centros mentorizados.
+- Número de sesiones de docencia compartida realizadas.
+* Lógica JS integrada: Al introducir los datos, la herramienta debe calcular automáticamente y mostrar de forma visual mediante tarjetas de impacto:
+  - El % de cobertura de visitas (Centros visitados / Asignados).
+  - El % de cobertura de mentorización (Centros mentorizados / Asignados).
+  - Si el número de centros visitados + no visitados no coincide con los asignados, debe mostrar un aviso visual de advertencia.
+
+3. LABORATORIO DE ANÁLISIS CUALITATIVO
+Campos de texto amplios (textarea) con placeholders sugerentes para guiar la redacción técnica del mentor/a:
+- Avances y aspectos positivos (Foco: implicación del profesorado, dinámicas de aula).
+- Dificultades y líneas de resistencia (Foco: casuísticas específicas de centros rezagados).
+- Propuestas de medidas de mejora (Foco: optimización para la recta final del programa).
+- Buenas prácticas y experiencias destacables (Foco: estrategias metodológicas e intervenciones de éxito).
+
+4. COMPROBACIÓN DE IMPACTO (OBJETIVOS BOE Y PLAN DIGITAL DE CANARIAS)
+Un bloque interactivo de 4 ítems con un selector dicotómico [SÍ] / [NO] para cada uno. Al marcar una opción, debe abrirse obligatoriamente un campo de texto para introducir la "Argumentación o justificación razonada":
+- Ítem 1: Integración Curricular del Pensamiento Computacional.
+- Ítem 2: Competencia Digital Docente Global (con casillas de verificación opcionales para marcar las Áreas del MRCDD impactadas: Área 1 a Área 6).
+- Ítem 3: Competencia Digital Docente Específica (PC, programación y robótica).
+- Ítem 4: Impacto Real en el Alumnado.
+
+5. PANEL DE EVALUACIÓN DE LA FORMACIÓN RECIBIDA
+Dos bloques de votación interactiva mediante botones de radio (estilo escala Likert del 1 al 5) completamente explicados para evaluar la pertinencia de las píldoras:
+A) Píldora formativa: "Mentorización Educativa" (El arte de acompañar).
+B) Píldora formativa: "Inteligencia Artificial Gemini en el ámbito educativo".
+* La graduación debe ser interactiva (cambio de color al seleccionar): 1. Nada pertinente, 2. Poco pertinente, 3. Moderadamente pertinente, 4. Totalmente pertinente, 5. Altamente pertinente y potenciadora.
+- Incluir un campo de texto adicional para "Sugerencias u observaciones sobre la formación interna y coordinación general".
+
+6. BLOQUE DE INFRAESTRUCTURA Y OTROS ASPECTOS
+- Campo de texto para la valoración técnica de la "Dotación de equipamiento e infraestructura tecnológica en los centros".
+- Campo de texto para "Otros comentarios finales".
+
+FUNCIONALIDADES Y BOTONES DE ACCIÓN:
+Añade una barra de herramientas flotante o fija en la parte inferior con los siguientes botones operativos mediante JavaScript puro:
+- [Generar Memoria-Informe]: Al pulsar, validará que los campos esenciales estén rellenos y compilará toda la información en un formato de visualización maquetado de manera impecable debajo del formulario.
+- [Copiar al Portapapeles]: Copia el texto limpio y estructurado de la memoria generada para que el mentor pueda pegarlo directamente en su procesador de textos (.docx).
+- [Descargar en PDF]: Ejecuta una función interna (`window.print()` optimizada o maquetación específica) para guardar el informe resultante.
+- [Versión Imprimible]: Oculta la interfaz de introducción de datos y los botones, mostrando únicamente la memoria final maquetada con diseño institucional apto para impresión en papel o PDF nativo.
+- [Limpiar Formulario]: Borra de forma segura todos los datos introducidos, reinicia los contadores matemáticos a 0% y restaura el estado inicial.
+
+REQUISITOS TÉCNICOS DE DISEÑO (CSS):
+- Responsive Design: Adaptable perfectamente a ordenadores de escritorio, tablets y pantallas de dispositivos móviles.
+- Uso de variables CSS para la paleta de colores.
+- Inclusión de reglas `@media print` para asegurar que al imprimir o guardar en PDF desaparezcan los elementos web secundarios (botones, temporizadores si los hubiera, campos vacíos de edición) y el documento parezca un informe oficial impreso.
+- Todo el código debe estar debidamente estructurado: estructura HTML accesible, estilos CSS organizados y lógica JS limpia y comentada en un único archivo autocontenido.
