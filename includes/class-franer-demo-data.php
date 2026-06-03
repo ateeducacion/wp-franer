@@ -313,9 +313,13 @@ class Franer_Demo_Data {
 	 */
 	private static function sample_mcode_payloads() {
 		$rows = array(
-			array( 'Ana Martínez', '38001234', 'Todo correcto.' ),
-			array( 'Carlos López', '35009876', 'Pendiente de revisión.' ),
-			array( 'María García', '38005678', '' ),
+			array( 'Ana Martínez', '38001234', 'Memoria completada sin incidencias.' ),
+			array( 'Carlos López', '35009876', 'Pendiente de revisión por la dirección.' ),
+			array( 'María García', '38005678', 'Entrega dentro de plazo.' ),
+			array( 'Lucía Hernández', '38004321', 'Faltan datos del segundo trimestre.' ),
+			array( 'Javier Santana', '35001122', 'Todo correcto, revisado dos veces.' ),
+			array( 'Elena Pérez', '38009988', 'Incluye anexo con fotografías.' ),
+			array( 'Pedro Cabrera', '35007766', '' ),
 		);
 
 		$payloads = array();

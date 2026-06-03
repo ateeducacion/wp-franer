@@ -40,9 +40,13 @@
 	<p class="muted">Esperando datos…</p>
 </main>
 <script>
+	// Build entities at runtime from char codes. We deliberately avoid literal
+	// "&amp;"-style strings here: Franer renders this template inside an iframe
+	// srcdoc, and literal HTML entities in the source would be decoded by the
+	// browser and corrupt the script.
 	function escapeHtml(s) {
 		return String(s).replace(/[&<>"']/g, function (c) {
-			return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+			return "&#" + c.charCodeAt(0) + ";";
 		});
 	}
 
