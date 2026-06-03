@@ -180,6 +180,10 @@ class Franer {
 
 		$this->loader->add_filter( 'manage_franer_site_posts_columns', $plugin_admin, 'add_list_columns' );
 		$this->loader->add_action( 'manage_franer_site_posts_custom_column', $plugin_admin, 'render_list_column', 10, 2 );
+		$this->loader->add_filter( 'manage_edit-franer_site_sortable_columns', $plugin_admin, 'add_sortable_columns' );
+		$this->loader->add_filter( 'posts_clauses', $plugin_admin, 'sort_by_submissions_clauses', 10, 2 );
+		$this->loader->add_action( 'restrict_manage_posts', $plugin_admin, 'add_list_filters' );
+		$this->loader->add_action( 'pre_get_posts', $plugin_admin, 'filter_list_query' );
 		$this->loader->add_filter( 'post_row_actions', $plugin_admin, 'add_row_actions', 10, 2 );
 	}
 

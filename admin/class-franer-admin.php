@@ -634,4 +634,128 @@ class Franer_Admin {
 
 		return $actions;
 	}
+
+	/**
+	 * Register the sortable franer_site list columns.
+	 *
+	 * @param array $columns Sortable columns map.
+	 * @return array The filtered map.
+	 */
+	public function add_sortable_columns( $columns ) {
+		$columns['author']             = 'author';
+		$columns['franer_submissions'] = 'franer_submissions';
+
+		return $columns;
+	}
+
+	/**
+	 * Sort the franer_site list by submission count when requested.
+	 *
+	 * Joins an aggregated count of the submissions table so the custom
+	 * "Submissions" column becomes sortable.
+	 *
+	 * @param array    $clauses The SQL clauses.
+	 * @param WP_Query $query   The current query.
+	 * @return array The filtered clauses.
+	 */
+	public function sort_by_submissions_clauses( $clauses, $query ) {
+		if ( ! is_admin() || ! $query->is_main_query() ) {
+			return $clauses;
+		}
+		if ( 'franer_site' !== $query->get( 'post_type' ) || 'franer_submissions' !== $query->get( 'orderby' ) ) {
+			return $clauses;
+		}
+
+		global $wpdb;
+		$table = Franer_Submissions_Repository::get_table_name();
+		$order = ( 'asc' === strtolower( (string) $query->get( 'order' ) ) ) ? 'ASC' : 'DESC';
+
+		// $table comes from get_table_name() (prefixed, not user input).
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$clauses['join']   .= " LEFT JOIN ( SELECT site_id, COUNT(*) AS franer_cnt FROM {$table} GROUP BY site_id ) franer_counts ON franer_counts.site_id = {$wpdb->posts}.ID";
+		$clauses['orderby'] = 'COALESCE( franer_counts.franer_cnt, 0 ) ' . $order;
+		$clauses['groupby'] = "{$wpdb->posts}.ID";
+
+		return $clauses;
+	}
+
+	/**
+	 * Render the franer_site list-table filters (status and author).
+	 *
+	 * @param string $post_type The current list post type.
+	 * @return void
+	 */
+	public function add_list_filters( $post_type ) {
+		if ( 'franer_site' !== $post_type ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only list filter.
+		$current = isset( $_GET['franer_enabled'] ) ? sanitize_key( wp_unslash( $_GET['franer_enabled'] ) ) : '';
+		?>
+		<label for="franer-enabled-filter" class="screen-reader-text"><?php esc_html_e( 'Filter by status', 'franer' ); ?></label>
+		<select name="franer_enabled" id="franer-enabled-filter">
+			<option value=""><?php esc_html_e( 'All statuses', 'franer' ); ?></option>
+			<option value="enabled" <?php selected( $current, 'enabled' ); ?>><?php esc_html_e( 'Enabled', 'franer' ); ?></option>
+			<option value="disabled" <?php selected( $current, 'disabled' ); ?>><?php esc_html_e( 'Disabled', 'franer' ); ?></option>
+		</select>
+		<?php
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only list filter.
+		$author = isset( $_GET['author'] ) ? absint( wp_unslash( $_GET['author'] ) ) : 0;
+		wp_dropdown_users(
+			array(
+				'name'            => 'author',
+				'show_option_all' => __( 'All authors', 'franer' ),
+				'selected'        => $author,
+				'capability'      => 'edit_posts',
+			)
+		);
+	}
+
+	/**
+	 * Apply the franer_site list filters to the main admin query.
+	 *
+	 * @param WP_Query $query The current query.
+	 * @return void
+	 */
+	public function filter_list_query( $query ) {
+		if ( ! is_admin() || ! $query->is_main_query() ) {
+			return;
+		}
+		if ( 'franer_site' !== $query->get( 'post_type' ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only list filter.
+		$enabled = isset( $_GET['franer_enabled'] ) ? sanitize_key( wp_unslash( $_GET['franer_enabled'] ) ) : '';
+
+		if ( 'disabled' === $enabled ) {
+			$query->set(
+				'meta_query', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+				array(
+					array(
+						'key'   => '_franer_enabled',
+						'value' => '0',
+					),
+				)
+			);
+		} elseif ( 'enabled' === $enabled ) {
+			// Enabled = the flag is not '0' (unset legacy meta also counts as enabled).
+			$query->set(
+				'meta_query', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+				array(
+					'relation' => 'OR',
+					array(
+						'key'     => '_franer_enabled',
+						'value'   => '0',
+						'compare' => '!=',
+					),
+					array(
+						'key'     => '_franer_enabled',
+						'compare' => 'NOT EXISTS',
+					),
+				)
+			);
+		}
+	}
 }

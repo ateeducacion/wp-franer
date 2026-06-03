@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-06-02T22:21:45+00:00\n"
-"PO-Revision-Date: 2026-06-03T00:09:08+00:00\n"
+"PO-Revision-Date: 2026-06-03T00:11:23+00:00\n"
 "Language: es_ES\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Domain: franer\n"
@@ -74,6 +74,21 @@ msgstr "No tienes permiso para gestionar los envíos."
 
 msgid "Visit Franer"
 msgstr "Ver Franer"
+
+msgid "Filter by status"
+msgstr "Filtrar por estado"
+
+msgid "All statuses"
+msgstr "Todos los estados"
+
+msgid "Enabled"
+msgstr "Habilitado"
+
+msgid "Disabled"
+msgstr "Deshabilitado"
+
+msgid "All authors"
+msgstr "Todos los autores"
 
 msgid "You do not have permission to export submissions."
 msgstr "No tienes permiso para exportar los envíos."
@@ -170,9 +185,6 @@ msgstr "Solo letras minúsculas, números y guiones. Se usa en la URL pública."
 
 msgid "Status"
 msgstr "Estado"
-
-msgid "Enabled"
-msgstr "Habilitado"
 
 msgid "When disabled, the activity is unavailable to everyone."
 msgstr "Cuando está deshabilitado, la actividad no está disponible para nadie."

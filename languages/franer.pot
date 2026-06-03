@@ -75,6 +75,21 @@ msgstr ""
 msgid "Visit Franer"
 msgstr ""
 
+msgid "Filter by status"
+msgstr ""
+
+msgid "All statuses"
+msgstr ""
+
+msgid "Enabled"
+msgstr ""
+
+msgid "Disabled"
+msgstr ""
+
+msgid "All authors"
+msgstr ""
+
 msgid "You do not have permission to export submissions."
 msgstr ""
 
@@ -169,9 +184,6 @@ msgid "Lowercase letters, numbers and hyphens only. Used in the public URL."
 msgstr ""
 
 msgid "Status"
-msgstr ""
-
-msgid "Enabled"
 msgstr ""
 
 msgid "When disabled, the activity is unavailable to everyone."
