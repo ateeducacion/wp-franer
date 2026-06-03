@@ -203,7 +203,12 @@ class Franer_Public {
 			);
 		}
 
-		$this->render_site( $site, $settings );
+		// Presentation/kiosk layout toggle. Display-only: it changes nothing on the
+		// server, so no nonce is required for this read.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$fullscreen = isset( $_GET['fullscreen'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['fullscreen'] ) );
+
+		$this->render_site( $site, $settings, $fullscreen );
 		exit;
 	}
 
@@ -216,10 +221,16 @@ class Franer_Public {
 	 * wp_head()/wp_footer() still run so enqueued styles and scripts load.
 	 * Intended for the dedicated /franer/{slug}/ URL.
 	 *
-	 * @param WP_Post $site     The site post object.
-	 * @param array   $settings The typed site settings.
+	 * @param WP_Post $site       The site post object.
+	 * @param array   $settings   The typed site settings.
+	 * @param bool    $fullscreen Whether to render the kiosk/presentation layout.
 	 */
-	public function render_site( WP_Post $site, array $settings ) {
+	public function render_site( WP_Post $site, array $settings, $fullscreen = false ) {
+		// Kiosk mode is meant to fill the viewport, so suppress the admin bar.
+		if ( $fullscreen ) {
+			add_filter( 'show_admin_bar', '__return_false' );
+		}
+
 		$this->enqueue_assets( $settings );
 
 		/** This action is documented in public/class-franer-public.php */
@@ -227,6 +238,11 @@ class Franer_Public {
 
 		nocache_headers();
 		$this->send_frame_protection_headers();
+
+		$body_classes = array( 'franer-activity-page' );
+		if ( $fullscreen ) {
+			$body_classes[] = 'franer-activity-page--full';
+		}
 		?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>
@@ -236,7 +252,7 @@ class Franer_Public {
 	<title><?php echo esc_html( get_the_title( $site ) ); ?></title>
 		<?php wp_head(); ?>
 </head>
-<body <?php body_class( 'franer-activity-page' ); ?>>
+<body <?php body_class( $body_classes ); ?>>
 		<?php
 		if ( function_exists( 'wp_body_open' ) ) {
 			wp_body_open();
@@ -338,6 +354,15 @@ class Franer_Public {
 			true
 		);
 
+		// Depends on franer-shell so the localized FranerShell global is available.
+		wp_enqueue_script(
+			'franer-fullscreen',
+			plugin_dir_url( __FILE__ ) . 'js/franer-fullscreen.js',
+			array( 'franer-shell' ),
+			FRANER_VERSION,
+			true
+		);
+
 		$base = 'franer/v1/sites/' . rawurlencode( $slug );
 
 		$default_shell_data = array(
@@ -346,10 +371,12 @@ class Franer_Public {
 			'nonce'    => wp_create_nonce( 'wp_rest' ),
 			'slug'     => $slug,
 			'messages' => array(
-				'saved'   => __( 'Your response has been saved.', 'franer' ),
-				'updated' => __( 'Your response has been updated.', 'franer' ),
-				'error'   => __( 'There was a problem saving your response. Please try again.', 'franer' ),
-				'network' => __( 'A network error occurred. Please check your connection and try again.', 'franer' ),
+				'saved'          => __( 'Your response has been saved.', 'franer' ),
+				'updated'        => __( 'Your response has been updated.', 'franer' ),
+				'error'          => __( 'There was a problem saving your response. Please try again.', 'franer' ),
+				'network'        => __( 'A network error occurred. Please check your connection and try again.', 'franer' ),
+				'fullscreen'     => __( 'Fullscreen', 'franer' ),
+				'exitFullscreen' => __( 'Exit fullscreen', 'franer' ),
 			),
 		);
 

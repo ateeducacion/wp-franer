@@ -261,6 +261,11 @@ if ( ! function_exists( 'franer_render_public_url_metabox' ) ) {
 				<?php esc_html_e( 'Open public page', 'franer' ); ?>
 			</a>
 		</p>
+		<p>
+			<a href="<?php echo esc_url( add_query_arg( 'fullscreen', '1', $public_url ) ); ?>" target="_blank" rel="noopener noreferrer">
+				<?php esc_html_e( 'Open in fullscreen', 'franer' ); ?>
+			</a>
+		</p>
 		<hr />
 		<p>
 			<label for="franer_shortcode"><strong><?php esc_html_e( 'Shortcode', 'franer' ); ?></strong></label>

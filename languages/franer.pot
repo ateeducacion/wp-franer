@@ -390,6 +390,9 @@ msgstr ""
 msgid "Open public page"
 msgstr ""
 
+msgid "Open in fullscreen"
+msgstr ""
+
 msgid "Shortcode"
 msgstr ""
 
@@ -633,6 +636,12 @@ msgid "There was a problem saving your response. Please try again."
 msgstr ""
 
 msgid "A network error occurred. Please check your connection and try again."
+msgstr ""
+
+msgid "Fullscreen"
+msgstr ""
+
+msgid "Exit fullscreen"
 msgstr ""
 
 #. translators: %s: Franer activity title.
