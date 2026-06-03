@@ -56,6 +56,22 @@ if ( ! defined( 'WPINC' ) ) {
 			<a class="button button-primary" href="<?php echo esc_url( $export_url ); ?>">
 				<?php esc_html_e( 'Export all submissions (JSON)', 'franer' ); ?>
 			</a>
+			<?php
+			// Overview renderer for this Franer's submissions (only useful when a
+			// submission-view template is configured, but always offered: the page
+			// itself shows a clear notice when no template exists).
+			$franer_overview_url = add_query_arg(
+				array(
+					'post_type' => 'franer_site',
+					'page'      => 'franer-submission-view',
+					'site_id'   => (int) $selected_site,
+				),
+				admin_url( 'edit.php' )
+			);
+			?>
+			<a class="button" href="<?php echo esc_url( $franer_overview_url ); ?>">
+				<?php esc_html_e( 'View overview', 'franer' ); ?>
+			</a>
 		<?php endif; ?>
 	</form>
 

@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Franer 0.0.0\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/franer\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-franer\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -45,6 +45,9 @@ msgstr ""
 msgid "Help"
 msgstr ""
 
+msgid "Submissions overview"
+msgstr ""
+
 msgid "Site settings"
 msgstr ""
 
@@ -67,6 +70,12 @@ msgid "Could not copy. Please copy manually."
 msgstr ""
 
 msgid "You do not have permission to access this page."
+msgstr ""
+
+msgid "The requested Franer could not be found."
+msgstr ""
+
+msgid "No submission view template has been configured for this Franer."
 msgstr ""
 
 msgid "You do not have permission to manage submissions."
@@ -115,6 +124,57 @@ msgid "Replace REPLACE_WITH_SLUG with the activity slug and implement these glob
 msgstr ""
 
 msgid "Add a clearly visible button that calls FranerSubmit(). Return only the HTML document."
+msgstr ""
+
+msgid "Add clear comments to the HTML, CSS and JavaScript to make future maintenance easier."
+msgstr ""
+
+msgid "Include the prompt that generated this activity as an HTML comment near the top of the document when possible. Do not include secrets, private data, credentials, API keys or personal data in that comment."
+msgstr ""
+
+msgid "Franer will strip HTML and JavaScript comments before rendering the activity to users, so comments are for administrator maintenance only."
+msgstr ""
+
+msgid "You are generating a self-contained HTML template for Franer, a WordPress plugin that stores JSON submissions from AI-generated activities."
+msgstr ""
+
+msgid "This HTML document is not the activity form. It is an administrator-only template that renders an OVERVIEW of all submissions for one activity: totals, charts and summary tables."
+msgstr ""
+
+msgid "Generate ONE complete HTML document with HTML, CSS and JavaScript in a single file."
+msgstr ""
+
+msgid "No external scripts, external CSS, CDNs, remote fonts, tracking pixels, cookies or localStorage for personal data. Draw any charts yourself with inline SVG or <canvas> — do not load a charting library."
+msgstr ""
+
+msgid "It must not call fetch(), XMLHttpRequest, navigator.sendBeacon(), WebSockets or any external endpoint, must not include a form action URL, and must not read or modify the parent window DOM."
+msgstr ""
+
+msgid "It receives data only through window.postMessage(). The parent admin page sends this message:"
+msgstr ""
+
+msgid "Implement this global and listener:"
+msgstr ""
+
+msgid "The overview must show the activity title and the total number of submissions, then aggregate the submissions into a readable report."
+msgstr ""
+
+msgid "Iterate context.submissions and read each submission.payload.data. Summarize answers (counts, averages, distributions) and visualize the most relevant fields as charts. Show submissions over time when timestamps are available."
+msgstr ""
+
+msgid "If context.truncated is true, state that only the most recent submissions are shown. If there are no submissions or a field is missing, show a friendly fallback instead of crashing."
+msgstr ""
+
+msgid "Include a collapsible raw JSON section using <details> and a print button using window.print()."
+msgstr ""
+
+msgid "Use semantic, accessible HTML that works on mobile screens, and add clear comments to the HTML, CSS and JavaScript."
+msgstr ""
+
+msgid "Include this prompt as an HTML comment near the top of the document when possible, excluding any secrets, credentials, API keys or personal data. Do not invent backend URLs and do not include WordPress nonces."
+msgstr ""
+
+msgid "Return only the complete HTML document. Do not add explanations before or after it."
 msgstr ""
 
 msgid "Franer logo"
@@ -177,6 +237,18 @@ msgstr ""
 msgid "Franer activity spec"
 msgstr ""
 
+msgid "Prompt for generating a submission view template"
+msgstr ""
+
+msgid "A submission view template is not a form. It is an admin-only HTML document that renders an overview of all of an activity's submissions (totals, charts, summary tables). Configure it in the \"Submission View HTML\" tab of a Franer, then open it with the \"View overview\" button on the Submissions screen. The template receives every submission as JSON through postMessage and runs inside a sandboxed iframe, exactly like an activity."
+msgstr ""
+
+msgid "Copy submission view prompt"
+msgstr ""
+
+msgid "Franer submission view spec"
+msgstr ""
+
 msgid "Slug"
 msgstr ""
 
@@ -222,6 +294,18 @@ msgstr ""
 msgid "Maximum accepted submission size, between 1 and 5120 KB."
 msgstr ""
 
+msgid "Copy"
+msgstr ""
+
+msgid "HTML editors"
+msgstr ""
+
+msgid "Activity HTML"
+msgstr ""
+
+msgid "Submission View HTML"
+msgstr ""
+
 msgid "Security note:"
 msgstr ""
 
@@ -234,7 +318,25 @@ msgstr ""
 msgid "A complete, self-contained HTML document implementing window.FranerCollect() and window.FranerSubmit(). See the Help page for a ready-to-use AI prompt."
 msgstr ""
 
-msgid "Copy"
+msgid "Prompt used to generate this activity"
+msgstr ""
+
+msgid "Optional field. Store here the prompt used to generate this HTML. It can help with future modifications, adjustments or regeneration of the activity."
+msgstr ""
+
+msgid "Like the activity HTML, this template is stored raw and only ever rendered inside a sandboxed iframe. It is shown only to administrators and receives every submission JSON through postMessage. It never receives REST nonces, admin URLs or network access."
+msgstr ""
+
+msgid "Submission view HTML source"
+msgstr ""
+
+msgid "Optional HTML used to render an overview of all submissions for this Franer (totals, charts, …). It is only shown to administrators from the submissions screen and receives every submission JSON through postMessage."
+msgstr ""
+
+msgid "Prompt used to generate this submission view"
+msgstr ""
+
+msgid "Optional field. Store here the prompt used to generate the submission-view template. It can help with future modifications, adjustments or regeneration of the view."
 msgstr ""
 
 msgid "Open public page"
@@ -256,10 +358,45 @@ msgstr ""
 msgid "Export JSON"
 msgstr ""
 
+msgid "View overview"
+msgstr ""
+
+msgid "Renders all submissions with the Submission View HTML template."
+msgstr ""
+
 msgid "Need help creating an activity? The Help page includes a ready-to-use AI prompt and the full JavaScript contract."
 msgstr ""
 
 msgid "Open Help"
+msgstr ""
+
+msgid "Back to submissions"
+msgstr ""
+
+msgid "Print"
+msgstr ""
+
+msgid "Activity"
+msgstr ""
+
+msgid "Total submissions"
+msgstr ""
+
+#. translators: %s: maximum number of submissions delivered to the view.
+#, php-format
+msgid "This activity has more submissions than can be rendered at once. The view received the %s most recent submissions."
+msgstr ""
+
+msgid "View JSON"
+msgstr ""
+
+msgid "Submissions JSON payload"
+msgstr ""
+
+msgid "Rendered overview"
+msgstr ""
+
+msgid "Rendered submissions overview"
 msgstr ""
 
 msgid "Submission deleted."
@@ -303,9 +440,6 @@ msgid "&raquo;"
 msgstr ""
 
 msgid "ID"
-msgstr ""
-
-msgid "Activity"
 msgstr ""
 
 msgid "User"

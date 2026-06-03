@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<!--
+	Franer demo submission-view template for "Gustos canarios".
+	Admin-only overview of ALL submissions: totals, bar charts and a comment
+	list. It is NOT a form. It receives every submission through postMessage
+	(type "franer_view_payload") and renders an aggregate report. No external
+	resources, no network calls; charts are drawn with inline SVG.
+-->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resumen · Gustos canarios</title>
+<style>
+	:root { --blue: #0073e6; --green: #28a745; --ink: #1d2327; --muted: #50575e; --bg: #fff; }
+	* { box-sizing: border-box; }
+	body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 1.25rem; color: var(--ink); background: var(--bg); line-height: 1.5; }
+	h1 { color: var(--blue); margin: 0 0 0.25rem; }
+	h2 { margin: 1.5rem 0 0.5rem; font-size: 1.1rem; }
+	.muted { color: var(--muted); }
+	.totals { font-size: 2rem; font-weight: 800; color: var(--green); }
+	.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
+	.card { border: 1px solid #dcdcde; border-radius: 8px; padding: 0.75rem 1rem; }
+	.bar-row { display: flex; align-items: center; gap: 0.5rem; margin: 0.3rem 0; }
+	.bar-label { flex: 0 0 9rem; font-size: 0.9rem; }
+	.bar-track { flex: 1; background: #eef0f1; border-radius: 4px; overflow: hidden; }
+	.bar-fill { height: 1.1rem; background: var(--blue); }
+	.bar-count { flex: 0 0 3.5rem; text-align: right; font-variant-numeric: tabular-nums; }
+	ul.comments { padding-left: 1.1rem; }
+	ul.comments li { margin: 0.25rem 0; }
+	.empty { padding: 1rem; background: #f6f7f7; border-radius: 8px; }
+	details { margin-top: 1.5rem; }
+	textarea { width: 100%; font-family: Consolas, Monaco, monospace; font-size: 12px; }
+	button { margin: 1rem 0; padding: 0.5rem 1rem; border: 1px solid var(--blue); background: #fff; color: var(--blue); border-radius: 6px; cursor: pointer; }
+	@media print { button, details { display: none; } }
+</style>
+</head>
+<body>
+<main id="app">
+	<h1>Resumen · Gustos canarios</h1>
+	<p class="muted" id="subtitle">Esperando datos…</p>
+</main>
+<script>
+	// Human-readable labels for each stored answer value.
+	var LABELS = {
+		refresco: { clipper_fresa: "Clipper de fresa", clipper_pina: "Clipper de piña", otro: "Otro" },
+		merienda: { ambrosias: "Ambrosías (Tirma)", tirma: "Chocolate Tirma", gofio: "Pan con gofio" },
+		mojo: { rojo: "Mojo rojo", verde: "Mojo verde" },
+		bebida: { barraquito: "Barraquito", cafe: "Café normal" },
+		papas: { si: "Sí", no: "No" }
+	};
+	var QUESTIONS = [
+		{ key: "refresco", title: "Refresco favorito" },
+		{ key: "merienda", title: "Para merendar" },
+		{ key: "mojo", title: "Mojo favorito" },
+		{ key: "bebida", title: "Para beber" },
+		{ key: "papas", title: "¿Papas arrugadas?" }
+	];
+
+	function escapeHtml(s) {
+		return String(s).replace(/[&<>"']/g, function (c) {
+			return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+		});
+	}
+
+	// Tally the distribution of one answer key across all submissions.
+	function tally(submissions, key) {
+		var counts = {};
+		submissions.forEach(function (s) {
+			var data = (s && s.payload && s.payload.data) || {};
+			var answers = data.answers || {};
+			var value = answers[key];
+			if (value === undefined || value === null || value === "") { return; }
+			counts[value] = (counts[value] || 0) + 1;
+		});
+		return counts;
+	}
+
+	// Render a horizontal bar chart for a tally object.
+	function barChart(counts, key) {
+		var keys = Object.keys(counts);
+		if (!keys.length) { return '<p class="muted">Sin respuestas.</p>'; }
+		var max = 0;
+		keys.forEach(function (k) { if (counts[k] > max) { max = counts[k]; } });
+		var rows = keys.map(function (k) {
+			var label = (LABELS[key] && LABELS[key][k]) ? LABELS[key][k] : k;
+			var pct = max ? Math.round((counts[k] / max) * 100) : 0;
+			return '<div class="bar-row">' +
+				'<span class="bar-label">' + escapeHtml(label) + '</span>' +
+				'<span class="bar-track"><span class="bar-fill" style="width:' + pct + '%"></span></span>' +
+				'<span class="bar-count">' + counts[k] + '</span>' +
+				'</div>';
+		});
+		return rows.join("");
+	}
+
+	function averageRating(submissions) {
+		var sum = 0, n = 0;
+		submissions.forEach(function (s) {
+			var data = (s && s.payload && s.payload.data) || {};
+			var r = parseFloat(data.rating);
+			if (!isNaN(r)) { sum += r; n += 1; }
+		});
+		return n ? (sum / n) : null;
+	}
+
+	function collectComments(submissions) {
+		var out = [];
+		submissions.forEach(function (s) {
+			var data = (s && s.payload && s.payload.data) || {};
+			var c = (data.comentario || "").trim();
+			if (c) { out.push(c); }
+		});
+		return out;
+	}
+
+	// Main entry point invoked by the host page after postMessage.
+	window.FranerRenderSubmissions = function (context) {
+		context = context || {};
+		var submissions = context.submissions || [];
+		var total = (typeof context.count === "number") ? context.count : submissions.length;
+		var app = document.getElementById("app");
+
+		var html = '<h1>Resumen · ' + escapeHtml((context.site && context.site.title) || "Gustos canarios") + '</h1>';
+		html += '<p class="totals">' + total + '</p><p class="muted">respuestas recibidas';
+		if (context.truncated) { html += ' (mostrando las más recientes)'; }
+		html += '</p>';
+
+		if (!submissions.length) {
+			html += '<div class="empty">Todavía no hay respuestas para esta actividad.</div>';
+			app.innerHTML = html;
+			return;
+		}
+
+		var avg = averageRating(submissions);
+		if (avg !== null) {
+			html += '<h2>Valoración media de Canarias</h2><p class="totals">' + avg.toFixed(1) + ' / 5</p>';
+		}
+
+		html += '<h2>Preferencias</h2><div class="grid">';
+		QUESTIONS.forEach(function (q) {
+			html += '<div class="card"><strong>' + escapeHtml(q.title) + '</strong>' +
+				barChart(tally(submissions, q.key), q.key) + '</div>';
+		});
+		html += '</div>';
+
+		var comments = collectComments(submissions);
+		if (comments.length) {
+			html += '<h2>Comentarios</h2><ul class="comments">';
+			comments.forEach(function (c) { html += '<li>' + escapeHtml(c) + '</li>'; });
+			html += '</ul>';
+		}
+
+		html += '<button type="button" onclick="window.print()">Imprimir</button>';
+		html += '<details><summary>Ver JSON</summary><textarea rows="14" readonly>' +
+			escapeHtml(JSON.stringify(context, null, 2)) + '</textarea></details>';
+
+		app.innerHTML = html;
+	};
+
+	window.addEventListener("message", function (event) {
+		if (!event.data || event.data.type !== "franer_view_payload") { return; }
+		if (typeof window.FranerRenderSubmissions === "function") {
+			window.FranerRenderSubmissions(event.data.payload);
+		}
+	});
+</script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<!--
+	Franer demo submission-view template for the MCODE40 activity.
+	Admin-only overview of ALL submissions. It is NOT a form: it receives every
+	submission through postMessage (type "franer_view_payload") and renders an
+	aggregate report (total, submissions over time, and a per-submission table).
+	Generic by design, so it degrades gracefully for any data shape. No external
+	resources or network calls.
+-->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resumen de envíos</title>
+<style>
+	:root { --blue: #003366; --accent: #0073e6; --green: #28a745; --ink: #1d2327; --muted: #50575e; }
+	* { box-sizing: border-box; }
+	body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 1.25rem; color: var(--ink); line-height: 1.5; background: #fff; }
+	h1 { color: var(--blue); margin: 0 0 0.25rem; }
+	h2 { margin: 1.5rem 0 0.5rem; font-size: 1.1rem; }
+	.muted { color: var(--muted); }
+	.totals { font-size: 2rem; font-weight: 800; color: var(--green); margin: 0.25rem 0; }
+	table { border-collapse: collapse; width: 100%; margin-top: 0.5rem; }
+	th, td { border: 1px solid #dcdcde; padding: 0.4rem 0.6rem; text-align: left; vertical-align: top; font-size: 0.92rem; }
+	th { background: #f4f6f8; }
+	.timeline { display: flex; align-items: flex-end; gap: 4px; height: 120px; margin-top: 0.5rem; }
+	.timeline .col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; flex: 1; }
+	.timeline .col .bar { width: 100%; max-width: 28px; background: var(--accent); border-radius: 3px 3px 0 0; }
+	.timeline .col .lbl { font-size: 0.65rem; color: var(--muted); margin-top: 2px; transform: rotate(-45deg); white-space: nowrap; }
+	.empty { padding: 1rem; background: #f6f7f7; border-radius: 8px; }
+	details { margin-top: 1.5rem; }
+	textarea { width: 100%; font-family: Consolas, Monaco, monospace; font-size: 12px; }
+	button { margin: 1rem 0; padding: 0.5rem 1rem; border: 1px solid var(--accent); background: #fff; color: var(--accent); border-radius: 6px; cursor: pointer; }
+	@media print { button, details { display: none; } }
+</style>
+</head>
+<body>
+<main id="app">
+	<h1>Resumen de envíos</h1>
+	<p class="muted">Esperando datos…</p>
+</main>
+<script>
+	function escapeHtml(s) {
+		return String(s).replace(/[&<>"']/g, function (c) {
+			return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+		});
+	}
+
+	// Build a short, human-readable summary of a submission's data payload.
+	function summarize(data) {
+		if (!data || typeof data !== "object") { return "—"; }
+		if (data.answers && typeof data.answers === "object") {
+			var parts = Object.keys(data.answers).map(function (k) {
+				var v = data.answers[k];
+				if (v && typeof v === "object") { v = JSON.stringify(v); }
+				return escapeHtml(k) + ": " + escapeHtml(v);
+			});
+			if (parts.length) { return parts.join("<br>"); }
+		}
+		if (data.report && typeof data.report.text === "string" && data.report.text) {
+			return escapeHtml(data.report.text.slice(0, 200));
+		}
+		var json = JSON.stringify(data);
+		return escapeHtml(json.length > 200 ? json.slice(0, 200) + "…" : json);
+	}
+
+	// Count submissions per calendar day (YYYY-MM-DD) for the timeline chart.
+	function perDay(submissions) {
+		var counts = {};
+		submissions.forEach(function (s) {
+			var d = (s.created_at || "").slice(0, 10);
+			if (!d) { return; }
+			counts[d] = (counts[d] || 0) + 1;
+		});
+		return counts;
+	}
+
+	function timeline(submissions) {
+		var counts = perDay(submissions);
+		var days = Object.keys(counts).sort();
+		if (!days.length) { return ""; }
+		var max = 0;
+		days.forEach(function (d) { if (counts[d] > max) { max = counts[d]; } });
+		var cols = days.map(function (d) {
+			var h = max ? Math.round((counts[d] / max) * 110) : 0;
+			return '<div class="col" title="' + escapeHtml(d) + ': ' + counts[d] + '">' +
+				'<div class="bar" style="height:' + h + 'px"></div>' +
+				'<div class="lbl">' + escapeHtml(d.slice(5)) + '</div></div>';
+		});
+		return '<div class="timeline">' + cols.join("") + '</div>';
+	}
+
+	window.FranerRenderSubmissions = function (context) {
+		context = context || {};
+		var submissions = context.submissions || [];
+		var total = (typeof context.count === "number") ? context.count : submissions.length;
+		var app = document.getElementById("app");
+
+		var html = '<h1>Resumen de envíos · ' +
+			escapeHtml((context.site && context.site.title) || "") + '</h1>';
+		html += '<p class="totals">' + total + '</p><p class="muted">envíos en total';
+		if (context.truncated) { html += ' (mostrando los más recientes)'; }
+		html += '</p>';
+
+		if (!submissions.length) {
+			html += '<div class="empty">Todavía no hay envíos para esta actividad.</div>';
+			app.innerHTML = html;
+			return;
+		}
+
+		html += '<h2>Envíos por día</h2>' + timeline(submissions);
+
+		html += '<h2>Detalle</h2><table><thead><tr>' +
+			'<th>ID</th><th>Fecha</th><th>Usuario</th><th>Respuestas</th>' +
+			'</tr></thead><tbody>';
+		submissions.forEach(function (s) {
+			var data = (s && s.payload && s.payload.data) || s.payload || {};
+			html += '<tr>' +
+				'<td>' + escapeHtml(s.id) + '</td>' +
+				'<td>' + escapeHtml(s.created_at || "—") + '</td>' +
+				'<td>' + escapeHtml(s.user_id || "—") + '</td>' +
+				'<td>' + summarize(data) + '</td>' +
+				'</tr>';
+		});
+		html += '</tbody></table>';
+
+		html += '<button type="button" onclick="window.print()">Imprimir</button>';
+		html += '<details><summary>Ver JSON</summary><textarea rows="14" readonly>' +
+			escapeHtml(JSON.stringify(context, null, 2)) + '</textarea></details>';
+
+		app.innerHTML = html;
+	};
+
+	window.addEventListener("message", function (event) {
+		if (!event.data || event.data.type !== "franer_view_payload") { return; }
+		if (typeof window.FranerRenderSubmissions === "function") {
+			window.FranerRenderSubmissions(event.data.payload);
+		}
+	});
+</script>
+</body>
+</html>

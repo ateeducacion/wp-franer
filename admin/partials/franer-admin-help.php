@@ -4,7 +4,8 @@
  *
  * Expects the following variable from Franer_Help::render_help_page():
  *
- * @var string $prompt The reusable AI activity-generation prompt.
+ * @var string $prompt      The reusable AI activity-generation prompt.
+ * @var string $view_prompt The reusable AI submission-view template prompt.
  *
  * @package    Franer
  * @subpackage Franer/admin/partials
@@ -62,11 +63,27 @@ if ( ! defined( 'WPINC' ) ) {
 	</p>
 	<p>
 		<button type="button" class="button button-primary" id="franer-copy-prompt"
-			data-franer-copy-target="franer-prompt-text">
+			data-franer-copy-target="franer-prompt-text"
+			data-franer-copy-status="franer-copy-prompt-status">
 			<?php esc_html_e( 'Copy Franer spec', 'franer' ); ?>
 		</button>
 		<span id="franer-copy-prompt-status" class="franer-copy-status" role="status" aria-live="polite"></span>
 	</p>
 	<label for="franer-prompt-text" class="screen-reader-text"><?php esc_html_e( 'Franer activity spec', 'franer' ); ?></label>
 	<textarea id="franer-prompt-text" class="large-text code" rows="16" readonly><?php echo esc_textarea( $prompt ); ?></textarea>
+
+	<h2><?php esc_html_e( 'Prompt for generating a submission view template', 'franer' ); ?></h2>
+	<p>
+		<?php esc_html_e( 'A submission view template is not a form. It is an admin-only HTML document that renders an overview of all of an activity\'s submissions (totals, charts, summary tables). Configure it in the "Submission View HTML" tab of a Franer, then open it with the "View overview" button on the Submissions screen. The template receives every submission as JSON through postMessage and runs inside a sandboxed iframe, exactly like an activity.', 'franer' ); ?>
+	</p>
+	<p>
+		<button type="button" class="button button-primary" id="franer-copy-view-prompt"
+			data-franer-copy-target="franer-view-prompt-text"
+			data-franer-copy-status="franer-copy-view-prompt-status">
+			<?php esc_html_e( 'Copy submission view prompt', 'franer' ); ?>
+		</button>
+		<span id="franer-copy-view-prompt-status" class="franer-copy-status" role="status" aria-live="polite"></span>
+	</p>
+	<label for="franer-view-prompt-text" class="screen-reader-text"><?php esc_html_e( 'Franer submission view spec', 'franer' ); ?></label>
+	<textarea id="franer-view-prompt-text" class="large-text code" rows="20" readonly><?php echo esc_textarea( $view_prompt ); ?></textarea>
 </div>

@@ -46,7 +46,7 @@
     },
     {
       "step": "runPHP",
-      "code": "<?php require_once('/wordpress/wp-load.php'); if ( class_exists( 'Franer_Demo_Data' ) ) { Franer_Demo_Data::seed( 'mcode40' ); } ?>"
+      "code": "<?php require_once('/wordpress/wp-load.php'); if ( class_exists( 'Franer_Demo_Data' ) ) { Franer_Demo_Data::seed_all(); Franer_Demo_Data::seed_sample_submissions(); } ?>"
     }
   ],
   "features": {

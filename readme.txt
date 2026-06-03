@@ -43,8 +43,14 @@ through a nonced, authenticated REST call made by the parent page.
 * **Role-based access** — only logged-in users with an allowed role may view and submit.
 * **Privacy by design** — only SHA-256 hashes of IP and user agent are stored, never raw values.
 * **JSON export** — administrators can export all submissions for an activity as a JSON file.
+* **Submissions overview** — an optional admin-only HTML template renders all of an activity's
+  submissions (totals, charts, summaries) inside a sandboxed iframe, fed via postMessage.
+* **Generation prompt field** — store the prompt used to generate the activity for future audits.
+* **Render-time comment stripping** — HTML/JS comments are removed before rendering (the stored
+  source keeps them), so maintenance comments and embedded prompts never leak to end users.
 * **Public URL and shortcode** — publish at `/franer/{slug}/` or embed with `[franer slug="..."]`.
-* **Built-in AI prompt** — the Help page provides a ready-to-use prompt for generating activities.
+* **Built-in AI prompts** — the Help page provides ready-to-use prompts for generating activities
+  and submissions-overview templates.
 * **WordPress Coding Standards compliant** and covered by PHPUnit, Jest and Playwright tests.
 
 == Installation ==
@@ -92,6 +98,10 @@ No. Franer is fully self-contained.
 * Role-based access control and per-site submission settings.
 * Submissions admin screen with JSON detail modal and JSON export.
 * Built-in AI activity-generation prompt on the Help page.
+* Optional generation-prompt field stored per activity (revisioned, admin-only).
+* Render-time HTML/JavaScript comment stripping for the sandboxed iframe.
+* Optional submission-view template that renders an admin-only overview of all of an activity's
+  submissions inside a sandboxed iframe (postMessage contract), with a second Help prompt.
 * Public `/franer/{slug}/` URL and `[franer]` shortcode.
 
 == Screenshots ==

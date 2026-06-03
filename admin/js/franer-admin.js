@@ -14,21 +14,103 @@
 	var settings = window.FranerAdmin || {};
 	var messages = settings.messages || {};
 
+	// CodeMirror instances keyed by textarea id, so editors inside an initially
+	// hidden tab panel can be refreshed when their panel becomes visible.
+	var editors = {};
+
 	/**
-	 * Initialize the CodeMirror-backed code editor for the HTML textarea.
+	 * Initialize the CodeMirror-backed code editor on every HTML textarea.
+	 *
+	 * Targets all `textarea.franer-code-editor` elements that carry an id, so the
+	 * activity HTML and the submission-view HTML editors are both initialized.
 	 */
 	function initCodeEditor() {
-		if ( ! settings.editorSettings || ! settings.textareaId ) {
+		if ( ! settings.editorSettings ) {
 			return;
 		}
 		if ( ! window.wp || ! window.wp.codeEditor ) {
 			return;
 		}
-		var textarea = document.getElementById( settings.textareaId );
-		if ( ! textarea ) {
-			return;
-		}
-		window.wp.codeEditor.initialize( settings.textareaId, settings.editorSettings );
+		var areas = document.querySelectorAll( 'textarea.franer-code-editor' );
+		Array.prototype.forEach.call( areas, function ( area ) {
+			if ( ! area.id ) {
+				return;
+			}
+			var instance = window.wp.codeEditor.initialize( area.id, settings.editorSettings );
+			if ( instance && instance.codemirror ) {
+				editors[ area.id ] = instance.codemirror;
+			}
+		} );
+	}
+
+	/**
+	 * Refresh any CodeMirror editor contained in the given element.
+	 *
+	 * CodeMirror mis-measures its gutters when initialized inside a hidden
+	 * container, so it must be refreshed once the container becomes visible.
+	 *
+	 * @param {Element} container The newly shown element.
+	 */
+	function refreshEditorsIn( container ) {
+		Object.keys( editors ).forEach( function ( id ) {
+			var area = document.getElementById( id );
+			if ( area && container.contains( area ) ) {
+				editors[ id ].refresh();
+			}
+		} );
+	}
+
+	/**
+	 * Wire accessible tabbed editors (`[data-franer-tabs]`).
+	 *
+	 * Activating a tab shows its panel, hides the others, and updates the ARIA
+	 * state. Left/Right arrow keys move between tabs (WAI-ARIA tabs pattern).
+	 */
+	function initTabs() {
+		var groups = document.querySelectorAll( '[data-franer-tabs]' );
+		Array.prototype.forEach.call( groups, function ( group ) {
+			var tabs = Array.prototype.slice.call(
+				group.querySelectorAll( '[role="tab"]' )
+			);
+
+			function activate( tab, focus ) {
+				tabs.forEach( function ( other ) {
+					var selected = other === tab;
+					other.setAttribute( 'aria-selected', selected ? 'true' : 'false' );
+					other.tabIndex = selected ? 0 : -1;
+					var panel = document.getElementById(
+						other.getAttribute( 'aria-controls' )
+					);
+					if ( panel ) {
+						panel.hidden = ! selected;
+						if ( selected ) {
+							refreshEditorsIn( panel );
+						}
+					}
+				} );
+				if ( focus ) {
+					tab.focus();
+				}
+			}
+
+			tabs.forEach( function ( tab, index ) {
+				tab.addEventListener( 'click', function () {
+					activate( tab, false );
+				} );
+				tab.addEventListener( 'keydown', function ( event ) {
+					var next = null;
+					if ( 'ArrowRight' === event.key ) {
+						next = tabs[ ( index + 1 ) % tabs.length ];
+					} else if ( 'ArrowLeft' === event.key ) {
+						next = tabs[ ( index - 1 + tabs.length ) % tabs.length ];
+					}
+					if ( next ) {
+						event.preventDefault();
+						activate( next, true );
+					}
+				} );
+			} );
+		} );
 	}
 
 	/**
@@ -88,7 +170,8 @@
 	 * @param {string}  message The feedback message.
 	 */
 	function showCopyFeedback( button, message ) {
-		var status = document.getElementById( 'franer-copy-prompt-status' );
+		var statusId = button.getAttribute( 'data-franer-copy-status' ) || 'franer-copy-prompt-status';
+		var status = document.getElementById( statusId );
 		if ( status ) {
 			status.textContent = message;
 			window.setTimeout( function () {
@@ -173,6 +256,7 @@
 	}
 
 	ready( function () {
+		initTabs();
 		initCodeEditor();
 		initCopyButtons();
 		initJsonModal();

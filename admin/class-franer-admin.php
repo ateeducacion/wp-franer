@@ -97,6 +97,39 @@ class Franer_Admin {
 			'franer-help',
 			array( $help, 'render_help_page' )
 		);
+
+		// Admin-only overview renderer for a Franer's submissions, reached from the
+		// submissions screen. Registered so its page route exists (capability
+		// enforced in the callback), then hidden from the menu since it is opened
+		// per-Franer with a site_id. The load hook seeds the page title so the
+		// removed-from-menu page does not leave $title null (PHP 8 strip_tags()).
+		$view_hook = add_submenu_page(
+			'edit.php?post_type=franer_site',
+			__( 'Submissions overview', 'franer' ),
+			__( 'Submissions overview', 'franer' ),
+			'manage_options',
+			'franer-submission-view',
+			array( $this, 'render_submission_view_page' )
+		);
+		remove_submenu_page( 'edit.php?post_type=franer_site', 'franer-submission-view' );
+		if ( $view_hook ) {
+			add_action( 'load-' . $view_hook, array( $this, 'set_submission_view_title' ) );
+		}
+	}
+
+	/**
+	 * Seed the page title for the hidden submissions-overview page.
+	 *
+	 * The page is removed from the submenu, so WordPress cannot resolve its title
+	 * from the menu and would pass null to strip_tags() in admin-header.php. Setting
+	 * the global title before the header renders avoids that PHP 8 deprecation (and
+	 * the "headers already sent" cascade it triggers when WP_DEBUG_DISPLAY is on).
+	 *
+	 * @return void
+	 */
+	public function set_submission_view_title() {
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Intentionally seeds the page title for a menu-hidden admin page so admin-header.php does not strip_tags(null).
+		$GLOBALS['title'] = __( 'Submissions overview', 'franer' );
 	}
 
 	/**
@@ -216,8 +249,16 @@ class Franer_Admin {
 			),
 			'franer_export_' . $post->ID
 		);
+		$overview_url = add_query_arg(
+			array(
+				'post_type' => 'franer_site',
+				'page'      => 'franer-submission-view',
+				'site_id'   => $post->ID,
+			),
+			admin_url( 'edit.php' )
+		);
 		require_once plugin_dir_path( __FILE__ ) . 'partials/franer-admin-metaboxes.php';
-		franer_render_submissions_metabox( $count, $list_url, $export_url );
+		franer_render_submissions_metabox( $count, $list_url, $export_url, $overview_url );
 	}
 
 	/**
@@ -326,6 +367,31 @@ class Franer_Admin {
 		$raw_end = isset( $_POST['franer_end_date'] ) ? sanitize_text_field( wp_unslash( $_POST['franer_end_date'] ) ) : '';
 		update_post_meta( $post_id, '_franer_end_date', Franer_Sanitizer::sanitize_datetime( $raw_end ) );
 
+		// Optional generation prompt. Stored as free-form text: it may contain
+		// Markdown, HTML or code snippets, so it is normalized and size-capped (not
+		// run through KSES/sanitize_text_field, which would strip angle brackets).
+		if ( isset( $_POST['franer_generation_prompt'] ) ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Normalized and size-capped by sanitize_generation_prompt(); stored raw by design and only ever shown via esc_textarea().
+			$raw_prompt = wp_unslash( $_POST['franer_generation_prompt'] );
+			update_post_meta( $post_id, '_franer_generation_prompt', Franer_Sanitizer::sanitize_generation_prompt( $raw_prompt ) );
+		}
+
+		// Optional submission-view template HTML. Like the activity HTML it is raw,
+		// admin-provided source rendered only inside a sandboxed iframe, so it is
+		// stored verbatim (line endings normalized) and never sanitized destructively.
+		if ( isset( $_POST['franer_view_html'] ) ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Raw HTML stored by design; only ever rendered inside a sandboxed iframe (comment-stripped) and escaped on output.
+			$raw_view_html = wp_unslash( $_POST['franer_view_html'] );
+			update_post_meta( $post_id, '_franer_view_html', Franer_Sanitizer::sanitize_view_html( $raw_view_html ) );
+		}
+
+		// Optional prompt used to generate the submission-view template.
+		if ( isset( $_POST['franer_view_generation_prompt'] ) ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Normalized and size-capped by sanitize_generation_prompt(); stored raw by design and only ever shown via esc_textarea().
+			$raw_view_prompt = wp_unslash( $_POST['franer_view_generation_prompt'] );
+			update_post_meta( $post_id, '_franer_view_generation_prompt', Franer_Sanitizer::sanitize_generation_prompt( $raw_view_prompt ) );
+		}
+
 		// Persist any notices for display on redirect.
 		if ( ! empty( $this->notices ) ) {
 			set_transient( 'franer_admin_notices_' . get_current_user_id(), $this->notices, 60 );
@@ -374,7 +440,7 @@ class Franer_Admin {
 		$is_cpt_screen = $screen && isset( $screen->post_type ) && 'franer_site' === $screen->post_type;
 		$is_franer_page = isset( $_GET['page'] ) && in_array(
 			sanitize_text_field( wp_unslash( $_GET['page'] ) ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only screen detection.
-			array( 'franer-submissions', 'franer-help' ),
+			array( 'franer-submissions', 'franer-help', 'franer-submission-view' ),
 			true
 		);
 
@@ -494,6 +560,183 @@ class Franer_Admin {
 		}
 
 		require plugin_dir_path( __FILE__ ) . 'partials/franer-admin-submissions.php';
+	}
+
+	/**
+	 * Maximum number of submissions delivered to a submission-view template.
+	 *
+	 * Bounds the JSON localized into the overview page. When a Franer has more
+	 * submissions, the newest ones are sent and the template is told it was
+	 * truncated, so it can say so instead of silently under-reporting.
+	 *
+	 * @var int
+	 */
+	const VIEW_MAX_SUBMISSIONS = 2000;
+
+	/**
+	 * Render the admin-only submissions-overview page for one Franer.
+	 *
+	 * Resolves the Franer site and its optional `_franer_view_html` template and
+	 * renders that template inside a sandboxed iframe. ALL of the Franer's
+	 * submissions (decoded, capped at VIEW_MAX_SUBMISSIONS) are delivered to the
+	 * iframe by the parent page via postMessage (see
+	 * admin/js/franer-submission-view.js), so the template can build an aggregate
+	 * report (totals, charts, …). The data is never interpolated into the iframe
+	 * markup, and the iframe never receives a REST nonce or any privileged URL.
+	 * When no template is configured, a notice is shown instead.
+	 *
+	 * @return void
+	 */
+	public function render_submission_view_page() {
+		if ( ! Franer_Permissions::can_manage() ) {
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'franer' ) );
+		}
+
+		$site_id = isset( $_GET['site_id'] ) ? absint( wp_unslash( $_GET['site_id'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin view keyed by site ID; capability checked above.
+
+		$data = $this->prepare_submission_view( $site_id );
+
+		// Extract the prepared values into the template scope.
+		$back_url     = $data['back_url'];
+		$error        = $data['error'];
+		$has_template = $data['has_template'];
+		$view_html    = $data['view_html'];
+		$site_title   = $data['site_title'];
+		$count        = $data['count'];
+		$truncated    = $data['truncated'];
+		$pretty_json  = $data['pretty_json'];
+		$context      = $data['context'];
+
+		if ( $has_template ) {
+			// Deliver the decoded submissions to the sandboxed iframe via postMessage
+			// after it loads. No nonce or privileged URL is ever exposed to the frame.
+			wp_register_script(
+				'franer-submission-view',
+				plugin_dir_url( __FILE__ ) . 'js/franer-submission-view.js',
+				array(),
+				$this->version,
+				true
+			);
+			wp_localize_script(
+				'franer-submission-view',
+				'FranerSubmissionView',
+				array(
+					'frameId' => 'franer-view-frame',
+					'payload' => $context,
+				)
+			);
+			wp_enqueue_script( 'franer-submission-view' );
+		}
+
+		require plugin_dir_path( __FILE__ ) . 'partials/franer-admin-submission-view.php';
+	}
+
+	/**
+	 * Build the data and JSON context for a Franer's submissions overview.
+	 *
+	 * Separated from render_submission_view_page() so the resolution logic (invalid
+	 * site, missing template, decoded submissions) can be unit-tested without
+	 * output. The returned 'context' is what the parent page posts to the sandboxed
+	 * iframe; it contains only the site metadata and the decoded submissions —
+	 * never a nonce, a privileged URL, or stored PII such as the IP/UA hashes or the
+	 * user email.
+	 *
+	 * @param int $site_id The Franer site ID whose submissions to render.
+	 * @return array {
+	 *     @type string $back_url     URL back to the submissions list (filtered by site).
+	 *     @type string $error        Error/notice message ('' on success).
+	 *     @type bool   $has_template Whether a view template is available.
+	 *     @type string $view_html    Comment-stripped view template HTML.
+	 *     @type string $site_title   The Franer site title.
+	 *     @type int    $count        Total submissions for the site.
+	 *     @type bool   $truncated    Whether the delivered list was capped.
+	 *     @type string $pretty_json  Pretty-printed delivered context JSON.
+	 *     @type array  $context      The postMessage context (site/count/submissions).
+	 * }
+	 */
+	public function prepare_submission_view( $site_id ) {
+		$site_id = (int) $site_id;
+		$post    = $site_id > 0 ? get_post( $site_id ) : null;
+
+		$data = array(
+			'back_url'     => add_query_arg(
+				array(
+					'post_type' => 'franer_site',
+					'page'      => 'franer-submissions',
+					'site_id'   => $site_id,
+				),
+				admin_url( 'edit.php' )
+			),
+			'error'        => '',
+			'has_template' => false,
+			'view_html'    => '',
+			'site_title'   => '',
+			'count'        => 0,
+			'truncated'    => false,
+			'pretty_json'  => '',
+			'context'      => array(),
+		);
+
+		if ( ! $post instanceof WP_Post || 'franer_site' !== $post->post_type ) {
+			$data['error'] = __( 'The requested Franer could not be found.', 'franer' );
+			return $data;
+		}
+
+		$settings           = $this->sites->get_settings( $site_id );
+		$data['site_title'] = isset( $settings['title'] ) ? $settings['title'] : '';
+
+		$raw_view = isset( $settings['view_html'] ) ? (string) $settings['view_html'] : '';
+
+		if ( '' === trim( $raw_view ) ) {
+			$data['error'] = __( 'No submission view template has been configured for this Franer.', 'franer' );
+			return $data;
+		}
+
+		$total            = $this->submissions->count_site_submissions( $site_id );
+		$data['count']    = $total;
+		$data['truncated'] = $total > self::VIEW_MAX_SUBMISSIONS;
+
+		// Newest submissions first, capped so the localized JSON stays bounded.
+		$rows        = $this->submissions->get_site_submissions( $site_id, self::VIEW_MAX_SUBMISSIONS, 0 );
+		$submissions = array();
+		foreach ( $rows as $row ) {
+			// Decode each payload safely; an unreadable payload becomes an empty
+			// object so the template can degrade gracefully.
+			$decoded = json_decode( isset( $row['payload_json'] ) ? (string) $row['payload_json'] : '', true );
+			if ( ! is_array( $decoded ) ) {
+				$decoded = array();
+			}
+
+			$updated_at    = isset( $row['updated_at'] ) ? (string) $row['updated_at'] : '';
+			$submissions[] = array(
+				'id'         => (int) $row['id'],
+				'user_id'    => (int) $row['user_id'],
+				'created_at' => isset( $row['created_at'] ) ? (string) $row['created_at'] : '',
+				'updated_at' => ( '' === $updated_at ) ? null : $updated_at,
+				'payload'    => $decoded,
+			);
+		}
+
+		$data['has_template'] = true;
+		$data['view_html']    = Franer_Sanitizer::strip_activity_comments( $raw_view );
+
+		$data['context'] = array(
+			'site'        => array(
+				'id'    => $site_id,
+				'slug'  => isset( $settings['slug'] ) ? $settings['slug'] : '',
+				'title' => $data['site_title'],
+			),
+			'count'       => $total,
+			'truncated'   => $data['truncated'],
+			'submissions' => $submissions,
+		);
+
+		$data['pretty_json'] = (string) wp_json_encode(
+			$data['context'],
+			JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+		);
+
+		return $data;
 	}
 
 	/**

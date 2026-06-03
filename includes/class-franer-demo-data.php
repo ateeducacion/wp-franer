@@ -40,6 +40,13 @@ class Franer_Demo_Data {
 	const DEMO_SLUG = 'mcode40';
 
 	/**
+	 * Slug used for the second (Canarian preferences) demo activity.
+	 *
+	 * @var string
+	 */
+	const CANARIO_SLUG = 'gustos-canarios';
+
+	/**
 	 * Conditionally seed demo data.
 	 *
 	 * Idempotent: it does nothing if the seeding flag is already set. This is
@@ -52,45 +59,101 @@ class Franer_Demo_Data {
 			return;
 		}
 
-		self::seed();
+		self::seed_all();
 	}
 
 	/**
-	 * Seed the demo activity.
+	 * Seed every bundled demo activity and flag seeding as done.
 	 *
-	 * Safe to call directly from a blueprint runPHP step. It guards against
-	 * duplicate creation by checking for an existing post with the demo slug
-	 * and always sets the seeding flag at the end.
+	 * Safe to call directly from a blueprint runPHP step. Each activity is
+	 * seeded idempotently (by slug), so re-running never duplicates content.
+	 *
+	 * @return int The MCODE40 demo post ID (or 0 on failure).
+	 */
+	public static function seed_all() {
+		$mcode_id = self::seed();
+		self::seed_canarian();
+
+		update_option( self::SEEDED_OPTION, '1' );
+
+		return (int) $mcode_id;
+	}
+
+	/**
+	 * Seed the MCODE40 demo activity (with its submissions-overview template).
+	 *
+	 * Idempotent: returns the existing post if the demo slug already exists.
 	 *
 	 * @return int The created (or existing) post ID, or 0 on failure.
 	 */
 	public static function seed() {
+		$post_id = self::ensure_activity(
+			self::DEMO_SLUG,
+			'Memoria-Informe MCODE40',
+			self::get_demo_html(),
+			self::load_example( 'mcode40-view.html' ),
+			'' // allow_multiple stays off for MCODE40 (one submission per user).
+		);
+
+		return (int) $post_id;
+	}
+
+	/**
+	 * Seed the "Gustos canarios" demo activity (with its overview template).
+	 *
+	 * A light-hearted Canarian-preferences poll. Multiple submissions per user
+	 * are allowed so the overview template has varied data to aggregate.
+	 *
+	 * @return int The created (or existing) post ID, or 0 on failure.
+	 */
+	public static function seed_canarian() {
+		$post_id = self::ensure_activity(
+			self::CANARIO_SLUG,
+			'Gustos canarios',
+			self::load_example( 'gustos-canarios.html' ),
+			self::load_example( 'gustos-canarios-view.html' ),
+			'1' // allow_multiple: accumulate many responses.
+		);
+
+		return (int) $post_id;
+	}
+
+	/**
+	 * Create (idempotently) a demo franer_site with activity and view HTML.
+	 *
+	 * @param string $slug           The activity slug.
+	 * @param string $title          The activity title.
+	 * @param string $activity_html  Raw activity HTML for post_content.
+	 * @param string $view_html      Raw submissions-overview template HTML.
+	 * @param string $allow_multiple '1' to allow multiple submissions, '' otherwise.
+	 * @return int The created (or existing) post ID, or 0 on failure.
+	 */
+	private static function ensure_activity( $slug, $title, $activity_html, $view_html, $allow_multiple ) {
 		// Bail if the activity already exists (defensive: option may be unset).
 		if ( class_exists( 'Franer_Site_Repository' ) ) {
 			$repository = new Franer_Site_Repository();
-			$existing   = $repository->get_by_slug( self::DEMO_SLUG );
+			$existing   = $repository->get_by_slug( $slug );
 			if ( $existing instanceof WP_Post ) {
-				update_option( self::SEEDED_OPTION, '1' );
 				return (int) $existing->ID;
 			}
 		}
 
 		// Attribute the demo to an administrator (seeding may run without a
 		// current user, which would otherwise leave post_author as 0).
-		$admins        = get_users(
+		$admins      = get_users(
 			array(
-				'role'   => 'administrator',
-				'number' => 1,
-				'fields' => 'ID',
+				'role'    => 'administrator',
+				'number'  => 1,
+				'fields'  => 'ID',
 				'orderby' => 'ID',
-				'order'  => 'ASC',
+				'order'   => 'ASC',
 			)
 		);
-		$demo_author   = ! empty( $admins ) ? (int) $admins[0] : 0;
+		$demo_author = ! empty( $admins ) ? (int) $admins[0] : 0;
 
 		$post_id = wp_insert_post(
 			array(
-				'post_title'  => 'Memoria-Informe MCODE40',
+				'post_title'  => $title,
 				'post_type'   => 'franer_site',
 				'post_status' => 'publish',
 				'post_author' => $demo_author,
@@ -102,7 +165,7 @@ class Franer_Demo_Data {
 			return 0;
 		}
 
-		update_post_meta( $post_id, '_franer_slug', self::DEMO_SLUG );
+		update_post_meta( $post_id, '_franer_slug', $slug );
 		update_post_meta( $post_id, '_franer_accepts_submissions', '1' );
 		update_post_meta( $post_id, '_franer_enabled', '1' );
 		update_post_meta(
@@ -110,16 +173,191 @@ class Franer_Demo_Data {
 			'_franer_allowed_roles',
 			array( 'subscriber', 'author', 'editor', 'administrator' )
 		);
-		update_post_meta( $post_id, '_franer_allow_multiple_submissions', '' );
+		update_post_meta( $post_id, '_franer_allow_multiple_submissions', $allow_multiple );
 		update_post_meta( $post_id, '_franer_allow_overwrite', '1' );
 		update_post_meta( $post_id, '_franer_max_payload_size', 256 );
 
-		// The activity HTML lives in post_content (revisioned, shown in the diff).
-		Franer_Site_Repository::set_raw_html( $post_id, self::get_demo_html() );
+		// Optional submissions-overview template (admin-only, comment-stripped at
+		// render time).
+		if ( '' !== trim( (string) $view_html ) ) {
+			update_post_meta( $post_id, '_franer_view_html', $view_html );
+		}
 
-		update_option( self::SEEDED_OPTION, '1' );
+		// The activity HTML lives in post_content (revisioned, shown in the diff).
+		Franer_Site_Repository::set_raw_html( $post_id, $activity_html );
 
 		return (int) $post_id;
+	}
+
+	/**
+	 * Seed a handful of sample submissions so the overview templates have data.
+	 *
+	 * Intended for demo/Playground environments (call it after seed_all()); it is
+	 * idempotent per activity (skips an activity that already has submissions) and
+	 * is intentionally NOT run automatically on every request.
+	 *
+	 * @return void
+	 */
+	public static function seed_sample_submissions() {
+		if ( ! class_exists( 'Franer_Site_Repository' ) || ! class_exists( 'Franer_Submissions_Repository' ) ) {
+			return;
+		}
+
+		$repository  = new Franer_Site_Repository();
+		$submissions = new Franer_Submissions_Repository();
+
+		$user_ids = get_users(
+			array(
+				'number'  => 8,
+				'fields'  => 'ID',
+				'orderby' => 'ID',
+				'order'   => 'ASC',
+			)
+		);
+		$user_ids = array_map( 'intval', (array) $user_ids );
+		if ( empty( $user_ids ) ) {
+			return;
+		}
+
+		self::seed_activity_submissions(
+			$repository,
+			$submissions,
+			$user_ids,
+			self::CANARIO_SLUG,
+			self::sample_canarian_payloads()
+		);
+
+		self::seed_activity_submissions(
+			$repository,
+			$submissions,
+			$user_ids,
+			self::DEMO_SLUG,
+			self::sample_mcode_payloads()
+		);
+	}
+
+	/**
+	 * Insert a list of sample payloads for one activity, cycling through users.
+	 *
+	 * @param Franer_Site_Repository        $repository  Site repository.
+	 * @param Franer_Submissions_Repository $submissions Submissions repository.
+	 * @param array                         $user_ids    Candidate user IDs.
+	 * @param string                        $slug        The activity slug.
+	 * @param array                         $payloads    List of payload arrays.
+	 * @return void
+	 */
+	private static function seed_activity_submissions( $repository, $submissions, $user_ids, $slug, $payloads ) {
+		$site = $repository->get_by_slug( $slug );
+		if ( ! $site instanceof WP_Post ) {
+			return;
+		}
+
+		$site_id = (int) $site->ID;
+		if ( $submissions->count_site_submissions( $site_id ) > 0 ) {
+			return; // Already has data; stay idempotent.
+		}
+
+		$count = count( $user_ids );
+		foreach ( array_values( $payloads ) as $index => $payload ) {
+			$user_id = $user_ids[ $index % $count ];
+			$submissions->save_submission( $site_id, $user_id, (string) wp_json_encode( $payload ), true, false );
+		}
+	}
+
+	/**
+	 * Build a varied set of "Gustos canarios" sample payloads.
+	 *
+	 * @return array List of payload arrays.
+	 */
+	private static function sample_canarian_payloads() {
+		$rows = array(
+			array( 'clipper_fresa', 'ambrosias', 'rojo', 'barraquito', 'si', 5, '¡Viva la tierra!' ),
+			array( 'clipper_pina', 'gofio', 'verde', 'cafe', 'si', 4, '' ),
+			array( 'clipper_fresa', 'tirma', 'rojo', 'barraquito', 'no', 5, 'El mojo picón manda.' ),
+			array( 'otro', 'ambrosias', 'verde', 'cafe', 'si', 3, '' ),
+			array( 'clipper_fresa', 'ambrosias', 'rojo', 'barraquito', 'si', 5, 'Barraquito siempre.' ),
+			array( 'clipper_pina', 'tirma', 'verde', 'barraquito', 'si', 4, '' ),
+			array( 'clipper_fresa', 'gofio', 'rojo', 'cafe', 'si', 5, 'Gofio para todo.' ),
+			array( 'clipper_pina', 'ambrosias', 'rojo', 'barraquito', 'no', 4, '' ),
+			array( 'clipper_fresa', 'ambrosias', 'verde', 'barraquito', 'si', 5, '' ),
+			array( 'otro', 'tirma', 'rojo', 'cafe', 'si', 3, 'Me quedo con el chocolate.' ),
+		);
+
+		$payloads = array();
+		foreach ( $rows as $row ) {
+			$payloads[] = array(
+				'schema_version' => '1.0',
+				'activity_id'    => self::CANARIO_SLUG,
+				'activity_title' => 'Gustos canarios',
+				'data'           => array(
+					'answers'    => array(
+						'refresco' => $row[0],
+						'merienda' => $row[1],
+						'mojo'     => $row[2],
+						'bebida'   => $row[3],
+						'papas'    => $row[4],
+					),
+					'rating'     => $row[5],
+					'comentario' => $row[6],
+				),
+			);
+		}
+
+		return $payloads;
+	}
+
+	/**
+	 * Build a small set of generic MCODE40 sample payloads.
+	 *
+	 * @return array List of payload arrays.
+	 */
+	private static function sample_mcode_payloads() {
+		$rows = array(
+			array( 'Ana Martínez', '38001234', 'Todo correcto.' ),
+			array( 'Carlos López', '35009876', 'Pendiente de revisión.' ),
+			array( 'María García', '38005678', '' ),
+		);
+
+		$payloads = array();
+		foreach ( $rows as $row ) {
+			$payloads[] = array(
+				'schema_version' => '1.0',
+				'activity_id'    => self::DEMO_SLUG,
+				'activity_title' => 'Memoria-Informe MCODE40',
+				'data'           => array(
+					'answers' => array(
+						'idNombre' => $row[0],
+						'idCep'    => $row[1],
+						'idNotes'  => $row[2],
+					),
+					'report'  => array(
+						'text' => $row[2],
+						'html' => '',
+					),
+				),
+			);
+		}
+
+		return $payloads;
+	}
+
+	/**
+	 * Load a bundled example HTML file from the examples/ directory.
+	 *
+	 * @param string $filename The file name within examples/.
+	 * @return string The file contents, or '' when unavailable.
+	 */
+	private static function load_example( $filename ) {
+		$file = self::plugin_dir() . 'examples/' . $filename;
+
+		if ( is_readable( $file ) ) {
+			$contents = file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Reading a bundled plugin file, not a remote URL.
+			if ( false !== $contents ) {
+				return $contents;
+			}
+		}
+
+		return '';
 	}
 
 	/**

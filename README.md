@@ -87,8 +87,14 @@ Run `make help` to list every available target.
 
 1. In the WordPress admin, open **Franer > Add New**.
 2. Give the activity a title.
-3. In **HTML source**, paste your self-contained activity. It is stored exactly as entered and is
-   only ever rendered inside a sandboxed iframe.
+3. In **HTML source**, paste your self-contained activity. The box has two tabs:
+   - **Activity HTML** — the form shown to end users. It is stored exactly as entered and is
+     only ever rendered inside a sandboxed iframe. A collapsible **Prompt used to generate this
+     activity** field lets you save the prompt you used, for future audits or regenerations; it is
+     admin-only and never shown publicly, sent to the iframe or exported.
+   - **Submission View HTML** — an optional, admin-only template that renders an overview of *all*
+     of the activity's submissions (totals, charts, summary tables). See *Submissions overview*
+     below.
 4. In **Site settings**, configure:
    - **Slug** — lowercase letters, numbers and hyphens only; used in the public URL.
    - **Visibility** — whether allowed users can see it.
@@ -115,6 +121,14 @@ A published, visible activity is reachable in two ways:
   The shortcode renders nothing for users who are not allowed to view the activity, so it never
   leaks the existence of a hidden or restricted activity.
 
+**Render-time comment stripping.** Both rendering paths strip HTML comments (`<!-- ... -->`) and
+inline-JavaScript comments (`// ...`, `/* ... */`) from the activity HTML *before* it reaches the
+iframe `srcdoc`, so maintenance comments — including any generation prompt you embed near the top —
+never leak to end users. Stripping is render-time only: the stored `post_content` (and its
+revisions, and the admin editor) keep every comment. The stripper is string/template/regex-aware, so
+URLs (`https://…`) and comment-like text inside JS strings, template literals and regular
+expressions are preserved. CSS comments inside `<style>` are intentionally kept.
+
 ## Submissions
 
 - Each authenticated submission is stored in the `{$wpdb->prefix}franer_submissions` table as a
@@ -138,12 +152,54 @@ admin-post.php?action=franer_export&site_id=123
 The action is nonce-protected and restricted to `manage_options`. The download includes the decoded
 payloads plus each user's login and email.
 
+## Submissions overview
+
+Each Franer can carry an optional **Submission View HTML** template (the second tab of the HTML
+source box) that renders an admin-only overview of *all* of its submissions — totals, charts and
+summary tables. It is opened from the **View overview** button on the Submissions screen (and the
+per-site submissions metabox), at:
+
+```
+edit.php?post_type=franer_site&page=franer-submission-view&site_id=123
+```
+
+This admin page requires `manage_options`. It renders the template inside a sandboxed iframe
+(`sandbox="allow-scripts allow-modals"`, no `allow-same-origin`) — exactly like an activity — and
+the template's HTML/JS comments are stripped at render time. The decoded submissions are **not**
+interpolated into the iframe markup: after the iframe loads, the trusted parent page posts them via
+`postMessage`. The iframe never receives a REST nonce, an admin URL or any stored PII (the IP/UA
+hashes and the user email are not included).
+
+postMessage contract (parent → view iframe):
+
+```js
+{
+  type: "franer_view_payload",
+  payload: {
+    site: { id, slug, title },
+    count: 123,            // total submissions for the activity
+    truncated: false,      // true when only the most recent submissions were sent
+    submissions: [
+      { id, user_id, created_at, updated_at, payload: { schema_version, activity_id, data } }
+    ]
+  }
+}
+```
+
+The template implements `window.FranerRenderSubmissions(context)` and a `message` listener for
+`franer_view_payload`. If no template is configured, the page shows a clear notice instead. **Franer
+> Help** includes a ready-to-use **Copy submission view prompt** that generates a compliant,
+self-contained overview document (with inline-SVG/canvas charts, no external resources).
+
 ## Security model
 
 - **Untrusted HTML**: the activity markup is stored raw (never sanitized or stripped) and is only
   rendered inside `<iframe srcdoc="..." sandbox="allow-scripts allow-forms">` with **no**
-  `allow-same-origin`.
+  `allow-same-origin`. The optional submission-view template is treated identically (admin-only, but
+  still untrusted and sandboxed), and HTML/JS comments are stripped from both before rendering.
 - **Parent-side trust**: the iframe is never trusted; the parent page makes the nonced REST call.
+  The submission-view iframe receives only the submission JSON (via `postMessage`), never a nonce,
+  an admin URL or stored PII.
 - **Hashed identifiers**: only SHA-256 hashes of the IP and user agent are stored.
 - **Capabilities**: every admin create/edit/delete/export/submissions screen requires
   `manage_options`. REST endpoints require a logged-in user, a valid `X-WP-Nonce`, and an allowed
@@ -163,6 +219,11 @@ self-contained HTML document that implements:
 - `window.FranerSubmit()` — validates the form and posts
   `{ type:"franer_submit", payload: FranerCollect() }` to `window.parent`.
 - A `message` listener that handles `{ type:"franer_submit_result", ok, result }` from the host.
+
+The Help page also asks the AI to add maintenance comments and to embed the generating prompt as an
+HTML comment near the top of the document (Franer strips those before rendering). A second
+**Copy submission view prompt** generates the admin-only *submissions overview* template described
+under *Submissions overview*.
 
 ## Developer hooks
 
