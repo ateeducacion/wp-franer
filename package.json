@@ -10,6 +10,20 @@
     "jest": "^30.4.2",
     "jest-environment-jsdom": "^30.0.0"
   },
+  "comment:overrides": "Force patched versions of transitive dev/build dependencies flagged by GitHub Dependabot. None of these ship with the plugin (PHP runtime); they only run at build/test time. Remove entries once @wordpress/scripts and @wordpress/env upgrade upstream.",
+  "overrides": {
+    "qs": "6.15.2",
+    "serialize-javascript": "7.0.5",
+    "ws": "8.21.0",
+    "uuid": "11.1.1",
+    "webpack-dev-server": "5.2.4",
+    "markdownlint-cli": {
+      "minimatch": "3.1.5"
+    },
+    "@wp-playground/blueprints": {
+      "ajv": "8.18.0"
+    }
+  },
   "scripts": {
     "wp-env": "wp-env",
     "composer": "wp-env run cli --env-cwd=wp-content/plugins/franer composer",
