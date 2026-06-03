@@ -9,7 +9,7 @@
  */
 
 /**
- * Verifies Franer_Admin::render_submission_view_page() / prepare_submission_view().
+ * Verifies Franer_Admin_Submissions::render_submission_view_page() / prepare_submission_view().
  */
 class SubmissionViewTest extends WP_UnitTestCase {
 
@@ -64,7 +64,7 @@ class SubmissionViewTest extends WP_UnitTestCase {
 
 		$_GET['site_id'] = 1;
 
-		$admin = new Franer_Admin();
+		$admin = new Franer_Admin_Submissions();
 		$this->expectException( 'WPDieException' );
 		$admin->render_submission_view_page();
 	}
@@ -75,7 +75,7 @@ class SubmissionViewTest extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_invalid_site_id_is_rejected() {
-		$admin = new Franer_Admin();
+		$admin = new Franer_Admin_Submissions();
 
 		$zero = $admin->prepare_submission_view( 0 );
 		$this->assertFalse( $zero['has_template'] );
@@ -94,7 +94,7 @@ class SubmissionViewTest extends WP_UnitTestCase {
 	public function test_non_franer_post_is_rejected() {
 		$post_id = self::factory()->post->create( array( 'post_type' => 'post' ) );
 
-		$admin = new Franer_Admin();
+		$admin = new Franer_Admin_Submissions();
 		$data  = $admin->prepare_submission_view( $post_id );
 
 		$this->assertFalse( $data['has_template'] );
@@ -111,7 +111,7 @@ class SubmissionViewTest extends WP_UnitTestCase {
 		$user_id = self::factory()->user->create( array( 'role' => 'subscriber' ) );
 		$this->repo->save_submission( $site_id, $user_id, wp_json_encode( array( 'q1' => 'a' ) ), true, false );
 
-		$admin = new Franer_Admin();
+		$admin = new Franer_Admin_Submissions();
 		$data  = $admin->prepare_submission_view( $site_id );
 
 		$this->assertFalse( $data['has_template'] );
@@ -140,7 +140,7 @@ class SubmissionViewTest extends WP_UnitTestCase {
 		$this->repo->save_submission( $site_id, $user_a, wp_json_encode( array( 'data' => array( 'q1' => 'y' ) ) ), true, false );
 		$this->repo->save_submission( $site_id, $user_b, wp_json_encode( array( 'data' => array( 'q1' => 'z' ) ) ), true, false );
 
-		$admin = new Franer_Admin();
+		$admin = new Franer_Admin_Submissions();
 		$data  = $admin->prepare_submission_view( $site_id );
 
 		$this->assertTrue( $data['has_template'] );
@@ -171,5 +171,35 @@ class SubmissionViewTest extends WP_UnitTestCase {
 		$this->assertStringNotContainsString( '// note', $data['view_html'] );
 		$this->assertStringContainsString( '<div>Overview</div>', $data['view_html'] );
 		$this->assertStringContainsString( 'var a = 1;', $data['view_html'] );
+	}
+
+	/**
+	 * The overview template renders without error, including the truncation notice
+	 * (which references Franer_Admin_Submissions::VIEW_MAX_SUBMISSIONS).
+	 *
+	 * @return void
+	 */
+	public function test_overview_template_renders_truncation_notice() {
+		$back_url     = 'https://example.test/wp-admin/edit.php';
+		$error        = '';
+		$has_template = true;
+		$view_html    = '<div>Overview</div>';
+		$site_title   = 'View Activity';
+		$count        = Franer_Admin_Submissions::VIEW_MAX_SUBMISSIONS + 5;
+		$truncated    = true;
+		$pretty_json  = '{}';
+		$context      = array();
+
+		ob_start();
+		require dirname( __DIR__ ) . '/admin/partials/franer-admin-submission-view.php';
+		$html = (string) ob_get_clean();
+
+		// The page rendered, the iframe is present and the truncation notice shows
+		// the configured cap (proving the constant reference resolves).
+		$this->assertStringContainsString( 'franer-view-frame', $html );
+		$this->assertStringContainsString(
+			number_format_i18n( Franer_Admin_Submissions::VIEW_MAX_SUBMISSIONS ),
+			$html
+		);
 	}
 }

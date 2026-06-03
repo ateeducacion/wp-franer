@@ -24,7 +24,11 @@ Try Franer instantly in your browser with WordPress Playground. The demo include
 you can explore the features. All changes are discarded when you close the tab, because everything
 runs locally in your browser.
 
-[<kbd> <br> Preview in WordPress Playground <br> </kbd>](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/ateeducacion/wp-franer/refs/heads/main/blueprint.json)
+<p align="center">
+  <a href="https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/ateeducacion/wp-franer/refs/heads/main/blueprint.json">
+    <img src="https://raw.githubusercontent.com/ateeducacion/wp-franer/refs/heads/main/.github/playground-preview-button.svg" alt="Preview in WordPress Playground" width="320">
+  </a>
+</p>
 
 ## Purpose
 
