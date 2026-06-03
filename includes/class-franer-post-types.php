@@ -97,7 +97,9 @@ class Franer_Post_Types {
 			'capability_type'     => 'post',
 			'hierarchical'        => false,
 			'supports'            => array( 'title', 'author', 'revisions' ),
-			'menu_icon'           => 'dashicons-welcome-widgets-menus',
+			// A flexing "superhero" dashicon matches the Franer strongman mascot and
+			// recolors cleanly with the admin color scheme (unlike a custom image).
+			'menu_icon'           => 'dashicons-superhero',
 			'has_archive'         => false,
 			'rewrite'             => false,
 			'exclude_from_search' => true,
