@@ -41,6 +41,14 @@ $franer_iframe_title = sprintf( __( 'Activity: %s', 'franer' ), $franer_title );
 	</header>
 
 	<div class="franer-shell__frame-wrap">
+		<button
+			type="button"
+			class="franer-shell__fullscreen"
+			aria-pressed="false"
+			hidden>
+			<span class="franer-shell__fullscreen-icon" aria-hidden="true">&#9974;</span>
+			<span class="franer-shell__fullscreen-text"><?php echo esc_html__( 'Fullscreen', 'franer' ); ?></span>
+		</button>
 		<iframe
 			class="franer-shell__frame"
 			srcdoc="<?php echo esc_attr( $franer_html ); ?>"

@@ -342,6 +342,9 @@ msgstr "Campo opcional. Guarda aquí el prompt utilizado para generar la plantil
 msgid "Open public page"
 msgstr "Abrir página pública"
 
+msgid "Open in fullscreen"
+msgstr "Abrir a pantalla completa"
+
 msgid "Shortcode"
 msgstr "Shortcode"
 
@@ -586,6 +589,12 @@ msgstr "Ha ocurrido un problema al guardar tu respuesta. Inténtalo de nuevo."
 
 msgid "A network error occurred. Please check your connection and try again."
 msgstr "Se ha producido un error de red. Comprueba tu conexión e inténtalo de nuevo."
+
+msgid "Fullscreen"
+msgstr "Pantalla completa"
+
+msgid "Exit fullscreen"
+msgstr "Salir de pantalla completa"
 
 #. translators: %s: Franer activity title.
 #, php-format
