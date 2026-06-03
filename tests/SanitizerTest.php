@@ -302,4 +302,124 @@ class SanitizerTest extends WP_UnitTestCase {
 		$this->assertStringContainsString( '<div>a</div>', $result );
 		$this->assertStringContainsString( '<span>b</span>', $result );
 	}
+
+	/**
+	 * add_activity_csp injects the CSP meta as the first child of <head>.
+	 *
+	 * @return void
+	 */
+	public function test_add_activity_csp_injects_into_head() {
+		$html   = '<!doctype html><html><head><title>x</title></head><body>hi</body></html>';
+		$result = Franer_Sanitizer::add_activity_csp( $html );
+
+		$this->assertStringContainsString( 'http-equiv="Content-Security-Policy"', $result );
+		$this->assertStringContainsString( "connect-src &#039;none&#039;", $result );
+		$this->assertStringContainsString( "form-action &#039;none&#039;", $result );
+		// Inserted before the existing <title>, i.e. as the first head child.
+		$this->assertMatchesRegularExpression( '#<head>\s*<meta http-equiv="Content-Security-Policy"#', $result );
+	}
+
+	/**
+	 * add_activity_csp creates a <head> when the document lacks one.
+	 *
+	 * @return void
+	 */
+	public function test_add_activity_csp_creates_head_when_missing() {
+		$html   = '<html><body>only body</body></html>';
+		$result = Franer_Sanitizer::add_activity_csp( $html );
+
+		$this->assertStringContainsString( '<head><meta http-equiv="Content-Security-Policy"', $result );
+		$this->assertStringContainsString( '<body>only body</body>', $result );
+	}
+
+	/**
+	 * add_activity_csp prepends the meta for a bare fragment with no html/head.
+	 *
+	 * @return void
+	 */
+	public function test_add_activity_csp_prepends_for_fragment() {
+		$result = Franer_Sanitizer::add_activity_csp( '<div>fragment</div>' );
+
+		$this->assertStringStartsWith( '<meta http-equiv="Content-Security-Policy"', $result );
+		$this->assertStringContainsString( '<div>fragment</div>', $result );
+	}
+
+	/**
+	 * add_activity_csp leaves an author-declared CSP meta untouched.
+	 *
+	 * @return void
+	 */
+	public function test_add_activity_csp_respects_existing_policy() {
+		$html   = '<html><head><meta http-equiv="Content-Security-Policy" content="default-src \'self\'"></head><body></body></html>';
+		$result = Franer_Sanitizer::add_activity_csp( $html );
+
+		// Only the author's policy remains; the default is not added.
+		$this->assertSame( 1, substr_count( $result, 'http-equiv="Content-Security-Policy"' ) );
+		$this->assertStringContainsString( "default-src 'self'", $result );
+		$this->assertStringNotContainsString( "connect-src", $result );
+	}
+
+	/**
+	 * The franer_activity_csp filter overrides the injected policy.
+	 *
+	 * @return void
+	 */
+	public function test_add_activity_csp_is_filterable() {
+		$filter = static function () {
+			return "default-src 'none'; img-src https:";
+		};
+		add_filter( 'franer_activity_csp', $filter );
+
+		$result = Franer_Sanitizer::add_activity_csp( '<html><head></head><body></body></html>' );
+
+		remove_filter( 'franer_activity_csp', $filter );
+
+		$this->assertStringContainsString( 'img-src https:', $result );
+		$this->assertStringNotContainsString( 'connect-src', $result );
+	}
+
+	/**
+	 * An empty filter value skips injection entirely.
+	 *
+	 * @return void
+	 */
+	public function test_add_activity_csp_empty_filter_skips_injection() {
+		$filter = static function () {
+			return '';
+		};
+		add_filter( 'franer_activity_csp', $filter );
+
+		$html   = '<html><head></head><body>x</body></html>';
+		$result = Franer_Sanitizer::add_activity_csp( $html );
+
+		remove_filter( 'franer_activity_csp', $filter );
+
+		$this->assertSame( $html, $result );
+	}
+
+	/**
+	 * add_activity_csp handles empty and non-string input gracefully.
+	 *
+	 * @return void
+	 */
+	public function test_add_activity_csp_handles_empty_and_non_string() {
+		$this->assertSame( '', Franer_Sanitizer::add_activity_csp( '' ) );
+		$this->assertSame( '', Franer_Sanitizer::add_activity_csp( array() ) );
+		$this->assertSame( '', Franer_Sanitizer::add_activity_csp( null ) );
+	}
+
+	/**
+	 * prepare_for_srcdoc both strips comments and injects the CSP.
+	 *
+	 * @return void
+	 */
+	public function test_prepare_for_srcdoc_strips_comments_and_adds_csp() {
+		$html   = "<!doctype html><html><head><!-- secret prompt --></head><body><script>/* x */var a=1;</script></body></html>";
+		$result = Franer_Sanitizer::prepare_for_srcdoc( $html );
+
+		$this->assertStringNotContainsString( 'secret prompt', $result );
+		$this->assertStringNotContainsString( '/* x */', $result );
+		$this->assertStringContainsString( 'http-equiv="Content-Security-Policy"', $result );
+		$this->assertStringContainsString( 'var a=1;', $result );
+	}
 }

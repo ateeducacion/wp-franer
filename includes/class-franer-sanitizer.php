@@ -22,6 +22,32 @@ class Franer_Sanitizer {
 	const GENERATION_PROMPT_MAX_BYTES = 524288;
 
 	/**
+	 * Default Content-Security-Policy injected into the sandboxed iframe.
+	 *
+	 * Applied as a <meta http-equiv="Content-Security-Policy"> at render time so it
+	 * acts as a guardrail on top of the iframe sandbox. The intent is to let
+	 * activities load external libraries, fonts and images over https (so authors
+	 * can use Bootstrap, charting libraries, web fonts, remote images, …) while
+	 * blocking the channels a remote script would normally use to exfiltrate the
+	 * user's answers: 'connect-src none' kills fetch/XHR/WebSocket/sendBeacon and
+	 * 'form-action none' blocks form posts. The activity sends its data only via
+	 * window.parent.postMessage, which is not governed by CSP, so the Franer
+	 * contract keeps working.
+	 *
+	 * Note: 'unsafe-inline' is unavoidable because activities ship their own inline
+	 * CSS/JS, and 'img-src https:' leaves an image-beacon channel open, so this is
+	 * defense-in-depth, NOT an airtight guarantee — administrators must still paste
+	 * only trusted activities. The value is filterable via 'franer_activity_csp'.
+	 *
+	 * frame-ancestors and sandbox are intentionally omitted: they are not supported
+	 * in a <meta> CSP and are already enforced by the parent page header and the
+	 * iframe's own sandbox attribute respectively.
+	 *
+	 * @var string
+	 */
+	const DEFAULT_ACTIVITY_CSP = "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' https:; style-src 'unsafe-inline' https:; img-src https: data: blob:; font-src https: data:; media-src https: data: blob:; connect-src 'none'; form-action 'none'; base-uri 'none'";
+
+	/**
 	 * Normalize and size-cap a generation prompt for storage.
 	 *
 	 * The prompt is administrator-provided plain text that may legitimately
@@ -132,6 +158,98 @@ class Franer_Sanitizer {
 		}
 
 		return $out;
+	}
+
+	/**
+	 * Prepare raw activity/view HTML for use as an iframe "srcdoc".
+	 *
+	 * Single entry point used by every render path so the same transforms always
+	 * apply: maintenance comments are stripped (so they never leak to users) and a
+	 * guardrail Content-Security-Policy is injected. The stored source is never
+	 * modified — only this rendered copy.
+	 *
+	 * @param mixed $html The raw stored HTML.
+	 * @return string The HTML ready to be placed in a sandboxed iframe srcdoc.
+	 */
+	public static function prepare_for_srcdoc( $html ) {
+		return self::add_activity_csp( self::strip_activity_comments( $html ) );
+	}
+
+	/**
+	 * Inject the guardrail Content-Security-Policy into an HTML document.
+	 *
+	 * The CSP is added as a <meta http-equiv="Content-Security-Policy"> element so
+	 * it applies inside the sandboxed iframe (srcdoc). It is inserted as the first
+	 * child of <head> (a <head> is created right after <html> when missing, or the
+	 * meta is prepended when the input is a bare fragment) so it is parsed before
+	 * any external resource is requested.
+	 *
+	 * If the document already declares its own CSP meta tag it is left untouched,
+	 * so an author who ships a deliberately stricter/looser policy is respected.
+	 *
+	 * @param mixed $html The HTML (already comment-stripped) to protect.
+	 * @return string The HTML with the CSP meta tag injected.
+	 */
+	public static function add_activity_csp( $html ) {
+		$html = is_scalar( $html ) ? (string) $html : '';
+
+		if ( '' === $html ) {
+			return '';
+		}
+
+		/**
+		 * Filters the Content-Security-Policy applied to sandboxed activity iframes.
+		 *
+		 * Security-sensitive: the default lets activities load external libraries,
+		 * fonts and images over https while blocking data exfiltration via
+		 * connect-src/form-action. Callbacks may pin specific CDN hosts instead of
+		 * the broad "https:" source, but should keep "connect-src 'none'" (and
+		 * "form-action 'none'") to preserve the no-exfiltration guarantee.
+		 *
+		 * @since 1.1.0
+		 *
+		 * @param string $csp The Content-Security-Policy directive string.
+		 */
+		$csp = apply_filters( 'franer_activity_csp', self::DEFAULT_ACTIVITY_CSP );
+		$csp = is_scalar( $csp ) ? trim( (string) $csp ) : '';
+
+		if ( '' === $csp ) {
+			return $html;
+		}
+
+		// Respect a CSP the author already declared in the document head.
+		if ( preg_match( '#<meta\b[^>]*http-equiv\s*=\s*(["\']?)content-security-policy\1#i', $html ) ) {
+			return $html;
+		}
+
+		$meta = '<meta http-equiv="Content-Security-Policy" content="' . esc_attr( $csp ) . '">';
+
+		// Insert as the first child of <head> when present.
+		$with_head = preg_replace(
+			'#(<head\b[^>]*>)#i',
+			'$1' . $meta,
+			$html,
+			1,
+			$head_count
+		);
+		if ( null !== $with_head && $head_count > 0 ) {
+			return $with_head;
+		}
+
+		// No <head>: create one right after <html ...> when that tag exists.
+		$with_html = preg_replace(
+			'#(<html\b[^>]*>)#i',
+			'$1<head>' . $meta . '</head>',
+			$html,
+			1,
+			$html_count
+		);
+		if ( null !== $with_html && $html_count > 0 ) {
+			return $with_html;
+		}
+
+		// Bare fragment (or pathological input): prepend the meta tag.
+		return $meta . $html;
 	}
 
 	/**

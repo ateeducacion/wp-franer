@@ -104,4 +104,24 @@ class PublicTest extends WP_UnitTestCase {
 		$this->assertStringContainsString( '// js line comment', $settings['html'] );
 		$this->assertStringContainsString( '/* js block */', $settings['html'] );
 	}
+
+	/**
+	 * The rendered iframe srcdoc must carry the guardrail Content-Security-Policy
+	 * (the source is double-escaped inside the srcdoc attribute, so the plain
+	 * directive keywords survive while the quotes are entity-encoded).
+	 *
+	 * @return void
+	 */
+	public function test_public_render_injects_csp_into_srcdoc() {
+		$this->create_viewable_site( '<!doctype html><html><head><title>t</title></head><body><div>q</div></body></html>' );
+
+		$subscriber = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		wp_set_current_user( $subscriber );
+
+		$output = do_shortcode( '[franer slug="comments-demo"]' );
+
+		$this->assertStringContainsString( 'Content-Security-Policy', $output );
+		$this->assertStringContainsString( 'connect-src', $output );
+		$this->assertStringContainsString( 'form-action', $output );
+	}
 }
