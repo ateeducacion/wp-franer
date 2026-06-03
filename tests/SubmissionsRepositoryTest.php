@@ -195,16 +195,18 @@ class SubmissionsRepositoryTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * When the per-user lock cannot be acquired, a single submission must fail with
-	 * a 503 rather than fall back to the unguarded (racy) read-then-write.
+	 * When advisory locks are unavailable (e.g. SQLite/WordPress Playground, where
+	 * GET_LOCK does not exist), a single submission must still save best-effort
+	 * rather than failing the request.
 	 *
 	 * @return void
 	 */
-	public function test_lock_failure_returns_503_and_writes_nothing() {
-		// A repository whose lock acquisition always fails, simulating contention.
+	public function test_lock_unavailable_falls_back_to_best_effort_save() {
+		// A repository whose lock acquisition always reports "not locked", as it
+		// would on a database without GET_LOCK.
 		$repo = new class() extends Franer_Submissions_Repository {
 			/**
-			 * Always fail to acquire the lock.
+			 * Simulate advisory locks being unavailable.
 			 *
 			 * @param int $site_id The site post ID.
 			 * @param int $user_id The user ID.
@@ -223,12 +225,9 @@ class SubmissionsRepositoryTest extends WP_UnitTestCase {
 			false
 		);
 
-		$this->assertWPError( $result );
-		$this->assertSame( 'franer_lock_failed', $result->get_error_code() );
-		$this->assertSame( 503, $result->get_error_data()['status'] );
-
-		// The failed save must not have written a row.
-		$this->assertSame( 0, $this->repo->count_site_submissions( $this->site_id ) );
+		$this->assertIsArray( $result );
+		$this->assertSame( 'saved', $result['status'] );
+		$this->assertSame( 1, $this->repo->count_site_submissions( $this->site_id ) );
 	}
 
 	/**

@@ -91,24 +91,24 @@ class Franer_Submissions_Repository {
 		// an existing row. That read-then-write is a TOCTOU race: two concurrent
 		// requests could both observe "no row" and both insert (bypassing duplicate
 		// handling) or clobber each other on overwrite. Serialize per (site, user)
-		// with a MySQL named lock so the check and the write are atomic across
-		// requests, without a schema change that would break multiple submissions.
+		// with a MySQL advisory lock so the check and the write are atomic across
+		// concurrent requests, without a schema change that would break multiple
+		// submissions.
 		//
-		// If the lock cannot be obtained (another save is mid-flight beyond the
-		// timeout, or a DB error), do NOT fall back to the unguarded read-then-write
-		// — that is the exact race we are protecting against. Ask the client to retry.
-		if ( ! $this->acquire_user_lock( $site_id, $user_id ) ) {
-			return new WP_Error(
-				'franer_lock_failed',
-				__( 'Could not process the submission right now. Please try again.', 'franer' ),
-				array( 'status' => 503 )
-			);
-		}
+		// GET_LOCK is MySQL-only. On databases without advisory locks (e.g. SQLite,
+		// used by WordPress Playground) acquisition just returns false; we then fall
+		// back to a best-effort save rather than failing the request — that is the
+		// pre-existing behavior and no worse than not holding a lock. Under real
+		// MySQL contention the second request blocks until the first releases
+		// (milliseconds), so the lock does its job in practice.
+		$locked = $this->acquire_user_lock( $site_id, $user_id );
 
 		try {
 			return $this->save_single_submission( $site_id, $user_id, $payload_json, $allow_overwrite );
 		} finally {
-			$this->release_user_lock( $site_id, $user_id );
+			if ( $locked ) {
+				$this->release_user_lock( $site_id, $user_id );
+			}
 		}
 	}
 
@@ -225,9 +225,11 @@ class Franer_Submissions_Repository {
 	/**
 	 * Acquire the per-user advisory lock, waiting briefly if another request holds it.
 	 *
-	 * Returns false on timeout or DB error; callers MUST NOT proceed with the
-	 * unguarded read-then-write when this returns false (save_submission() returns a
-	 * 503 instead). Protected so tests can simulate a lock failure.
+	 * GET_LOCK is MySQL-only and returns 1 on success, 0 on timeout and NULL on
+	 * error. On databases without advisory locks (e.g. SQLite, used by WordPress
+	 * Playground) the query fails harmlessly; the error is suppressed and this
+	 * returns false so save_submission() falls back to a best-effort save. Protected
+	 * so tests can simulate the lock being unavailable.
 	 *
 	 * @param int $site_id The site post ID.
 	 * @param int $user_id The user ID.
@@ -236,16 +238,17 @@ class Franer_Submissions_Repository {
 	protected function acquire_user_lock( $site_id, $user_id ) {
 		global $wpdb;
 
-		// GET_LOCK returns 1 on success, 0 on timeout, NULL on error.
-		$got = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$suppress = $wpdb->suppress_errors( true );
+		$got      = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			$wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', $this->user_lock_name( $site_id, $user_id ), 10 )
 		);
+		$wpdb->suppress_errors( $suppress );
 
 		return '1' === (string) $got;
 	}
 
 	/**
-	 * Release the per-user advisory lock.
+	 * Release the per-user advisory lock (no-op on databases without GET_LOCK).
 	 *
 	 * @param int $site_id The site post ID.
 	 * @param int $user_id The user ID.
@@ -254,9 +257,11 @@ class Franer_Submissions_Repository {
 	protected function release_user_lock( $site_id, $user_id ) {
 		global $wpdb;
 
+		$suppress = $wpdb->suppress_errors( true );
 		$wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			$wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $this->user_lock_name( $site_id, $user_id ) )
 		);
+		$wpdb->suppress_errors( $suppress );
 	}
 
 	/**

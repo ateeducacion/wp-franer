@@ -429,9 +429,6 @@ msgstr ""
 msgid "The submitted payload is too large."
 msgstr ""
 
-msgid "Could not process the submission right now. Please try again."
-msgstr ""
-
 msgid "Duplicate submission not allowed"
 msgstr ""
 
