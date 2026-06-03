@@ -72,9 +72,6 @@ msgstr ""
 msgid "You do not have permission to manage submissions."
 msgstr ""
 
-msgid "Author"
-msgstr ""
-
 msgid "Visit Franer"
 msgstr ""
 

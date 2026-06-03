@@ -569,19 +569,18 @@ class Franer_Admin {
 	 * @return array The filtered columns.
 	 */
 	public function add_list_columns( $columns ) {
+		// The "Author" column is provided natively by the CPT's 'author' support,
+		// so we only add the Submissions count here (before the Date column).
 		$new = array();
 
 		foreach ( $columns as $key => $label ) {
 			if ( 'date' === $key ) {
-				$new['franer_author']      = __( 'Author', 'franer' );
 				$new['franer_submissions'] = __( 'Submissions', 'franer' );
 			}
 			$new[ $key ] = $label;
 		}
 
-		// Fallback if there was no date column.
 		if ( ! isset( $new['franer_submissions'] ) ) {
-			$new['franer_author']      = __( 'Author', 'franer' );
 			$new['franer_submissions'] = __( 'Submissions', 'franer' );
 		}
 
@@ -596,13 +595,6 @@ class Franer_Admin {
 	 * @return void
 	 */
 	public function render_list_column( $column, $post_id ) {
-		if ( 'franer_author' === $column ) {
-			$author_id = (int) get_post_field( 'post_author', $post_id );
-			$name      = $author_id > 0 ? get_the_author_meta( 'display_name', $author_id ) : '';
-			echo esc_html( '' !== $name ? $name : '—' );
-			return;
-		}
-
 		if ( 'franer_submissions' === $column ) {
 			$count = $this->submissions->count_site_submissions( (int) $post_id );
 			$url   = add_query_arg(
