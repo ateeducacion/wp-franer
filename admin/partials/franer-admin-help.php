@@ -38,7 +38,21 @@ if ( ! defined( 'WPINC' ) ) {
 
 	<h2><?php esc_html_e( 'Security model', 'franer' ); ?></h2>
 	<p>
-		<?php esc_html_e( 'Activity HTML always runs inside an <iframe srcdoc> with sandbox="allow-scripts allow-forms" and no same-origin access. The iframe cannot read cookies, access the parent page, or make network requests. The parent page (not the iframe) performs the authenticated REST call that stores the submission.', 'franer' ); ?>
+		<?php esc_html_e( 'Activity HTML always runs inside an <iframe srcdoc> with sandbox="allow-scripts allow-forms" and no same-origin access. It cannot read cookies/storage or access the parent page. The parent page (not the iframe) performs the authenticated REST call that stores the submission. At render time Franer also injects a Content-Security-Policy into the iframe as a guardrail.', 'franer' ); ?>
+	</p>
+	<p><strong><?php esc_html_e( 'What activities CAN do:', 'franer' ); ?></strong></p>
+	<ul>
+		<li><?php esc_html_e( 'Load external libraries, web fonts and images over https (Bootstrap, charting libraries, Google Fonts, remote images, …). A self-contained document is still recommended for privacy and reliability.', 'franer' ); ?></li>
+		<li><?php esc_html_e( 'Send the user\'s answers to WordPress — but ONLY through window.parent.postMessage.', 'franer' ); ?></li>
+	</ul>
+	<p><strong><?php esc_html_e( 'What is blocked:', 'franer' ); ?></strong></p>
+	<ul>
+		<li><?php esc_html_e( 'Storage and cookies (localStorage/sessionStorage/cookies throw); keep state in memory.', 'franer' ); ?></li>
+		<li><?php esc_html_e( 'Modal dialogs and printing: alert(), confirm(), prompt(), window.print(), pop-ups and downloads.', 'franer' ); ?></li>
+		<li><?php esc_html_e( 'Data exfiltration: the Content-Security-Policy blocks fetch(), XMLHttpRequest, WebSockets, sendBeacon() and form submissions, so a remote script cannot phone the answers home.', 'franer' ); ?></li>
+	</ul>
+	<p>
+		<?php esc_html_e( 'Because remote scripts run in front of your users, paste only activities you trust. The CSP reduces exfiltration but is defense-in-depth, not a substitute for trust.', 'franer' ); ?>
 	</p>
 
 	<h2><?php esc_html_e( 'JavaScript contract', 'franer' ); ?></h2>

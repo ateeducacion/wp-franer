@@ -171,6 +171,10 @@ class SubmissionViewTest extends WP_UnitTestCase {
 		$this->assertStringNotContainsString( '// note', $data['view_html'] );
 		$this->assertStringContainsString( '<div>Overview</div>', $data['view_html'] );
 		$this->assertStringContainsString( 'var a = 1;', $data['view_html'] );
+
+		// ...and the guardrail Content-Security-Policy is injected for the iframe.
+		$this->assertStringContainsString( 'http-equiv="Content-Security-Policy"', $data['view_html'] );
+		$this->assertStringContainsString( 'connect-src', $data['view_html'] );
 	}
 
 	/**
