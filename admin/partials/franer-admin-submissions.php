@@ -6,9 +6,10 @@
  *
  * @var array  $site_posts    Array of franer_site WP_Post objects for the filter.
  * @var int    $selected_site Currently selected site ID (0 = none).
- * @var array  $rows          Normalized submission rows for the selected site.
- * @var string $export_url    Nonced export URL (empty when no site selected).
- * @var int    $total         Total submissions for the selected site.
+ * @var array  $rows           Normalized submission rows for the selected site.
+ * @var string $export_url     Nonced JSON export URL (empty when no site selected).
+ * @var string $export_csv_url Nonced CSV export URL (empty when no site selected).
+ * @var int    $total          Total submissions for the selected site.
  * @var int    $per_page      Rows shown per page.
  * @var int    $paged         Current page number (1-based).
  * @var int    $total_pages   Total number of pages.
@@ -52,14 +53,11 @@ if ( ! defined( 'WPINC' ) ) {
 			<?php endforeach; ?>
 		</select>
 		<button type="submit" class="button"><?php esc_html_e( 'Filter', 'franer' ); ?></button>
-		<?php if ( $selected_site > 0 && '' !== $export_url ) : ?>
-			<a class="button button-primary" href="<?php echo esc_url( $export_url ); ?>">
-				<?php esc_html_e( 'Export all submissions (JSON)', 'franer' ); ?>
-			</a>
-			<?php
-			// Overview renderer for this Franer's submissions (only useful when a
-			// submission-view template is configured, but always offered: the page
-			// itself shows a clear notice when no template exists).
+		<?php
+		// Overview renderer for this Franer's submissions (only useful when a
+		// submission-view template is configured, but always offered: the page
+		// itself shows a clear notice when no template exists).
+		if ( $selected_site > 0 && '' !== $export_url ) {
 			$franer_overview_url = add_query_arg(
 				array(
 					'post_type' => 'franer_site',
@@ -72,8 +70,25 @@ if ( ! defined( 'WPINC' ) ) {
 			<a class="button" href="<?php echo esc_url( $franer_overview_url ); ?>">
 				<?php esc_html_e( 'View overview', 'franer' ); ?>
 			</a>
-		<?php endif; ?>
+			<?php
+		}
+		?>
 	</form>
+
+	<?php if ( $selected_site > 0 && '' !== $export_url ) : ?>
+		<div class="franer-download-options">
+			<strong class="franer-download-options__label"><?php esc_html_e( 'Download submissions:', 'franer' ); ?></strong>
+			<a class="button button-primary" href="<?php echo esc_url( $export_url ); ?>">
+				<?php esc_html_e( 'Export JSON', 'franer' ); ?>
+			</a>
+			<a class="button button-secondary" href="<?php echo esc_url( $export_csv_url ); ?>">
+				<?php esc_html_e( 'Export CSV', 'franer' ); ?>
+			</a>
+			<p class="description franer-download-options__hint">
+				<?php esc_html_e( 'JSON keeps the full nested data and is best for re-import. CSV has one row per submission with each answer in its own column and opens directly in a spreadsheet (Excel, LibreOffice, Google Sheets).', 'franer' ); ?>
+			</p>
+		</div>
+	<?php endif; ?>
 
 	<?php if ( 0 === $selected_site ) : ?>
 		<p><?php esc_html_e( 'Choose an activity to view its submissions.', 'franer' ); ?></p>

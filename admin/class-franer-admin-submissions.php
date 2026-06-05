@@ -109,11 +109,12 @@ class Franer_Admin_Submissions {
 			)
 		);
 
-		$rows        = array();
-		$export_url  = '';
-		$per_page    = 50;
-		$total       = 0;
-		$total_pages = 0;
+		$rows           = array();
+		$export_url     = '';
+		$export_csv_url = '';
+		$per_page       = 50;
+		$total          = 0;
+		$total_pages    = 0;
 		if ( $selected_site > 0 ) {
 			$total       = $this->submissions->count_site_submissions( $selected_site );
 			$total_pages = (int) ceil( $total / $per_page );
@@ -121,9 +122,9 @@ class Franer_Admin_Submissions {
 			if ( $total_pages > 0 && $paged > $total_pages ) {
 				$paged = $total_pages;
 			}
-			$offset     = ( $paged - 1 ) * $per_page;
-			$rows       = $this->map_submission_rows( $this->submissions->get_site_submissions( $selected_site, $per_page, $offset ) );
-			$export_url = wp_nonce_url(
+			$offset         = ( $paged - 1 ) * $per_page;
+			$rows           = $this->map_submission_rows( $this->submissions->get_site_submissions( $selected_site, $per_page, $offset ) );
+			$export_url     = wp_nonce_url(
 				add_query_arg(
 					array(
 						'action'  => 'franer_export',
@@ -132,6 +133,16 @@ class Franer_Admin_Submissions {
 					admin_url( 'admin-post.php' )
 				),
 				'franer_export_' . $selected_site
+			);
+			$export_csv_url = wp_nonce_url(
+				add_query_arg(
+					array(
+						'action'  => 'franer_export_csv',
+						'site_id' => $selected_site,
+					),
+					admin_url( 'admin-post.php' )
+				),
+				'franer_export_csv_' . $selected_site
 			);
 		}
 

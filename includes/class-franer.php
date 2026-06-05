@@ -134,6 +134,7 @@ class Franer {
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-franer-admin-submissions.php';
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-franer-help.php';
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-franer-export-controller.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/class-franer-csv-export-controller.php';
 
 		/**
 		 * The class responsible for the public-facing side of the site.
@@ -175,6 +176,9 @@ class Franer {
 
 		$plugin_export = new Franer_Export_Controller();
 		$this->loader->add_action( 'admin_post_franer_export', $plugin_export, 'handle' );
+
+		$plugin_export_csv = new Franer_Csv_Export_Controller();
+		$this->loader->add_action( 'admin_post_franer_export_csv', $plugin_export_csv, 'handle' );
 
 		$plugin_submissions = new Franer_Admin_Submissions( $this->get_version() );
 		$this->loader->add_action( 'admin_post_franer_delete_submission', $plugin_submissions, 'handle_delete_submission' );

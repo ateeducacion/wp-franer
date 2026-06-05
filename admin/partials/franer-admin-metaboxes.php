@@ -193,9 +193,12 @@ if ( ! function_exists( 'franer_render_html_metabox' ) ) {
 				<p>
 					<label for="franer_html" class="screen-reader-text"><?php esc_html_e( 'Activity HTML source', 'franer' ); ?></label>
 				</p>
-				<textarea id="franer_html" name="franer_html" rows="20" class="large-text code franer-code-editor"><?php echo esc_textarea( $settings['html'] ); ?></textarea>
+				<div class="franer-drop" data-franer-drop>
+					<textarea id="franer_html" name="franer_html" rows="20" class="large-text code franer-code-editor"><?php echo esc_textarea( $settings['html'] ); ?></textarea>
+				</div>
 				<p class="description">
 					<?php esc_html_e( 'A complete, self-contained HTML document implementing window.FranerCollect() and window.FranerSubmit(). See the Help page for a ready-to-use AI prompt.', 'franer' ); ?>
+					<?php esc_html_e( 'You can also drag and drop an .html file here to load its contents.', 'franer' ); ?>
 				</p>
 				<?php
 				franer_render_prompt_details(
@@ -217,9 +220,12 @@ if ( ! function_exists( 'franer_render_html_metabox' ) ) {
 				<p>
 					<label for="franer_view_html" class="screen-reader-text"><?php esc_html_e( 'Submission view HTML source', 'franer' ); ?></label>
 				</p>
-				<textarea id="franer_view_html" name="franer_view_html" rows="20" class="large-text code franer-code-editor"><?php echo esc_textarea( $view_html ); ?></textarea>
+				<div class="franer-drop" data-franer-drop>
+					<textarea id="franer_view_html" name="franer_view_html" rows="20" class="large-text code franer-code-editor"><?php echo esc_textarea( $view_html ); ?></textarea>
+				</div>
 				<p class="description">
 					<?php esc_html_e( 'Optional HTML used to render an overview of all submissions for this Franer (totals, charts, …). It is only shown to administrators from the submissions screen and receives every submission JSON through postMessage.', 'franer' ); ?>
+					<?php esc_html_e( 'You can also drag and drop an .html file here to load its contents.', 'franer' ); ?>
 				</p>
 				<?php
 				franer_render_prompt_details(
@@ -285,13 +291,14 @@ if ( ! function_exists( 'franer_render_submissions_metabox' ) ) {
 	/**
 	 * Render the per-site Submissions summary metabox.
 	 *
-	 * @param int    $count        The submission count.
-	 * @param string $list_url     URL to the filtered submissions list.
-	 * @param string $export_url   Nonced export URL.
-	 * @param string $overview_url URL to the rendered submissions overview.
+	 * @param int    $count          The submission count.
+	 * @param string $list_url       URL to the filtered submissions list.
+	 * @param string $export_url     Nonced JSON export URL.
+	 * @param string $overview_url   URL to the rendered submissions overview.
+	 * @param string $export_csv_url Nonced CSV export URL.
 	 * @return void
 	 */
-	function franer_render_submissions_metabox( $count, $list_url, $export_url, $overview_url = '' ) {
+	function franer_render_submissions_metabox( $count, $list_url, $export_url, $overview_url = '', $export_csv_url = '' ) {
 		?>
 		<p>
 			<?php
@@ -306,9 +313,20 @@ if ( ! function_exists( 'franer_render_submissions_metabox' ) ) {
 			<a class="button" href="<?php echo esc_url( $list_url ); ?>">
 				<?php esc_html_e( 'View submissions', 'franer' ); ?>
 			</a>
+		</p>
+		<p class="franer-download-options">
+			<strong class="franer-download-options__label"><?php esc_html_e( 'Download submissions:', 'franer' ); ?></strong>
 			<a class="button button-secondary" href="<?php echo esc_url( $export_url ); ?>">
 				<?php esc_html_e( 'Export JSON', 'franer' ); ?>
 			</a>
+			<?php if ( '' !== $export_csv_url ) : ?>
+				<a class="button button-secondary" href="<?php echo esc_url( $export_csv_url ); ?>">
+					<?php esc_html_e( 'Export CSV', 'franer' ); ?>
+				</a>
+			<?php endif; ?>
+		</p>
+		<p class="description">
+			<?php esc_html_e( 'JSON keeps the full nested data; CSV gives one row per submission with each answer in its own column for spreadsheets.', 'franer' ); ?>
 		</p>
 		<?php if ( '' !== $overview_url ) : ?>
 			<p>
