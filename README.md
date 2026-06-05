@@ -5,6 +5,7 @@
 </p>
 
 ![CI](https://img.shields.io/github/actions/workflow/status/ateeducacion/wp-franer/ci.yml?label=CI)
+[![codecov](https://codecov.io/gh/ateeducacion/wp-franer/branch/main/graph/badge.svg)](https://codecov.io/gh/ateeducacion/wp-franer)
 ![WordPress Version](https://img.shields.io/badge/WordPress-6.1%2B-blue)
 ![Language](https://img.shields.io/badge/Language-PHP-orange)
 ![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)

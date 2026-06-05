@@ -150,8 +150,19 @@ jobs:
       - name: Run plugin check
         run: make check-plugin
 
-      - name: Run PHP unit tests
-        run: make test-php
+      - name: Run PHP unit tests with coverage
+        # test-php-coverage (re)starts wp-env with --xdebug=coverage and writes a
+        # Clover report to artifacts/coverage/clover.xml for the Codecov upload.
+        run: make test-php-coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: artifacts/coverage/clover.xml
+          flags: php
+          # Requires a CODECOV_TOKEN repository secret (mandatory for upload).
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
 
   e2e:
     runs-on: ubuntu-latest

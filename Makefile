@@ -139,6 +139,19 @@ test-php: start-if-not-running
 	if [ -n "$(FILTER)" ]; then CMD="$$CMD --filter $(FILTER)"; fi; \
 	npx wp-env run tests-cli --env-cwd=wp-content/plugins/franer $$CMD --colors=always
 
+# Run PHP unit tests with code coverage (text summary + Clover XML + HTML).
+# Coverage needs Xdebug, which wp-env only installs when started in coverage
+# mode, so this target (re)starts the environment with --xdebug=coverage first.
+# Outputs land in artifacts/coverage/ (clover.xml is what Codecov consumes).
+test-php-coverage:
+	npx wp-env start --xdebug=coverage
+	npx wp-env run tests-cli --env-cwd=wp-content/plugins/franer \
+		env XDEBUG_MODE=coverage ./vendor/bin/phpunit \
+		--colors=always \
+		--coverage-text \
+		--coverage-clover artifacts/coverage/clover.xml \
+		--coverage-html artifacts/coverage/html
+
 # Run JavaScript unit tests (Jest)
 test-js:
 	npm run test:js
@@ -221,6 +234,7 @@ help:
 	@echo "  test / test-php    - Run PHPUnit tests. Accepts optional variables:"
 	@echo "                       FILTER=<pattern> (run tests matching the pattern)"
 	@echo "                       FILE=<path>      (run tests in specific file)"
+	@echo "  test-php-coverage  - Run PHPUnit with code coverage (Clover + HTML in artifacts/)"
 	@echo "  test-js            - Run JavaScript unit tests (Jest)"
 	@echo "  test-e2e           - Run E2E tests (non-interactive)"
 	@echo "  test-e2e-visual    - Run E2E tests with visual test UI"

@@ -146,6 +146,9 @@ Franer uses the classic **loader architecture** (à la WordPress plugin boilerpl
   - `make down` / `make destroy` / `make reset` — stop / destroy / reset the environment.
   - `make lint` — PHPCS (WordPress Coding Standards). `make fix` — PHPCBF auto-fix.
   - `make test` / `make test-php` — PHPUnit tests (accepts `FILE=` and `FILTER=`).
+  - `make test-php-coverage` — PHPUnit with code coverage. (Re)starts wp-env with
+    `--xdebug=coverage` and writes `artifacts/coverage/clover.xml` (consumed by
+    Codecov) plus a browsable `artifacts/coverage/html/` report.
   - `make test-js` — Jest JavaScript unit tests.
   - `make test-e2e` — Playwright end-to-end tests (against port 8889).
   - `make check-plugin` — WordPress Plugin Check.
@@ -153,6 +156,13 @@ Franer uses the classic **loader architecture** (à la WordPress plugin boilerpl
   - `make pot` / `make po` / `make mo` — regenerate translation catalogues.
   - `make check` — runs fix, lint, plugin-check, tests, untranslated and mo together.
   - `make package VERSION=x.y.z` — build the release ZIP.
+- **Code coverage (Codecov).** The CI `lint_and_test` job runs PHPUnit with coverage
+  and uploads `artifacts/coverage/clover.xml` to [Codecov](https://codecov.io/gh/ateeducacion/wp-franer).
+  PHP line coverage is currently **~55%**. `codecov.yml` configures gating status
+  checks: a pull request **fails** if it lowers project coverage or if its changed
+  lines are less covered than the base, so add tests alongside new code. The
+  coverage scope is defined in `phpunit.xml.dist` (`admin/`, `includes/`, `public/`,
+  `franer.php`, `uninstall.php`). Uploads require a `CODECOV_TOKEN` repository secret.
 
 ## Environment and tools
 
