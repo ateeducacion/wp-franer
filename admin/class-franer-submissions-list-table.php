@@ -46,13 +46,23 @@ class Franer_Submissions_List_Table extends WP_List_Table {
 	private $per_page;
 
 	/**
+	 * Inferred field schema (Franer_Submission_Schema::infer_fields() result).
+	 *
+	 * Drives the readable answer-chip, rating and comment columns.
+	 *
+	 * @var array
+	 */
+	private $fields;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param Franer_Submissions_Repository $submissions The submissions repository.
 	 * @param int                           $site_id     The activity post ID to list.
 	 * @param int                           $per_page    Rows per page. Default 50.
+	 * @param array                         $fields      Inferred field schema. Default empty.
 	 */
-	public function __construct( $submissions, $site_id, $per_page = 50 ) {
+	public function __construct( $submissions, $site_id, $per_page = 50, $fields = array() ) {
 		parent::__construct(
 			array(
 				'singular' => 'franer_submission',
@@ -64,6 +74,46 @@ class Franer_Submissions_List_Table extends WP_List_Table {
 		$this->submissions = $submissions;
 		$this->site_id     = (int) $site_id;
 		$this->per_page    = max( 1, (int) $per_page );
+		$this->fields      = is_array( $fields ) ? $fields : array();
+	}
+
+	/**
+	 * The fields shown as preview chips (categorical/number, max 3).
+	 *
+	 * @return array Field descriptors.
+	 */
+	private function preview_fields() {
+		return Franer_Submission_Schema::select_preview_fields( $this->fields, 3 );
+	}
+
+	/**
+	 * The rating field descriptor, if the activity has one.
+	 *
+	 * @return array|null
+	 */
+	private function rating_field() {
+		return Franer_Submission_Schema::first_field_of_type( $this->fields, 'rating' );
+	}
+
+	/**
+	 * The free-text field descriptor, if the activity has one.
+	 *
+	 * @return array|null
+	 */
+	private function comment_field() {
+		return Franer_Submission_Schema::first_field_of_type( $this->fields, 'text' );
+	}
+
+	/**
+	 * Decode a row's stored JSON payload to an array.
+	 *
+	 * @param array $item The current row.
+	 * @return array The decoded payload (empty on failure).
+	 */
+	private function row_payload( $item ) {
+		$decoded = json_decode( isset( $item['payload'] ) ? (string) $item['payload'] : '', true );
+
+		return is_array( $decoded ) ? Franer_Submission_Schema::flatten_payload( $decoded ) : array();
 	}
 
 	/**
@@ -81,14 +131,27 @@ class Franer_Submissions_List_Table extends WP_List_Table {
 	 * @return array Column slug => header label.
 	 */
 	public function get_columns() {
-		return array(
-			'id'         => __( 'ID', 'franer' ),
-			'activity'   => __( 'Activity', 'franer' ),
-			'user'       => __( 'User', 'franer' ),
-			'created_at' => __( 'Created', 'franer' ),
-			'updated_at' => __( 'Updated', 'franer' ),
-			'actions'    => __( 'Actions', 'franer' ),
+		$columns = array(
+			'id'   => __( 'ID', 'franer' ),
+			'user' => __( 'User', 'franer' ),
 		);
+
+		if ( ! empty( $this->preview_fields() ) ) {
+			$columns['answers'] = __( 'Answers', 'franer' );
+		}
+		$rating = $this->rating_field();
+		if ( null !== $rating ) {
+			$columns['rating'] = $rating['label'];
+		}
+		$comment = $this->comment_field();
+		if ( null !== $comment ) {
+			$columns['comment'] = $comment['label'];
+		}
+
+		$columns['created_at'] = __( 'Created', 'franer' );
+		$columns['actions']    = __( 'Actions', 'franer' );
+
+		return $columns;
 	}
 
 	/**
@@ -225,6 +288,85 @@ class Franer_Submissions_List_Table extends WP_List_Table {
 			default:
 				return '';
 		}
+	}
+
+	/**
+	 * Render the readable answer-chip preview column.
+	 *
+	 * @param array $item The current row.
+	 * @return string The cell HTML.
+	 */
+	public function column_answers( $item ) {
+		$payload = $this->row_payload( $item );
+		$chips   = '';
+		foreach ( $this->preview_fields() as $field ) {
+			$key   = $field['key'];
+			$value = isset( $payload[ $key ] ) ? $payload[ $key ] : null;
+			$chips .= sprintf(
+				'<span class="franer-achip" title="%1$s">%2$s</span>',
+				esc_attr( $field['label'] ),
+				esc_html( Franer_Submission_Schema::preview_value( $field, $value ) )
+			);
+		}
+
+		return '<span class="franer-apreview">' . $chips . '</span>';
+	}
+
+	/**
+	 * Render the rating column as stars.
+	 *
+	 * @param array $item The current row.
+	 * @return string The cell HTML.
+	 */
+	public function column_rating( $item ) {
+		$field = $this->rating_field();
+		if ( null === $field ) {
+			return '';
+		}
+		$payload = $this->row_payload( $item );
+		$value   = isset( $payload[ $field['key'] ] ) ? (float) $payload[ $field['key'] ] : 0.0;
+
+		return self::stars_html( $value );
+	}
+
+	/**
+	 * Render the free-text comment column (truncated).
+	 *
+	 * @param array $item The current row.
+	 * @return string The cell HTML.
+	 */
+	public function column_comment( $item ) {
+		$field = $this->comment_field();
+		if ( null === $field ) {
+			return '';
+		}
+		$payload = $this->row_payload( $item );
+		$value   = isset( $payload[ $field['key'] ] ) ? (string) $payload[ $field['key'] ] : '';
+		$value   = trim( $value );
+
+		if ( '' === $value ) {
+			return '<span class="franer-muted">—</span>';
+		}
+
+		return '<span class="franer-comment">“' . esc_html( wp_html_excerpt( $value, 80, '…' ) ) . '”</span>';
+	}
+
+	/**
+	 * Build the star-rating markup for a 0..5 value.
+	 *
+	 * @param float $value The rating value.
+	 * @return string The stars HTML.
+	 */
+	public static function stars_html( $value ) {
+		$value = (float) $value;
+		$out   = '<span class="franer-stars" title="' . esc_attr( number_format_i18n( $value, 1 ) . ' / 5' ) . '">';
+		for ( $i = 1; $i <= 5; $i++ ) {
+			$on   = $value >= ( $i - 0.25 ) ? ' is-on' : '';
+			$out .= '<span class="franer-star' . $on . '" aria-hidden="true">★</span>';
+		}
+		$out .= '</span>';
+
+		return $out;
 	}
 
 	/**

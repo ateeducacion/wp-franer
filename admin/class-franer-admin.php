@@ -146,18 +146,10 @@ class Franer_Admin {
 			);
 		}
 
-		add_meta_box(
-			'franer_site_settings',
-			__( 'Site settings', 'franer' ),
-			array( $this, 'render_settings_metabox' ),
-			'franer_site',
-			'normal',
-			'high'
-		);
-
+		// The activity HTML is the heart of a Franer, so it leads the main column.
 		add_meta_box(
 			'franer_site_html',
-			__( 'HTML source', 'franer' ),
+			__( 'Activity', 'franer' ),
 			array( $this, 'render_html_metabox' ),
 			'franer_site',
 			'normal',
@@ -165,8 +157,26 @@ class Franer_Admin {
 		);
 
 		add_meta_box(
+			'franer_site_access',
+			__( 'Access and visibility', 'franer' ),
+			array( $this, 'render_access_metabox' ),
+			'franer_site',
+			'normal',
+			'high'
+		);
+
+		add_meta_box(
+			'franer_site_submissions_settings',
+			__( 'Submissions and availability', 'franer' ),
+			array( $this, 'render_submissions_settings_metabox' ),
+			'franer_site',
+			'normal',
+			'default'
+		);
+
+		add_meta_box(
 			'franer_site_public_url',
-			__( 'Public URL', 'franer' ),
+			__( 'Share', 'franer' ),
 			array( $this, 'render_public_url_metabox' ),
 			'franer_site',
 			'side',
@@ -193,17 +203,49 @@ class Franer_Admin {
 	}
 
 	/**
-	 * Render the Site settings metabox.
+	 * Render the onboarding guide strip above the editor (franer_site only).
+	 *
+	 * Hooked on edit_form_top, which fires for every post type, so it must bail
+	 * out for anything that is not a Franer.
 	 *
 	 * @param WP_Post $post The post being edited.
 	 * @return void
 	 */
-	public function render_settings_metabox( $post ) {
-		$settings  = $this->sites->get_settings( $post->ID );
-		$all_roles = wp_roles()->roles;
+	public function render_guide_strip( $post ) {
+		if ( ! $post instanceof WP_Post || 'franer_site' !== $post->post_type ) {
+			return;
+		}
+		require_once plugin_dir_path( __FILE__ ) . 'partials/franer-admin-metaboxes.php';
+		franer_render_guide_strip();
+	}
+
+	/**
+	 * Render the Access and visibility metabox (slug, status, roles).
+	 *
+	 * Also emits the shared save nonce for the whole editor.
+	 *
+	 * @param WP_Post $post The post being edited.
+	 * @return void
+	 */
+	public function render_access_metabox( $post ) {
+		$settings    = $this->sites->get_settings( $post->ID );
+		$all_roles   = wp_roles()->roles;
+		$public_base = home_url( '/franer/' );
 		wp_nonce_field( 'save_franer_site', 'franer_site_nonce' );
 		require plugin_dir_path( __FILE__ ) . 'partials/franer-admin-metaboxes.php';
-		franer_render_settings_metabox( $settings, $all_roles );
+		franer_render_access_metabox( $settings, $all_roles, $public_base );
+	}
+
+	/**
+	 * Render the Submissions and availability metabox.
+	 *
+	 * @param WP_Post $post The post being edited.
+	 * @return void
+	 */
+	public function render_submissions_settings_metabox( $post ) {
+		$settings = $this->sites->get_settings( $post->ID );
+		require plugin_dir_path( __FILE__ ) . 'partials/franer-admin-metaboxes.php';
+		franer_render_submissions_settings_metabox( $settings );
 	}
 
 	/**
@@ -213,9 +255,11 @@ class Franer_Admin {
 	 * @return void
 	 */
 	public function render_html_metabox( $post ) {
-		$settings = $this->sites->get_settings( $post->ID );
+		$settings        = $this->sites->get_settings( $post->ID );
+		$activity_prompt = Franer_Help::get_default_activity_prompt();
+		$view_prompt     = Franer_Help::get_default_view_prompt();
 		require_once plugin_dir_path( __FILE__ ) . 'partials/franer-admin-metaboxes.php';
-		franer_render_html_metabox( $settings );
+		franer_render_html_metabox( $settings, $activity_prompt, $view_prompt );
 	}
 
 	/**
@@ -633,6 +677,8 @@ class Franer_Admin {
 					'dropConfirm'     => __( 'Replace the current content with the dropped file?', 'franer' ),
 					'dropInvalidType' => __( 'Please drop an .html file.', 'franer' ),
 					'dropReadError'   => __( 'The file could not be read.', 'franer' ),
+					'invalidJson'     => __( 'Could not read this submission.', 'franer' ),
+					'noComment'       => __( 'No comment', 'franer' ),
 				),
 			)
 		);

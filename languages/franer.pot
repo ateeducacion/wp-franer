@@ -63,13 +63,16 @@ msgstr ""
 msgid "Author"
 msgstr ""
 
-msgid "Site settings"
+msgid "Activity"
 msgstr ""
 
-msgid "HTML source"
+msgid "Access and visibility"
 msgstr ""
 
-msgid "Public URL"
+msgid "Submissions and availability"
+msgstr ""
+
+msgid "Share"
 msgstr ""
 
 msgid "The slug is invalid. Use only lowercase letters, numbers and hyphens."
@@ -91,6 +94,12 @@ msgid "Please drop an .html file."
 msgstr ""
 
 msgid "The file could not be read."
+msgstr ""
+
+msgid "Could not read this submission."
+msgstr ""
+
+msgid "No comment"
 msgstr ""
 
 msgid "Visit Franer"
@@ -225,16 +234,13 @@ msgstr ""
 msgid "ID"
 msgstr ""
 
-msgid "Activity"
-msgstr ""
-
 msgid "User"
 msgstr ""
 
-msgid "Created"
+msgid "Answers"
 msgstr ""
 
-msgid "Updated"
+msgid "Created"
 msgstr ""
 
 msgid "Actions"
@@ -351,6 +357,27 @@ msgstr ""
 msgid "Franer submission view spec"
 msgstr ""
 
+msgid "Paste your activity"
+msgstr ""
+
+msgid "A self-contained HTML document (an AI can generate it for you)."
+msgstr ""
+
+msgid "Set up access"
+msgstr ""
+
+msgid "Who can see it, when, and how many times they may respond."
+msgstr ""
+
+msgid "Share it"
+msgstr ""
+
+msgid "Use the public URL or the shortcode, then collect the submissions."
+msgstr ""
+
+msgid "Create a Franer in 3 steps"
+msgstr ""
+
 msgid "Slug"
 msgstr ""
 
@@ -361,6 +388,24 @@ msgid "Status"
 msgstr ""
 
 msgid "When disabled, the activity is unavailable to everyone."
+msgstr ""
+
+msgid "Allowed roles"
+msgstr ""
+
+msgid "Only logged-in users with one of these roles may view and submit. Administrators are always allowed."
+msgstr ""
+
+msgid "Accept new submissions"
+msgstr ""
+
+msgid "Allow multiple submissions per user"
+msgstr ""
+
+msgid "Allow overwriting the previous submission"
+msgstr ""
+
+msgid "Reception"
 msgstr ""
 
 msgid "Availability window"
@@ -375,21 +420,6 @@ msgstr ""
 msgid "Optional. Submissions are only accepted within this window (site time). Leave empty for no limit."
 msgstr ""
 
-msgid "Accept new submissions"
-msgstr ""
-
-msgid "Allow multiple submissions per user"
-msgstr ""
-
-msgid "Allow overwriting the previous submission"
-msgstr ""
-
-msgid "Allowed roles"
-msgstr ""
-
-msgid "Only logged-in users with one of these roles may view and submit. Administrators are always allowed."
-msgstr ""
-
 msgid "Max payload size (KB)"
 msgstr ""
 
@@ -397,6 +427,18 @@ msgid "Maximum accepted submission size, between 1 and 5120 KB."
 msgstr ""
 
 msgid "Copy"
+msgstr ""
+
+msgid "Copy AI prompt"
+msgstr ""
+
+msgid "Ready-to-use AI prompt"
+msgstr ""
+
+msgid "Secure environment."
+msgstr ""
+
+msgid "Learn more"
 msgstr ""
 
 msgid "HTML editors"
@@ -408,7 +450,10 @@ msgstr ""
 msgid "Submission View HTML"
 msgstr ""
 
-msgid "Security note:"
+msgid "Optional"
+msgstr ""
+
+msgid "This HTML runs isolated in a sandboxed iframe; it cannot read cookies or send data outside."
 msgstr ""
 
 msgid "This HTML is stored exactly as entered and is ONLY ever rendered inside a sandboxed iframe (sandbox=\"allow-scripts allow-forms\", without same-origin access). It cannot read cookies/storage or the page DOM. It MAY load external libraries, fonts and images over https, but an injected Content-Security-Policy blocks fetch/XHR/forms so answers can only leave via postMessage. Because remote scripts run in front of your users, paste only activities you trust."
@@ -417,7 +462,7 @@ msgstr ""
 msgid "Activity HTML source"
 msgstr ""
 
-msgid "A complete, self-contained HTML document implementing window.FranerCollect() and window.FranerSubmit(). See the Help page for a ready-to-use AI prompt."
+msgid "A complete, self-contained HTML document implementing window.FranerCollect() and window.FranerSubmit()."
 msgstr ""
 
 msgid "You can also drag and drop an .html file here to load its contents."
@@ -427,6 +472,9 @@ msgid "Prompt used to generate this activity"
 msgstr ""
 
 msgid "Optional field. Store here the prompt used to generate this HTML. It can help with future modifications, adjustments or regeneration of the activity."
+msgstr ""
+
+msgid "Optional template shown only to administrators; it also runs isolated in a sandboxed iframe."
 msgstr ""
 
 msgid "Like the activity HTML, this template is stored raw and only ever rendered inside a sandboxed iframe. It is shown only to administrators and receives every submission JSON through postMessage. It never receives REST nonces or admin URLs, and an injected Content-Security-Policy blocks fetch/XHR/forms so the aggregated answers cannot be exfiltrated. It may still load libraries, fonts and images over https — paste only templates you trust."
@@ -444,6 +492,9 @@ msgstr ""
 msgid "Optional field. Store here the prompt used to generate the submission-view template. It can help with future modifications, adjustments or regeneration of the view."
 msgstr ""
 
+msgid "Public URL"
+msgstr ""
+
 msgid "Open public page"
 msgstr ""
 
@@ -453,10 +504,8 @@ msgstr ""
 msgid "Shortcode"
 msgstr ""
 
-#. translators: %s: number of submissions.
-#, php-format
-msgid "%s submission collected."
-msgid_plural "%s submissions collected."
+msgid "response collected"
+msgid_plural "responses collected"
 msgstr[0] ""
 msgstr[1] ""
 
@@ -513,6 +562,35 @@ msgstr ""
 msgid "Rendered submissions overview"
 msgstr ""
 
+msgid "Choose an activity to see its submissions"
+msgstr ""
+
+msgid "Once you pick a Franer you will see the collected responses here, an automatic summary and the export options."
+msgstr ""
+
+msgid "Automatic summary"
+msgstr ""
+
+msgid "Generated automatically from the responses. You do not need to create an HTML template."
+msgstr ""
+
+#. translators: %s: number of ratings.
+#, php-format
+msgid "average of %s rating"
+msgid_plural "average of %s ratings"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of stars.
+#, php-format
+msgid "%d star"
+msgid_plural "%d stars"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Comments"
+msgstr ""
+
 msgid "Submission deleted."
 msgstr ""
 
@@ -531,19 +609,19 @@ msgstr ""
 msgid "Filter"
 msgstr ""
 
-msgid "JSON keeps the full nested data and is best for re-import. CSV has one row per submission with each answer in its own column and opens directly in a spreadsheet (Excel, LibreOffice, Google Sheets)."
-msgstr ""
-
-msgid "Choose an activity to view its submissions."
-msgstr ""
-
 msgid "Search submissions"
 msgstr ""
 
-msgid "Edit submission payload"
+msgid "Submission detail"
 msgstr ""
 
 msgid "Close"
+msgstr ""
+
+msgid "Summary"
+msgstr ""
+
+msgid "JSON"
 msgstr ""
 
 msgid "Submission JSON payload"
@@ -555,7 +633,10 @@ msgstr ""
 msgid "Save changes"
 msgstr ""
 
-msgid "Cancel"
+msgid "Previous"
+msgstr ""
+
+msgid "Next"
 msgstr ""
 
 msgctxt "Post type general name"
@@ -638,6 +719,26 @@ msgid "The slug may only contain lowercase letters, numbers and hyphens."
 msgstr ""
 
 msgid "The submitted payload is too large."
+msgstr ""
+
+msgid "Yes"
+msgstr ""
+
+msgid "No"
+msgstr ""
+
+msgid "response"
+msgid_plural "responses"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "average rating"
+msgstr ""
+
+msgid "with a comment"
+msgstr ""
+
+msgid "last response"
 msgstr ""
 
 msgid "Duplicate submission not allowed"

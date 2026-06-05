@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-06-02T22:21:45+00:00\n"
-"PO-Revision-Date: 2026-06-05T14:14:29+00:00\n"
+"PO-Revision-Date: 2026-06-05T15:05:49+00:00\n"
 "Language: es_ES\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Domain: franer\n"
@@ -63,14 +63,17 @@ msgstr "Ayuda"
 msgid "Author"
 msgstr "Autor"
 
-msgid "Site settings"
-msgstr "Ajustes del sitio"
+msgid "Activity"
+msgstr "Actividad"
 
-msgid "HTML source"
-msgstr "Código HTML"
+msgid "Access and visibility"
+msgstr "Acceso y visibilidad"
 
-msgid "Public URL"
-msgstr "URL pública"
+msgid "Submissions and availability"
+msgstr "Envíos y disponibilidad"
+
+msgid "Share"
+msgstr "Compartir"
 
 msgid "The slug is invalid. Use only lowercase letters, numbers and hyphens."
 msgstr "El slug no es válido. Usa solo letras minúsculas, números y guiones."
@@ -92,6 +95,12 @@ msgstr "Suelta un archivo .html."
 
 msgid "The file could not be read."
 msgstr "No se pudo leer el archivo."
+
+msgid "Could not read this submission."
+msgstr "No se pudo leer este envío."
+
+msgid "No comment"
+msgstr "Sin comentario"
 
 msgid "Visit Franer"
 msgstr "Ver Franer"
@@ -225,17 +234,14 @@ msgstr "Devuelve únicamente el documento HTML completo. No añadas explicacione
 msgid "ID"
 msgstr "ID"
 
-msgid "Activity"
-msgstr "Actividad"
-
 msgid "User"
 msgstr "Usuario"
 
+msgid "Answers"
+msgstr "Respuestas"
+
 msgid "Created"
 msgstr "Creado"
-
-msgid "Updated"
-msgstr "Actualizado"
 
 msgid "Actions"
 msgstr "Acciones"
@@ -351,6 +357,27 @@ msgstr "Copiar prompt de vista de envíos"
 msgid "Franer submission view spec"
 msgstr "Especificación de la vista de envíos de Franer"
 
+msgid "Paste your activity"
+msgstr "Pega tu actividad"
+
+msgid "A self-contained HTML document (an AI can generate it for you)."
+msgstr "Un documento HTML autocontenido (lo puede generar una IA)."
+
+msgid "Set up access"
+msgstr "Configura el acceso"
+
+msgid "Who can see it, when, and how many times they may respond."
+msgstr "Quién puede verla, cuándo y cuántas veces puede responder."
+
+msgid "Share it"
+msgstr "Compártela"
+
+msgid "Use the public URL or the shortcode, then collect the submissions."
+msgstr "Usa la URL pública o el shortcode y recoge los envíos."
+
+msgid "Create a Franer in 3 steps"
+msgstr "Crea un Franer en 3 pasos"
+
 msgid "Slug"
 msgstr "Slug"
 
@@ -362,6 +389,24 @@ msgstr "Estado"
 
 msgid "When disabled, the activity is unavailable to everyone."
 msgstr "Cuando está deshabilitado, la actividad no está disponible para nadie."
+
+msgid "Allowed roles"
+msgstr "Roles permitidos"
+
+msgid "Only logged-in users with one of these roles may view and submit. Administrators are always allowed."
+msgstr "Solo los usuarios identificados con uno de estos roles pueden ver y enviar. Los administradores siempre tienen permiso."
+
+msgid "Accept new submissions"
+msgstr "Aceptar nuevos envíos"
+
+msgid "Allow multiple submissions per user"
+msgstr "Permitir varios envíos por usuario"
+
+msgid "Allow overwriting the previous submission"
+msgstr "Permitir sobrescribir el envío anterior"
+
+msgid "Reception"
+msgstr "Recepción"
 
 msgid "Availability window"
 msgstr "Periodo de disponibilidad"
@@ -375,21 +420,6 @@ msgstr "Fin"
 msgid "Optional. Submissions are only accepted within this window (site time). Leave empty for no limit."
 msgstr "Opcional. Los envíos solo se aceptan dentro de este periodo (hora del sitio). Déjalo vacío para no tener límite."
 
-msgid "Accept new submissions"
-msgstr "Aceptar nuevos envíos"
-
-msgid "Allow multiple submissions per user"
-msgstr "Permitir varios envíos por usuario"
-
-msgid "Allow overwriting the previous submission"
-msgstr "Permitir sobrescribir el envío anterior"
-
-msgid "Allowed roles"
-msgstr "Roles permitidos"
-
-msgid "Only logged-in users with one of these roles may view and submit. Administrators are always allowed."
-msgstr "Solo los usuarios identificados con uno de estos roles pueden ver y enviar. Los administradores siempre tienen permiso."
-
 msgid "Max payload size (KB)"
 msgstr "Tamaño máximo de datos (KB)"
 
@@ -398,6 +428,18 @@ msgstr "Tamaño máximo de envío aceptado, entre 1 y 5120 KB."
 
 msgid "Copy"
 msgstr "Copiar"
+
+msgid "Copy AI prompt"
+msgstr "Copiar prompt de IA"
+
+msgid "Ready-to-use AI prompt"
+msgstr "Prompt de IA listo para usar"
+
+msgid "Secure environment."
+msgstr "Entorno seguro."
+
+msgid "Learn more"
+msgstr "Saber más"
 
 msgid "HTML editors"
 msgstr "Editores HTML"
@@ -408,8 +450,11 @@ msgstr "HTML de la actividad"
 msgid "Submission View HTML"
 msgstr "HTML de la vista de envíos"
 
-msgid "Security note:"
-msgstr "Nota de seguridad:"
+msgid "Optional"
+msgstr "Opcional"
+
+msgid "This HTML runs isolated in a sandboxed iframe; it cannot read cookies or send data outside."
+msgstr "Este HTML se ejecuta aislado en un iframe con sandbox; no puede leer cookies ni enviar datos fuera."
 
 msgid "This HTML is stored exactly as entered and is ONLY ever rendered inside a sandboxed iframe (sandbox=\"allow-scripts allow-forms\", without same-origin access). It cannot read cookies/storage or the page DOM. It MAY load external libraries, fonts and images over https, but an injected Content-Security-Policy blocks fetch/XHR/forms so answers can only leave via postMessage. Because remote scripts run in front of your users, paste only activities you trust."
 msgstr "Este HTML se almacena exactamente como se introduce y SOLO se renderiza dentro de un iframe aislado (sandbox=\"allow-scripts allow-forms\", sin acceso same-origin). No puede leer cookies/almacenamiento ni el DOM de la página. PUEDE cargar librerías, fuentes e imágenes externas por https, pero una Content-Security-Policy inyectada bloquea fetch/XHR/formularios, así que las respuestas solo pueden salir por postMessage. Como los scripts remotos se ejecutan ante tus usuarios, pega solo actividades de confianza."
@@ -417,8 +462,8 @@ msgstr "Este HTML se almacena exactamente como se introduce y SOLO se renderiza 
 msgid "Activity HTML source"
 msgstr "Código HTML de la actividad"
 
-msgid "A complete, self-contained HTML document implementing window.FranerCollect() and window.FranerSubmit(). See the Help page for a ready-to-use AI prompt."
-msgstr "Un documento HTML completo y autocontenido que implemente window.FranerCollect() y window.FranerSubmit(). Consulta la página de Ayuda para obtener un prompt de IA listo para usar."
+msgid "A complete, self-contained HTML document implementing window.FranerCollect() and window.FranerSubmit()."
+msgstr ""
 
 msgid "You can also drag and drop an .html file here to load its contents."
 msgstr "También puedes arrastrar y soltar aquí un archivo .html para cargar su contenido."
@@ -428,6 +473,9 @@ msgstr "Prompt utilizado para generar esta actividad"
 
 msgid "Optional field. Store here the prompt used to generate this HTML. It can help with future modifications, adjustments or regeneration of the activity."
 msgstr "Campo opcional. Guarda aquí el prompt utilizado para generar este HTML. Puede facilitar futuras modificaciones, ajustes o regeneraciones de la actividad."
+
+msgid "Optional template shown only to administrators; it also runs isolated in a sandboxed iframe."
+msgstr "Plantilla opcional visible solo para administradores; también se ejecuta aislada en un iframe con sandbox."
 
 msgid "Like the activity HTML, this template is stored raw and only ever rendered inside a sandboxed iframe. It is shown only to administrators and receives every submission JSON through postMessage. It never receives REST nonces or admin URLs, and an injected Content-Security-Policy blocks fetch/XHR/forms so the aggregated answers cannot be exfiltrated. It may still load libraries, fonts and images over https — paste only templates you trust."
 msgstr "Como el HTML de la actividad, esta plantilla se almacena en bruto y solo se renderiza dentro de un iframe aislado. Solo se muestra a administradores y recibe cada envío en JSON mediante postMessage. Nunca recibe nonces REST ni URLs de administración, y una Content-Security-Policy inyectada bloquea fetch/XHR/formularios, así que las respuestas agregadas no se pueden exfiltrar. Aun así puede cargar librerías, fuentes e imágenes por https; pega solo plantillas de confianza."
@@ -444,6 +492,9 @@ msgstr "Prompt utilizado para generar esta vista de envíos"
 msgid "Optional field. Store here the prompt used to generate the submission-view template. It can help with future modifications, adjustments or regeneration of the view."
 msgstr "Campo opcional. Guarda aquí el prompt utilizado para generar la plantilla de vista de envíos. Puede facilitar futuras modificaciones, ajustes o regeneraciones de la vista."
 
+msgid "Public URL"
+msgstr "URL pública"
+
 msgid "Open public page"
 msgstr "Abrir página pública"
 
@@ -453,12 +504,10 @@ msgstr "Abrir a pantalla completa"
 msgid "Shortcode"
 msgstr "Shortcode"
 
-#. translators: %s: number of submissions.
-#, php-format
-msgid "%s submission collected."
-msgid_plural "%s submissions collected."
-msgstr[0] "%s envío recogido."
-msgstr[1] "%s envíos recogidos."
+msgid "response collected"
+msgid_plural "responses collected"
+msgstr[0] "respuesta recogida"
+msgstr[1] "respuestas recogidas"
 
 msgid "View submissions"
 msgstr "Ver envíos"
@@ -513,6 +562,35 @@ msgstr "Resumen representado"
 msgid "Rendered submissions overview"
 msgstr "Resumen de envíos representado"
 
+msgid "Choose an activity to see its submissions"
+msgstr "Elige una actividad para ver sus envíos"
+
+msgid "Once you pick a Franer you will see the collected responses here, an automatic summary and the export options."
+msgstr "Cuando elijas un Franer verás aquí las respuestas recogidas, un resumen automático y las opciones de exportación."
+
+msgid "Automatic summary"
+msgstr "Resumen automático"
+
+msgid "Generated automatically from the responses. You do not need to create an HTML template."
+msgstr "Generado automáticamente a partir de las respuestas. No necesitas crear una plantilla HTML."
+
+#. translators: %s: number of ratings.
+#, php-format
+msgid "average of %s rating"
+msgid_plural "average of %s ratings"
+msgstr[0] "media de %s valoración"
+msgstr[1] "media de %s valoraciones"
+
+#. translators: %d: number of stars.
+#, php-format
+msgid "%d star"
+msgid_plural "%d stars"
+msgstr[0] "%d estrella"
+msgstr[1] "%d estrellas"
+
+msgid "Comments"
+msgstr "Comentarios"
+
 msgid "Submission deleted."
 msgstr "Envío eliminado."
 
@@ -531,20 +609,20 @@ msgstr "— Selecciona una actividad —"
 msgid "Filter"
 msgstr "Filtrar"
 
-msgid "JSON keeps the full nested data and is best for re-import. CSV has one row per submission with each answer in its own column and opens directly in a spreadsheet (Excel, LibreOffice, Google Sheets)."
-msgstr "JSON conserva todos los datos anidados y es ideal para reimportar. CSV tiene una fila por respuesta con cada dato en su propia columna y se abre directamente en una hoja de cálculo (Excel, LibreOffice, Google Sheets)."
-
-msgid "Choose an activity to view its submissions."
-msgstr "Elige una actividad para ver sus envíos."
-
 msgid "Search submissions"
 msgstr "Buscar envíos"
 
-msgid "Edit submission payload"
-msgstr "Editar los datos del envío"
+msgid "Submission detail"
+msgstr "Detalle del envío"
 
 msgid "Close"
 msgstr "Cerrar"
+
+msgid "Summary"
+msgstr "Resumen"
+
+msgid "JSON"
+msgstr "JSON"
 
 msgid "Submission JSON payload"
 msgstr "Datos JSON del envío"
@@ -555,8 +633,11 @@ msgstr "Edita el JSON (debe ser un objeto JSON válido) y guarda."
 msgid "Save changes"
 msgstr "Guardar cambios"
 
-msgid "Cancel"
-msgstr "Cancelar"
+msgid "Previous"
+msgstr "Anterior"
+
+msgid "Next"
+msgstr "Siguiente"
 
 msgctxt "Post type general name"
 msgid "Franer"
@@ -639,6 +720,26 @@ msgstr "El slug solo puede contener letras minúsculas, números y guiones."
 
 msgid "The submitted payload is too large."
 msgstr "Los datos enviados son demasiado grandes."
+
+msgid "Yes"
+msgstr "Sí"
+
+msgid "No"
+msgstr "No"
+
+msgid "response"
+msgid_plural "responses"
+msgstr[0] "respuesta"
+msgstr[1] "respuestas"
+
+msgid "average rating"
+msgstr "valoración media"
+
+msgid "with a comment"
+msgstr "con comentario"
+
+msgid "last response"
+msgstr "último envío"
 
 msgid "Duplicate submission not allowed"
 msgstr "No se permite un envío duplicado."

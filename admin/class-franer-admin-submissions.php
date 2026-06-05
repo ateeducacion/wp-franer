@@ -108,12 +108,30 @@ class Franer_Admin_Submissions {
 			)
 		);
 
-		$export_url     = '';
-		$export_csv_url = '';
-		$list_table     = null;
+		// Submission counts per activity, used by the empty-state chips.
+		$activity_counts = array();
+		foreach ( $site_posts as $franer_site_post ) {
+			$activity_counts[ $franer_site_post->ID ] = $this->submissions->count_site_submissions( $franer_site_post->ID );
+		}
+
+		$export_url      = '';
+		$export_csv_url  = '';
+		$list_table      = null;
+		$summary         = null;
+		$fields          = array();
+		$has_custom_view = false;
 		if ( $selected_site > 0 ) {
 			require_once plugin_dir_path( __FILE__ ) . 'class-franer-submissions-list-table.php';
-			$list_table = new Franer_Submissions_List_Table( $this->submissions, $selected_site );
+
+			// Infer the field schema from a bounded sample so the table, the
+			// auto-summary and the detail drawer can read any free-form payload.
+			$summary_rows    = $this->build_summary_rows( $selected_site );
+			$fields          = Franer_Submission_Schema::infer_fields( wp_list_pluck( $summary_rows, 'payload' ) );
+			$summary         = Franer_Submission_Schema::build_summary( $summary_rows );
+			$settings        = $this->sites->get_settings( $selected_site );
+			$has_custom_view = isset( $settings['view_html'] ) && '' !== trim( (string) $settings['view_html'] );
+
+			$list_table = new Franer_Submissions_List_Table( $this->submissions, $selected_site, 50, $fields );
 			$list_table->prepare_items();
 
 			$export_url     = wp_nonce_url(
@@ -321,6 +339,37 @@ class Franer_Admin_Submissions {
 		}
 
 		return $submissions;
+	}
+
+	/**
+	 * Build the decoded rows used to infer the schema and the auto-summary.
+	 *
+	 * Reads a bounded, newest-first sample of the activity's submissions, decodes
+	 * each payload and resolves the submitter login, shaped for
+	 * Franer_Submission_Schema (no PII beyond the public login name).
+	 *
+	 * @param int $site_id The activity (site) post ID.
+	 * @return array List of { id, user, created_at, updated_at, payload }.
+	 */
+	private function build_summary_rows( $site_id ) {
+		$raw  = $this->submissions->get_site_submissions( (int) $site_id, self::VIEW_MAX_SUBMISSIONS, 0 );
+		$rows = array();
+		foreach ( $raw as $row ) {
+			$decoded = json_decode( isset( $row['payload_json'] ) ? (string) $row['payload_json'] : '', true );
+			if ( ! is_array( $decoded ) ) {
+				$decoded = array();
+			}
+			$user   = get_userdata( (int) $row['user_id'] );
+			$rows[] = array(
+				'id'         => (int) $row['id'],
+				'user'       => $user ? $user->user_login : ( '#' . (int) $row['user_id'] ),
+				'created_at' => isset( $row['created_at'] ) ? (string) $row['created_at'] : '',
+				'updated_at' => isset( $row['updated_at'] ) ? (string) $row['updated_at'] : '',
+				'payload'    => $decoded,
+			);
+		}
+
+		return $rows;
 	}
 
 	/**
