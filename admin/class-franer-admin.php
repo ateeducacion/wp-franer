@@ -131,6 +131,21 @@ class Franer_Admin {
 	 * @return void
 	 */
 	public function add_meta_boxes() {
+		// The CPT supports 'author', so core registers the Author box in the main
+		// column. Move it to the side and let restrict_author_dropdown_to_admins()
+		// populate it, so the activity owner is shown and can be reassigned.
+		if ( post_type_supports( 'franer_site', 'author' ) ) {
+			remove_meta_box( 'authordiv', 'franer_site', 'normal' );
+			add_meta_box(
+				'authordiv',
+				__( 'Author', 'franer' ),
+				'post_author_meta_box',
+				'franer_site',
+				'side',
+				'high'
+			);
+		}
+
 		add_meta_box(
 			'franer_site_settings',
 			__( 'Site settings', 'franer' ),
@@ -298,11 +313,82 @@ class Franer_Admin {
 		}
 
 		$this->save_slug_meta( $post_id );
-		$this->save_html_meta( $post_id );
+		// The activity HTML is written into post_content during the primary save by
+		// inject_raw_html_into_content() (a wp_insert_post_data filter), so a single
+		// revision per save captures it. See that method for why.
 		$this->save_flag_meta( $post_id );
 		$this->save_schedule_meta( $post_id );
 		$this->save_prompt_meta( $post_id );
 		$this->persist_notices();
+	}
+
+	/**
+	 * Restrict the Author metabox dropdown to administrators on franer_site.
+	 *
+	 * The franer_site post type has its own capabilities, all remapped to
+	 * manage_options (see Franer_Post_Types::map_franer_site_caps()). No role
+	 * literally holds edit_franer_sites, so the core Author dropdown — which queries
+	 * for users with that capability — comes up empty. Querying administrators (the
+	 * only role allowed to own a Franer) instead makes the box show the current
+	 * owner and lets an admin reassign it.
+	 *
+	 * @param array $query_args  The WP_User_Query arguments.
+	 * @param array $parsed_args The wp_dropdown_users() arguments.
+	 * @return array The adjusted query arguments.
+	 */
+	public function restrict_author_dropdown_to_admins( $query_args, $parsed_args ) {
+		if ( ! isset( $parsed_args['name'] ) || 'post_author_override' !== $parsed_args['name'] ) {
+			return $query_args;
+		}
+
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		if ( ! $screen || ! isset( $screen->post_type ) || 'franer_site' !== $screen->post_type ) {
+			return $query_args;
+		}
+
+		unset( $query_args['who'] );
+		$query_args['capability'] = array( 'manage_options' );
+
+		return $query_args;
+	}
+
+	/**
+	 * Write the raw activity HTML into post_content during the primary save.
+	 *
+	 * The franer_site editor keeps its HTML in a custom textarea (franer_html), not
+	 * the native editor. Injecting it here — as part of the post's own insert — keeps
+	 * the HTML in post_content (so it is revisioned and shown in the revision diff)
+	 * while producing a SINGLE revision per save. The previous approach wrote it with
+	 * a second wp_update_post() after save_post, which created a duplicate revision on
+	 * every save.
+	 *
+	 * @param array $data    The sanitized post data about to be written.
+	 * @param array $postarr The raw post array.
+	 * @return array The (possibly modified) post data.
+	 */
+	public function inject_raw_html_into_content( $data, $postarr ) {
+		if ( ! isset( $data['post_type'] ) || 'franer_site' !== $data['post_type'] ) {
+			return $data;
+		}
+
+		if ( ! isset( $_POST['franer_site_nonce'] ) ) {
+			return $data;
+		}
+		$nonce = sanitize_text_field( wp_unslash( $_POST['franer_site_nonce'] ) );
+		if ( ! wp_verify_nonce( $nonce, 'save_franer_site' ) ) {
+			return $data;
+		}
+
+		if ( ! isset( $_POST['franer_html'] ) || ! current_user_can( 'manage_options' ) ) {
+			return $data;
+		}
+
+		// Stored RAW by design (only ever rendered inside a sandboxed iframe). Left
+		// slashed because wp_insert_post() unslashes $data right after this filter.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Raw HTML by design; kept slashed for core's post-filter wp_unslash().
+		$data['post_content'] = $_POST['franer_html'];
+
+		return $data;
 	}
 
 	/**
@@ -362,29 +448,6 @@ class Franer_Admin {
 		} else {
 			update_post_meta( $post_id, '_franer_slug', $sanitized_slug );
 		}
-	}
-
-	/**
-	 * Store the raw activity HTML in post_content (KSES bypassed by design).
-	 *
-	 * @param int $post_id The post ID being saved.
-	 * @return void
-	 */
-	private function save_html_meta( $post_id ) {
-		// HTML source: stored RAW in post_content (so it is revisioned and shown in
-		// the revision diff). It only ever renders inside a sandboxed iframe.
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in should_save_meta().
-		if ( ! isset( $_POST['franer_html'] ) ) {
-			return;
-		}
-
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.NonceVerification.Missing -- HTML is stored raw by design and only rendered inside a sandboxed iframe; nonce verified in should_save_meta().
-		$html = wp_unslash( $_POST['franer_html'] );
-
-		// Avoid recursion: writing post_content fires save_post again.
-		remove_action( 'save_post_franer_site', array( $this, 'save_meta' ), 10 );
-		Franer_Site_Repository::set_raw_html( $post_id, $html );
-		add_action( 'save_post_franer_site', array( $this, 'save_meta' ), 10, 2 );
 	}
 
 	/**

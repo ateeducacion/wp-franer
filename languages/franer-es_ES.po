@@ -662,3 +662,6 @@ msgstr "Listo."
 
 msgid "Search submissions"
 msgstr "Buscar envíos"
+
+msgid "Author"
+msgstr "Autor"

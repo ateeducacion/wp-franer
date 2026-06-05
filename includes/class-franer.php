@@ -168,6 +168,11 @@ class Franer {
 
 		$this->loader->add_action( 'admin_menu', $plugin_admin, 'add_menu' );
 		$this->loader->add_action( 'add_meta_boxes', $plugin_admin, 'add_meta_boxes' );
+		// Show administrators in the Author metabox dropdown (the CPT's custom caps
+		// otherwise leave it empty) and write the activity HTML during the primary
+		// save so each save records a single revision.
+		$this->loader->add_filter( 'wp_dropdown_users_args', $plugin_admin, 'restrict_author_dropdown_to_admins', 10, 2 );
+		$this->loader->add_filter( 'wp_insert_post_data', $plugin_admin, 'inject_raw_html_into_content', 10, 2 );
 		$this->loader->add_action( 'save_post_franer_site', $plugin_admin, 'save_meta', 10, 2 );
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_assets' );
 		$this->loader->add_action( 'admin_notices', $plugin_admin, 'display_notices' );
