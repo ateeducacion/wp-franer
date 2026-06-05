@@ -62,6 +62,12 @@ class Franer_Post_Types {
 		if ( in_array( $cap, array( 'edit_post', 'delete_post', 'read_post', 'publish_post' ), true ) ) {
 			$post = isset( $args[0] ) ? get_post( $args[0] ) : null;
 
+			// A revision inherits its parent's access: resolve it so viewing and
+			// restoring a franer_site revision is gated by manage_options too.
+			if ( $post instanceof WP_Post && 'revision' === $post->post_type && $post->post_parent ) {
+				$post = get_post( $post->post_parent );
+			}
+
 			if ( $post instanceof WP_Post && 'franer_site' === $post->post_type ) {
 				return array( 'manage_options' );
 			}
