@@ -67,16 +67,33 @@ class Franer_Submissions_Repository {
 	}
 
 	/**
+	 * Build the form-version hash for a piece of activity HTML.
+	 *
+	 * Stored with each submission so administrators can tell whether it was
+	 * answered against a different version of the form than the current one.
+	 *
+	 * @param string $html The activity HTML at submission time.
+	 * @return string The 64-char hex hash, or '' for empty HTML.
+	 */
+	public static function form_version_hash( $html ) {
+		$html = (string) $html;
+
+		return '' === $html ? '' : hash( 'sha256', $html );
+	}
+
+	/**
 	 * Save (insert, update, or reject) a submission.
 	 *
-	 * @param int    $site_id         The site post ID.
-	 * @param int    $user_id         The submitting user ID.
-	 * @param string $payload_json    The JSON payload string.
-	 * @param bool   $allow_multiple  Whether multiple submissions are allowed.
-	 * @param bool   $allow_overwrite Whether overwriting the latest is allowed.
+	 * @param int    $site_id          The site post ID.
+	 * @param int    $user_id          The submitting user ID.
+	 * @param string $payload_json     The JSON payload string.
+	 * @param bool   $allow_multiple   Whether multiple submissions are allowed.
+	 * @param bool   $allow_overwrite  Whether overwriting the latest is allowed.
+	 * @param string $form_version     Hash of the activity HTML at submission time.
+	 * @param string $site_modified_at The Franer's modified date (GMT) at submission time.
 	 * @return array|WP_Error Result array, or WP_Error on duplicate/failure.
 	 */
-	public function save_submission( $site_id, $user_id, $payload_json, $allow_multiple, $allow_overwrite ) {
+	public function save_submission( $site_id, $user_id, $payload_json, $allow_multiple, $allow_overwrite, $form_version = '', $site_modified_at = '' ) {
 		$site_id      = (int) $site_id;
 		$user_id      = (int) $user_id;
 		$payload_json = (string) $payload_json;
@@ -84,7 +101,7 @@ class Franer_Submissions_Repository {
 		// Multiple-submission sites always insert a fresh row, so concurrent saves
 		// never race against each other and no lock is needed.
 		if ( $allow_multiple ) {
-			return $this->insert_submission( $site_id, $user_id, $payload_json );
+			return $this->insert_submission( $site_id, $user_id, $payload_json, $form_version, $site_modified_at );
 		}
 
 		// Single-submission sites decide between insert / overwrite / reject based on
@@ -104,7 +121,7 @@ class Franer_Submissions_Repository {
 		$locked = $this->acquire_user_lock( $site_id, $user_id );
 
 		try {
-			return $this->save_single_submission( $site_id, $user_id, $payload_json, $allow_overwrite );
+			return $this->save_single_submission( $site_id, $user_id, $payload_json, $allow_overwrite, $form_version, $site_modified_at );
 		} finally {
 			if ( $locked ) {
 				$this->release_user_lock( $site_id, $user_id );
@@ -117,13 +134,15 @@ class Franer_Submissions_Repository {
 	 *
 	 * Must be called while holding the per-user lock (see save_submission()).
 	 *
-	 * @param int    $site_id         The site post ID.
-	 * @param int    $user_id         The submitting user ID.
-	 * @param string $payload_json    The JSON payload string.
-	 * @param bool   $allow_overwrite Whether overwriting the latest is allowed.
+	 * @param int    $site_id          The site post ID.
+	 * @param int    $user_id          The submitting user ID.
+	 * @param string $payload_json     The JSON payload string.
+	 * @param bool   $allow_overwrite  Whether overwriting the latest is allowed.
+	 * @param string $form_version     Hash of the activity HTML at submission time.
+	 * @param string $site_modified_at The Franer's modified date (GMT) at submission time.
 	 * @return array|WP_Error Result array, or WP_Error on duplicate/failure.
 	 */
-	private function save_single_submission( $site_id, $user_id, $payload_json, $allow_overwrite ) {
+	private function save_single_submission( $site_id, $user_id, $payload_json, $allow_overwrite, $form_version = '', $site_modified_at = '' ) {
 		global $wpdb;
 
 		$existing = $this->get_latest_user_submission( $site_id, $user_id );
@@ -137,15 +156,19 @@ class Franer_Submissions_Repository {
 				);
 			}
 
+			// An overwrite is a fresh answer against the current form, so the stored
+			// form version is refreshed too.
 			$updated = $wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 				self::get_table_name(),
 				array(
-					'payload_json' => $payload_json,
-					'payload_hash' => $this->payload_hash( $payload_json ),
-					'updated_at'   => current_time( 'mysql' ),
+					'payload_json'     => $payload_json,
+					'payload_hash'     => $this->payload_hash( $payload_json ),
+					'form_version'     => '' === $form_version ? null : $form_version,
+					'site_modified_at' => '' === $site_modified_at ? null : $site_modified_at,
+					'updated_at'       => current_time( 'mysql' ),
 				),
 				array( 'id' => (int) $existing['id'] ),
-				array( '%s', '%s', '%s' ),
+				array( '%s', '%s', '%s', '%s', '%s' ),
 				array( '%d' )
 			);
 
@@ -163,33 +186,37 @@ class Franer_Submissions_Repository {
 			);
 		}
 
-		return $this->insert_submission( $site_id, $user_id, $payload_json );
+		return $this->insert_submission( $site_id, $user_id, $payload_json, $form_version, $site_modified_at );
 	}
 
 	/**
 	 * Insert a new submission row.
 	 *
-	 * @param int    $site_id      The site post ID.
-	 * @param int    $user_id      The submitting user ID.
-	 * @param string $payload_json The JSON payload string.
+	 * @param int    $site_id          The site post ID.
+	 * @param int    $user_id          The submitting user ID.
+	 * @param string $payload_json     The JSON payload string.
+	 * @param string $form_version     Hash of the activity HTML at submission time.
+	 * @param string $site_modified_at The Franer's modified date (GMT) at submission time.
 	 * @return array|WP_Error Result array, or WP_Error on failure.
 	 */
-	private function insert_submission( $site_id, $user_id, $payload_json ) {
+	private function insert_submission( $site_id, $user_id, $payload_json, $form_version = '', $site_modified_at = '' ) {
 		global $wpdb;
 
 		$inserted = $wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			self::get_table_name(),
 			array(
-				'site_id'         => $site_id,
-				'user_id'         => $user_id,
-				'payload_json'    => $payload_json,
-				'payload_hash'    => $this->payload_hash( $payload_json ),
-				'ip_hash'         => $this->hashed_server_value( 'REMOTE_ADDR' ),
-				'user_agent_hash' => $this->hashed_server_value( 'HTTP_USER_AGENT' ),
-				'created_at'      => current_time( 'mysql' ),
-				'updated_at'      => null,
+				'site_id'          => $site_id,
+				'user_id'          => $user_id,
+				'payload_json'     => $payload_json,
+				'payload_hash'     => $this->payload_hash( $payload_json ),
+				'ip_hash'          => $this->hashed_server_value( 'REMOTE_ADDR' ),
+				'user_agent_hash'  => $this->hashed_server_value( 'HTTP_USER_AGENT' ),
+				'form_version'     => '' === $form_version ? null : $form_version,
+				'site_modified_at' => '' === $site_modified_at ? null : $site_modified_at,
+				'created_at'       => current_time( 'mysql' ),
+				'updated_at'       => null,
 			),
-			array( '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s' )
+			array( '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s' )
 		);
 
 		if ( false === $inserted ) {

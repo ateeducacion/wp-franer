@@ -110,6 +110,23 @@ function franer_maybe_flush_rewrite_rules() {
 add_action( 'init', 'franer_maybe_flush_rewrite_rules', 999 );
 
 /**
+ * Run the submissions-table schema upgrade after a plugin update.
+ *
+ * Activation only runs on (re)activation, so in-place updates rely on this
+ * version-gated check to add new columns to the submissions table.
+ *
+ * @return void
+ */
+function franer_maybe_upgrade_db() {
+	require_once FRANER_PLUGIN_DIR . 'includes/class-franer-activator.php';
+
+	if ( Franer_Activator::DB_VERSION !== get_option( 'franer_db_version' ) ) {
+		Franer_Activator::maybe_upgrade();
+	}
+}
+add_action( 'plugins_loaded', 'franer_maybe_upgrade_db' );
+
+/**
  * The core plugin class that is used to define internationalization,
  * admin-specific hooks, and public-facing site hooks.
  */

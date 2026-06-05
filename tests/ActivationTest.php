@@ -37,7 +37,7 @@ class ActivationTest extends WP_UnitTestCase {
 	public function test_activation_stores_db_version() {
 		Franer_Activator::activate();
 
-		$this->assertSame( '1.0', get_option( 'franer_db_version' ) );
+		$this->assertSame( Franer_Activator::DB_VERSION, get_option( 'franer_db_version' ) );
 	}
 
 	/**
@@ -61,6 +61,8 @@ class ActivationTest extends WP_UnitTestCase {
 			'payload_hash',
 			'ip_hash',
 			'user_agent_hash',
+			'form_version',
+			'site_modified_at',
 			'created_at',
 			'updated_at',
 		);

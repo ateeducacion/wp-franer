@@ -3,7 +3,8 @@
  *
  * - Initializes the WordPress code editor (CodeMirror) on the HTML textarea.
  * - Copy-to-clipboard for the public URL, shortcode and AI prompt.
- * - JSON detail modal on the Submissions page.
+ * - Live public-URL preview as the slug is typed on the editor.
+ * - Submission detail drawer (readable view + editable JSON) on the Submissions page.
  *
  * All configuration (editor settings, messages) is provided via the localized
  * `FranerAdmin` object. No URLs are hardcoded.
@@ -312,63 +313,315 @@
 	}
 
 	/**
-	 * Wire the JSON detail modal on the Submissions page.
+	 * Turn a raw payload key into a readable label (mirrors the PHP helper).
+	 *
+	 * @param {string} key The raw field key.
+	 * @return {string} The humanized label.
 	 */
-	function initJsonModal() {
-		var modal = document.getElementById( 'franer-json-modal' );
-		if ( ! modal ) {
+	function humanizeLabel( key ) {
+		var raw = String( key );
+		var dot = raw.lastIndexOf( '.' );
+		if ( dot !== -1 ) {
+			raw = raw.slice( dot + 1 );
+		}
+		var text = raw.replace( /[_-]+/g, ' ' ).replace( /\s+/g, ' ' ).trim();
+		if ( ! text ) {
+			return '';
+		}
+		return text.charAt( 0 ).toUpperCase() + text.slice( 1 );
+	}
+
+	/**
+	 * Flatten nested associative objects to dotted keys (mirrors the PHP helper).
+	 *
+	 * @param {Object} obj    The object to flatten.
+	 * @param {string} prefix The current key prefix (internal).
+	 * @param {Object} out    The accumulator (internal).
+	 * @return {Object} The flattened map.
+	 */
+	function flattenPayload( obj, prefix, out ) {
+		out = out || {};
+		prefix = prefix || '';
+		Object.keys( obj ).forEach( function ( key ) {
+			var path = prefix ? prefix + '.' + key : key;
+			var value = obj[ key ];
+			if ( value && 'object' === typeof value && ! Array.isArray( value ) ) {
+				flattenPayload( value, path, out );
+			} else {
+				out[ path ] = value;
+			}
+		} );
+		return out;
+	}
+
+	/**
+	 * Read the inferred field schema embedded in the page (key => {label,type}).
+	 *
+	 * @return {Object} The schema map (empty when absent or invalid).
+	 */
+	function readFieldsSchema() {
+		var node = document.getElementById( 'franer-fields-schema' );
+		if ( ! node ) {
+			return {};
+		}
+		try {
+			return JSON.parse( node.textContent || '{}' ) || {};
+		} catch ( err ) {
+			return {};
+		}
+	}
+
+	/**
+	 * Build the five-star markup for a 0..5 rating value.
+	 *
+	 * @param {number} value The rating.
+	 * @return {string} The stars HTML.
+	 */
+	function starsHtml( value ) {
+		var out = '<span class="franer-stars">';
+		var i;
+		for ( i = 1; i <= 5; i++ ) {
+			out += '<span class="franer-star' + ( value >= i - 0.25 ? ' is-on' : '' ) + '">★</span>';
+		}
+		return out + '</span>';
+	}
+
+	/**
+	 * Escape a string for safe insertion as text inside the drawer.
+	 *
+	 * @param {string} text The raw text.
+	 * @return {string} The escaped text.
+	 */
+	function escapeHtml( text ) {
+		var div = document.createElement( 'div' );
+		div.textContent = String( text );
+		return div.innerHTML;
+	}
+
+	/**
+	 * Render the readable (question → answer) view of a submission payload.
+	 *
+	 * @param {string} payloadJson The pretty JSON string from the row button.
+	 * @param {Object} schema      The inferred field schema.
+	 * @return {string} The readable HTML.
+	 */
+	function renderReadable( payloadJson, schema ) {
+		var data;
+		try {
+			data = JSON.parse( payloadJson );
+		} catch ( err ) {
+			data = null;
+		}
+		if ( ! data || 'object' !== typeof data ) {
+			return '<p class="description">' + escapeHtml( messages.invalidJson || 'Could not read this submission.' ) + '</p>';
+		}
+
+		data = flattenPayload( data );
+		var rows = '';
+		Object.keys( data ).forEach( function ( key ) {
+			var field = schema[ key ] || {};
+			var label = field.label || humanizeLabel( key );
+			var type = field.type || '';
+			var value = data[ key ];
+
+			if ( 'text' === type ) {
+				var body;
+				if ( null === value || '' === String( value ).trim() ) {
+					body = '<p class="franer-muted">' + escapeHtml( messages.noComment || '—' ) + '</p>';
+				} else {
+					body = '<p>“' + escapeHtml( value ) + '”</p>';
+				}
+				rows += '<div class="franer-qa franer-qa--comment"><span class="franer-qa__q">' + escapeHtml( label ) +
+					'</span>' + body + '</div>';
+				return;
+			}
+
+			var answer;
+			if ( 'rating' === type ) {
+				answer = starsHtml( Number( value ) ) + ' <i class="franer-muted">' + escapeHtml( value ) + '/5</i>';
+			} else if ( null !== value && 'object' === typeof value ) {
+				answer = '<code>' + escapeHtml( JSON.stringify( value ) ) + '</code>';
+			} else if ( null === value || '' === value ) {
+				answer = '—';
+			} else {
+				answer = escapeHtml( value );
+			}
+			rows += '<div class="franer-qa"><span class="franer-qa__q">' + escapeHtml( label ) +
+				'</span><span class="franer-qa__a">' + answer + '</span></div>';
+		} );
+
+		return rows;
+	}
+
+	/**
+	 * Wire the submission detail drawer on the Submissions page.
+	 *
+	 * Replaces the old raw-JSON modal: a readable summary tab (question → answer),
+	 * an editable JSON tab (reusing the existing update handler) and prev/next
+	 * navigation across the listed submissions.
+	 */
+	function initDetailDrawer() {
+		var drawer = document.getElementById( 'franer-json-modal' );
+		if ( ! drawer ) {
 			return;
 		}
 		var content = document.getElementById( 'franer-modal-content' );
 		var editId = document.getElementById( 'franer-edit-id' );
 		var editNonce = document.getElementById( 'franer-edit-nonce' );
+		var eyebrow = document.getElementById( 'franer-drawer-eyebrow' );
+		var readable = document.getElementById( 'franer-drawer-readable' );
+		var schema = readFieldsSchema();
 		var lastFocused = null;
 
-		function openModal( payload, id, nonce ) {
-			lastFocused = document.activeElement;
-			// content is a <textarea>: set its value, not textContent.
-			content.value = payload;
-			if ( editId ) {
-				editId.value = id || '';
-			}
-			if ( editNonce ) {
-				editNonce.value = nonce || '';
-			}
-			modal.hidden = false;
-			content.focus();
+		var buttons = Array.prototype.slice.call( document.querySelectorAll( '.franer-view-json' ) );
+		var current = -1;
+
+		var panels = drawer.querySelectorAll( '[data-franer-drawer-panel]' );
+		var tabs = drawer.querySelectorAll( '[data-franer-drawer-tab]' );
+
+		function showTab( name ) {
+			Array.prototype.forEach.call( tabs, function ( tab ) {
+				tab.classList.toggle( 'is-on', tab.getAttribute( 'data-franer-drawer-tab' ) === name );
+			} );
+			Array.prototype.forEach.call( panels, function ( panel ) {
+				panel.hidden = panel.getAttribute( 'data-franer-drawer-panel' ) !== name;
+			} );
 		}
 
-		function closeModal() {
-			modal.hidden = true;
+		function openAt( index ) {
+			if ( index < 0 || index >= buttons.length ) {
+				return;
+			}
+			current = index;
+			var button = buttons[ index ];
+			var payload = ( button.getAttribute( 'data-franer-payload' ) || '' ).trim();
+
+			content.value = payload;
+			if ( editId ) {
+				editId.value = button.getAttribute( 'data-franer-id' ) || '';
+			}
+			if ( editNonce ) {
+				editNonce.value = button.getAttribute( 'data-franer-nonce' ) || '';
+			}
+			if ( eyebrow ) {
+				eyebrow.textContent = '#' + ( button.getAttribute( 'data-franer-id' ) || '' );
+			}
+			if ( readable ) {
+				var outdated = '1' === button.getAttribute( 'data-franer-outdated' )
+					? '<div class="franer-drawer__notice">' + escapeHtml( messages.outdated || 'Answered against an earlier version of the form.' ) + '</div>'
+					: '';
+				readable.innerHTML = outdated + renderReadable( payload, schema );
+			}
+			showTab( 'summary' );
+
+			if ( drawer.hidden ) {
+				lastFocused = document.activeElement;
+				drawer.hidden = false;
+			}
+		}
+
+		function closeDrawer() {
+			drawer.hidden = true;
 			content.value = '';
 			if ( lastFocused && typeof lastFocused.focus === 'function' ) {
 				lastFocused.focus();
 			}
 		}
 
-		var viewButtons = document.querySelectorAll( '.franer-view-json' );
-		Array.prototype.forEach.call( viewButtons, function ( button ) {
+		buttons.forEach( function ( button, index ) {
 			button.addEventListener( 'click', function () {
-				// The payload lives in a data attribute: getAttribute decodes
-				// HTML entities back to a real JSON string (script tags do not).
-				var payload = button.getAttribute( 'data-franer-payload' ) || '';
-				openModal(
-					payload.trim(),
-					button.getAttribute( 'data-franer-id' ),
-					button.getAttribute( 'data-franer-nonce' )
-				);
+				openAt( index );
 			} );
 		} );
 
-		var closers = modal.querySelectorAll( '[data-franer-modal-close]' );
+		Array.prototype.forEach.call( tabs, function ( tab ) {
+			tab.addEventListener( 'click', function () {
+				showTab( tab.getAttribute( 'data-franer-drawer-tab' ) );
+			} );
+		} );
+
+		var prev = drawer.querySelector( '[data-franer-drawer-prev]' );
+		var next = drawer.querySelector( '[data-franer-drawer-next]' );
+		if ( prev ) {
+			prev.addEventListener( 'click', function () {
+				openAt( current - 1 );
+			} );
+		}
+		if ( next ) {
+			next.addEventListener( 'click', function () {
+				openAt( current + 1 );
+			} );
+		}
+
+		var closers = drawer.querySelectorAll( '[data-franer-modal-close], .franer-modal__close' );
 		Array.prototype.forEach.call( closers, function ( el ) {
-			el.addEventListener( 'click', closeModal );
+			el.addEventListener( 'click', closeDrawer );
 		} );
 
 		document.addEventListener( 'keydown', function ( event ) {
-			if ( 'Escape' === event.key && ! modal.hidden ) {
-				closeModal();
+			if ( drawer.hidden ) {
+				return;
 			}
+			if ( 'Escape' === event.key ) {
+				closeDrawer();
+			} else if ( 'ArrowLeft' === event.key ) {
+				openAt( current - 1 );
+			} else if ( 'ArrowRight' === event.key ) {
+				openAt( current + 1 );
+			}
+		} );
+	}
+
+	/**
+	 * Wire the per-row delete buttons to the standalone delete form.
+	 *
+	 * The form lives outside the list's own GET form (nested forms are invalid),
+	 * so each trash button fills its hidden fields and submits it after confirming.
+	 */
+	function initDeleteButtons() {
+		var form = document.getElementById( 'franer-delete-form' );
+		if ( ! form ) {
+			return;
+		}
+		var idField = document.getElementById( 'franer-delete-id' );
+		var nonceField = document.getElementById( 'franer-delete-nonce' );
+
+		var buttons = document.querySelectorAll( '.franer-delete-btn' );
+		Array.prototype.forEach.call( buttons, function ( button ) {
+			button.addEventListener( 'click', function () {
+				var message = messages.deleteConfirm || 'Delete this submission? This cannot be undone.';
+				if ( ! window.confirm( message ) ) {
+					return;
+				}
+				if ( idField ) {
+					idField.value = button.getAttribute( 'data-franer-id' ) || '';
+				}
+				if ( nonceField ) {
+					nonceField.value = button.getAttribute( 'data-franer-delete-nonce' ) || '';
+				}
+				form.submit();
+			} );
+		} );
+	}
+
+	/**
+	 * Live-update the public URL preview as the slug is typed (edit screen).
+	 */
+	function initSlugPreview() {
+		var input = document.getElementById( 'franer_slug' );
+		if ( ! input ) {
+			return;
+		}
+		var preview = document.querySelector( '[data-franer-url-slug]' );
+		if ( ! preview ) {
+			return;
+		}
+		input.addEventListener( 'input', function () {
+			var slug = input.value.toLowerCase().replace( /[^a-z0-9-]/g, '-' );
+			if ( slug !== input.value ) {
+				input.value = slug;
+			}
+			preview.textContent = slug || '…';
 		} );
 	}
 
@@ -385,6 +638,8 @@
 		initCodeEditor();
 		initHtmlDropZones();
 		initCopyButtons();
-		initJsonModal();
+		initDetailDrawer();
+		initDeleteButtons();
+		initSlugPreview();
 	} );
 } )();

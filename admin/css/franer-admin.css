@@ -78,6 +78,28 @@
 	flex-wrap: wrap;
 }
 
+/* Right-aligned action group (overview + exports) in the filter toolbar. */
+.franer-filterbar__actions {
+	margin-left: auto;
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.franer-filterbar__actions .button {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.franer-filterbar__actions .button .dashicons {
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+	line-height: 1.4;
+}
+
 .franer-submissions-table {
 	margin-top: 12px;
 }
@@ -206,4 +228,849 @@
 	border: 1px solid #c3c4c7;
 	border-radius: 4px;
 	background: #fff;
+}
+
+/* =====================================================================
+ * Admin redesign — editor (Access/Submissions/Share) and submissions
+ * screen (stats, auto-summary, readable table, detail drawer).
+ * Ported from the Claude Design prototype, using WordPress admin tokens.
+ * ===================================================================== */
+
+/* ---- 3-step onboarding guide ---- */
+.franer-guide {
+	background: linear-gradient( 120deg, #eef4fb, #f4f0fb );
+	border: 1px solid #d6e2f2;
+	border-radius: 8px;
+	padding: 12px 16px;
+	margin: 12px 0 16px;
+}
+
+.franer-guide__summary {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 14px;
+	font-weight: 600;
+	color: #1d2327;
+	cursor: pointer;
+	list-style: none;
+}
+
+.franer-guide__summary .dashicons {
+	color: #2271b1;
+}
+
+.franer-guide__steps {
+	list-style: none;
+	margin: 12px 0 0;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat( 3, 1fr );
+	gap: 14px;
+}
+
+.franer-guide__steps li {
+	display: flex;
+	gap: 10px;
+	align-items: flex-start;
+}
+
+.franer-guide__num {
+	width: 30px;
+	height: 30px;
+	border-radius: 8px;
+	background: #fff;
+	border: 1px solid #d6e2f2;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+}
+
+.franer-guide__num .dashicons {
+	color: #2271b1;
+}
+
+.franer-guide__txt {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.franer-guide__txt b {
+	color: #1d2327;
+}
+
+.franer-guide__txt i {
+	font-style: normal;
+	color: #646970;
+	font-size: 12px;
+	line-height: 1.45;
+}
+
+@media ( max-width: 782px ) {
+	.franer-guide__steps {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* ---- live public URL preview ---- */
+.franer-urlprev {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin: 8px 0 0;
+	font-size: 12px;
+	color: #646970;
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	padding: 4px 10px;
+	border-radius: 6px;
+}
+
+.franer-urlprev .dashicons {
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+}
+
+.franer-urlprev b {
+	color: #2271b1;
+}
+
+/* ---- "Optional" badge on the submission-view tab ---- */
+.franer-tab-badge {
+	display: inline-block;
+	margin-left: 6px;
+	padding: 1px 6px;
+	border-radius: 4px;
+	background: #e3e3e5;
+	color: #646970;
+	font-size: 10px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.4px;
+	vertical-align: middle;
+}
+
+/* ---- copy AI prompt ---- */
+.franer-ai-prompt {
+	margin: 4px 0 8px;
+}
+
+.franer-ai-prompt .button {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+}
+
+.franer-ai-prompt .button .dashicons {
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+	line-height: 1.4;
+}
+
+/* ---- collapsible security notice ---- */
+.franer-secnote {
+	display: flex;
+	gap: 9px;
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	padding: 10px 12px;
+	margin: 0 0 12px;
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.franer-secnote > .dashicons {
+	color: #2271b1;
+	flex: none;
+}
+
+.franer-secnote__more {
+	margin-top: 6px;
+}
+
+.franer-secnote__more > summary {
+	cursor: pointer;
+	color: #2271b1;
+	font-weight: 600;
+}
+
+.franer-secnote__more p {
+	margin: 8px 0 0;
+	color: #3c434a;
+}
+
+/* ---- toggle switches ---- */
+.franer-toggle-stack {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.franer-toggle {
+	display: inline-flex;
+	align-items: flex-start;
+	gap: 10px;
+	cursor: pointer;
+}
+
+.franer-toggle input {
+	position: absolute;
+	opacity: 0;
+	width: 1px;
+	height: 1px;
+}
+
+.franer-toggle__track {
+	width: 38px;
+	height: 22px;
+	border-radius: 999px;
+	background: #8c8f94;
+	position: relative;
+	flex: none;
+	transition: background 0.15s;
+	margin-top: 1px;
+}
+
+.franer-toggle__thumb {
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	background: #fff;
+	transition: left 0.15s;
+	box-shadow: 0 1px 2px rgba( 0, 0, 0, 0.3 );
+}
+
+.franer-toggle input:checked + .franer-toggle__track {
+	background: #2271b1;
+}
+
+.franer-toggle input:checked + .franer-toggle__track .franer-toggle__thumb {
+	left: 18px;
+}
+
+.franer-toggle input:focus + .franer-toggle__track {
+	box-shadow: 0 0 0 2px #fff, 0 0 0 4px #2271b1;
+}
+
+.franer-toggle__text {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	color: #1d2327;
+}
+
+.franer-toggle__note {
+	font-size: 12px;
+	color: #646970;
+}
+
+/* ---- role chips ---- */
+.franer-rolewrap {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.franer-rolechip {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	border: 1px solid #c3c4c7;
+	background: #fff;
+	color: #3c434a;
+	border-radius: 999px;
+	padding: 6px 13px;
+	font-size: 12px;
+	cursor: pointer;
+	font-weight: 500;
+}
+
+.franer-rolechip input {
+	position: absolute;
+	opacity: 0;
+	width: 1px;
+	height: 1px;
+}
+
+.franer-rolechip:has( input:checked ) {
+	border-color: #2271b1;
+	background: #f0f6fb;
+	color: #0a4b78;
+}
+
+.franer-rolechip:has( input:focus ) {
+	box-shadow: 0 0 0 1px #2271b1;
+}
+
+/* ---- Share card links ---- */
+.franer-sharelinks {
+	display: flex;
+	gap: 16px;
+	flex-wrap: wrap;
+}
+
+.franer-sharelinks a {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+/* ---- per-site submissions mini ---- */
+.franer-enviosmini {
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
+	margin-bottom: 10px;
+}
+
+.franer-enviosmini__big {
+	font-size: 30px;
+	font-weight: 700;
+	color: #1d2327;
+	line-height: 1;
+}
+
+.franer-enviosmini__txt {
+	color: #646970;
+}
+
+/* ---- empty state ---- */
+.franer-emptystate {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 10px;
+	padding: 40px 30px;
+	text-align: center;
+	max-width: 680px;
+	margin-top: 16px;
+}
+
+.franer-emptystate__icon {
+	width: 56px;
+	height: 56px;
+	border-radius: 14px;
+	background: #f0f6fc;
+	color: #2271b1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin: 0 auto 14px;
+}
+
+.franer-emptystate__icon .dashicons {
+	font-size: 28px;
+	width: 28px;
+	height: 28px;
+}
+
+.franer-emptystate h2 {
+	margin: 0 0 8px;
+	font-size: 18px;
+	color: #1d2327;
+}
+
+.franer-emptystate p {
+	margin: 0 auto;
+	max-width: 440px;
+	color: #646970;
+	line-height: 1.55;
+}
+
+.franer-emptystate__chips {
+	display: flex;
+	gap: 10px;
+	justify-content: center;
+	margin-top: 18px;
+	flex-wrap: wrap;
+}
+
+.franer-actchip {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	border: 1px solid #c3c4c7;
+	background: #fff;
+	border-radius: 10px;
+	padding: 10px 14px;
+	font-size: 13px;
+	font-weight: 600;
+	color: #1d2327;
+	text-decoration: none;
+}
+
+.franer-actchip:hover {
+	border-color: #2271b1;
+	background: #f6f9fc;
+	color: #1d2327;
+}
+
+.franer-actchip .dashicons {
+	color: #2271b1;
+}
+
+.franer-actchip__n {
+	background: #f0f0f1;
+	border-radius: 6px;
+	padding: 1px 7px;
+	font-size: 12px;
+	color: #646970;
+}
+
+/* ---- stats strip ---- */
+.franer-statstrip {
+	display: grid;
+	grid-template-columns: repeat( 4, 1fr );
+	gap: 14px;
+	margin: 16px 0 18px;
+}
+
+.franer-stat {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 10px;
+	padding: 14px 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.franer-stat__big {
+	font-size: 24px;
+	font-weight: 700;
+	color: #1d2327;
+	line-height: 1.1;
+}
+
+.franer-stat__label {
+	font-size: 12px;
+	color: #646970;
+}
+
+@media ( max-width: 782px ) {
+	.franer-statstrip {
+		grid-template-columns: repeat( 2, 1fr );
+	}
+}
+
+/* ---- auto-summary panel ---- */
+.franer-summary-box {
+	margin-bottom: 18px;
+}
+
+.franer-summary-intro {
+	margin: 0 0 14px;
+}
+
+.franer-summary__grid {
+	display: grid;
+	grid-template-columns: repeat( 3, 1fr );
+	gap: 16px;
+}
+
+.franer-sumcard {
+	background: #fbfbfc;
+	border: 1px solid #dcdcde;
+	border-radius: 10px;
+	padding: 14px 16px;
+}
+
+.franer-sumcard h3 {
+	margin: 0 0 12px;
+	font-size: 13px;
+	color: #1d2327;
+}
+
+.franer-sumcard--wide {
+	grid-column: span 3;
+}
+
+@media ( max-width: 1100px ) {
+	.franer-summary__grid {
+		grid-template-columns: repeat( 2, 1fr );
+	}
+
+	.franer-sumcard--wide {
+		grid-column: span 2;
+	}
+}
+
+@media ( max-width: 782px ) {
+	.franer-summary__grid {
+		grid-template-columns: 1fr;
+	}
+
+	.franer-sumcard--wide {
+		grid-column: span 1;
+	}
+}
+
+/* ---- distribution bars ---- */
+.franer-bar {
+	margin-bottom: 10px;
+}
+
+.franer-bar:last-child {
+	margin-bottom: 0;
+}
+
+.franer-bar__top {
+	display: flex;
+	justify-content: space-between;
+	font-size: 12px;
+	margin-bottom: 4px;
+}
+
+.franer-bar__label {
+	color: #3c434a;
+}
+
+.franer-bar__val {
+	color: #646970;
+	margin-left: 8px;
+	flex: none;
+}
+
+.franer-bar__track {
+	height: 8px;
+	background: #f0f0f1;
+	border-radius: 5px;
+	overflow: hidden;
+}
+
+.franer-bar__fill {
+	display: block;
+	height: 100%;
+	border-radius: 5px;
+	background: #2271b1;
+}
+
+.franer-ratingbig {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 12px;
+}
+
+.franer-ratingbig b {
+	font-size: 20px;
+	color: #1d2327;
+}
+
+.franer-ratingbig i {
+	font-style: normal;
+	font-size: 12px;
+	color: #646970;
+}
+
+.franer-commentlist {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat( 2, 1fr );
+	gap: 12px;
+}
+
+.franer-commentlist li {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	padding: 10px 12px;
+	font-size: 12px;
+}
+
+.franer-commentlist li b {
+	color: #1d2327;
+}
+
+.franer-commentlist li p {
+	margin: 5px 0 0;
+	color: #3c434a;
+	line-height: 1.5;
+}
+
+@media ( max-width: 782px ) {
+	.franer-commentlist {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* ---- readable table cells ---- */
+.franer-apreview {
+	display: flex;
+	gap: 6px;
+	flex-wrap: wrap;
+}
+
+.franer-achip {
+	background: #f0f0f1;
+	border-radius: 6px;
+	padding: 3px 8px;
+	font-size: 12px;
+	color: #3c434a;
+	white-space: nowrap;
+}
+
+.franer-comment {
+	color: #3c434a;
+}
+
+.franer-muted {
+	color: #8c8f94;
+}
+
+/* Row action icon buttons (view / delete). */
+.franer-hidden-form {
+	display: none;
+}
+
+.franer-iconbtn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+	padding: 0;
+	border: 1px solid #c3c4c7;
+	border-radius: 6px;
+	background: #fff;
+	color: #3c434a;
+	cursor: pointer;
+	vertical-align: middle;
+}
+
+.franer-iconbtn + .franer-iconbtn {
+	margin-left: 5px;
+}
+
+.franer-iconbtn .dashicons {
+	font-size: 17px;
+	width: 17px;
+	height: 17px;
+	line-height: 1;
+}
+
+.franer-iconbtn:hover {
+	border-color: #2271b1;
+	color: #2271b1;
+}
+
+.franer-iconbtn:focus {
+	outline: none;
+	border-color: #2271b1;
+	box-shadow: 0 0 0 1px #2271b1;
+}
+
+.franer-iconbtn--danger {
+	color: #d63638;
+}
+
+.franer-iconbtn--danger:hover {
+	border-color: #d63638;
+	color: #d63638;
+	background: #fcf0f1;
+}
+
+.franer-iconbtn--danger:focus {
+	border-color: #d63638;
+	box-shadow: 0 0 0 1px #d63638;
+}
+
+/* "Older version" indicator (table cell + drawer notice). */
+.franer-version-badge {
+	display: inline-block;
+	margin-left: 6px;
+	padding: 1px 7px;
+	border-radius: 9px;
+	background: #fcf0e3;
+	color: #8a4b00;
+	font-size: 11px;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.franer-drawer__notice {
+	margin-bottom: 12px;
+	padding: 9px 12px;
+	border-radius: 8px;
+	border: 1px solid #f0d9b5;
+	background: #fcf6ec;
+	color: #8a4b00;
+	font-size: 12px;
+	line-height: 1.5;
+}
+
+.franer-stars {
+	display: inline-flex;
+	gap: 1px;
+	color: #d8d8da;
+	letter-spacing: 1px;
+}
+
+.franer-star.is-on {
+	color: #dba617;
+}
+
+/* ---- detail drawer ---- */
+.franer-drawer {
+	position: fixed;
+	inset: 0;
+	z-index: 100000;
+	display: flex;
+	justify-content: flex-end;
+}
+
+.franer-drawer[hidden] {
+	display: none;
+}
+
+.franer-drawer__backdrop {
+	position: absolute;
+	inset: 0;
+	background: rgba( 15, 23, 42, 0.4 );
+}
+
+.franer-drawer__panel {
+	position: relative;
+	width: 460px;
+	max-width: 92vw;
+	background: #fff;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	box-shadow: -10px 0 40px rgba( 0, 0, 0, 0.18 );
+}
+
+.franer-drawer__head {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	padding: 18px 20px 12px;
+	border-bottom: 1px solid #dcdcde;
+}
+
+.franer-drawer__eyebrow {
+	font-size: 12px;
+	color: #646970;
+	margin-bottom: 4px;
+}
+
+.franer-drawer__head h2 {
+	margin: 0;
+	font-size: 18px;
+	color: #1d2327;
+}
+
+.franer-drawer__x {
+	font-size: 24px;
+	line-height: 1;
+	text-decoration: none;
+	color: #646970;
+}
+
+.franer-drawer__toolbar {
+	padding: 14px 20px 4px;
+}
+
+.franer-seg {
+	display: inline-flex;
+	background: #f0f0f1;
+	border-radius: 7px;
+	padding: 3px;
+	gap: 2px;
+}
+
+.franer-seg__btn {
+	border: 0;
+	background: transparent;
+	color: #646970;
+	font-size: 12px;
+	font-weight: 600;
+	padding: 6px 12px;
+	border-radius: 5px;
+	cursor: pointer;
+}
+
+.franer-seg__btn.is-on {
+	background: #fff;
+	color: #1d2327;
+	box-shadow: 0 1px 2px rgba( 0, 0, 0, 0.08 );
+}
+
+.franer-drawer__body {
+	flex: 1;
+	overflow-y: auto;
+	padding: 14px 20px 20px;
+}
+
+.franer-qalist {
+	display: flex;
+	flex-direction: column;
+}
+
+.franer-qa {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 14px;
+	padding: 11px 0;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.franer-qa__q {
+	font-size: 12px;
+	color: #646970;
+}
+
+.franer-qa__a {
+	font-size: 13px;
+	color: #1d2327;
+	font-weight: 600;
+	text-align: right;
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+}
+
+.franer-qa--comment {
+	display: block;
+}
+
+.franer-qa--comment p {
+	margin: 6px 0 0;
+	color: #3c434a;
+	line-height: 1.55;
+	font-weight: 400;
+	text-align: left;
+}
+
+.franer-drawer__json {
+	width: 100%;
+	font-family: Consolas, Monaco, monospace;
+}
+
+.franer-drawer__json-actions {
+	margin-top: 10px;
+}
+
+.franer-drawer__foot {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 12px 20px;
+	border-top: 1px solid #dcdcde;
+	background: #fbfbfc;
+}
+
+.franer-drawer__nav {
+	display: flex;
+	gap: 6px;
 }

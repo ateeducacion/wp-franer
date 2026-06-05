@@ -170,12 +170,19 @@ class Franer_Rest_Controller {
 		 */
 		do_action( 'franer_before_save_submission', (int) $settings['id'], $user_id, $payload_json, $settings );
 
+		// Record which version of the form this answer was given against, so an
+		// admin can later tell submissions apart if the activity HTML changes.
+		$form_version     = Franer_Submissions_Repository::form_version_hash( $post->post_content );
+		$site_modified_at = isset( $post->post_modified_gmt ) ? (string) $post->post_modified_gmt : '';
+
 		$result = $this->submissions->save_submission(
 			(int) $settings['id'],
 			$user_id,
 			$payload_json,
 			$settings['allow_multiple'],
-			$settings['allow_overwrite']
+			$settings['allow_overwrite'],
+			$form_version,
+			$site_modified_at
 		);
 
 		if ( is_wp_error( $result ) ) {

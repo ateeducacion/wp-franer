@@ -14,15 +14,66 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-if ( ! function_exists( 'franer_render_settings_metabox' ) ) {
+if ( ! function_exists( 'franer_render_guide_strip' ) ) {
 	/**
-	 * Render the Site settings metabox.
+	 * Render the collapsible "Create a Franer in 3 steps" onboarding guide.
 	 *
-	 * @param array $settings  Typed settings from the repository.
-	 * @param array $all_roles All available WordPress roles (raw role data).
+	 * Shown above the editor so non-technical staff understand the flow. Uses a
+	 * native <details> element so it is collapsible without JavaScript.
+	 *
 	 * @return void
 	 */
-	function franer_render_settings_metabox( array $settings, array $all_roles ) {
+	function franer_render_guide_strip() {
+		$steps = array(
+			array(
+				'icon' => 'dashicons-editor-code',
+				'title' => __( 'Paste your activity', 'franer' ),
+				'desc'  => __( 'A self-contained HTML document (an AI can generate it for you).', 'franer' ),
+			),
+			array(
+				'icon' => 'dashicons-admin-settings',
+				'title' => __( 'Set up access', 'franer' ),
+				'desc'  => __( 'Who can see it, when, and how many times they may respond.', 'franer' ),
+			),
+			array(
+				'icon' => 'dashicons-share',
+				'title' => __( 'Share it', 'franer' ),
+				'desc'  => __( 'Use the public URL or the shortcode, then collect the submissions.', 'franer' ),
+			),
+		);
+		?>
+		<details class="franer-guide" open>
+			<summary class="franer-guide__summary">
+				<span class="dashicons dashicons-superhero" aria-hidden="true"></span>
+				<?php esc_html_e( 'Create a Franer in 3 steps', 'franer' ); ?>
+			</summary>
+			<ol class="franer-guide__steps">
+				<?php foreach ( $steps as $index => $step ) : ?>
+					<li>
+						<span class="franer-guide__num"><span class="dashicons <?php echo esc_attr( $step['icon'] ); ?>" aria-hidden="true"></span></span>
+						<span class="franer-guide__txt">
+							<b><?php echo esc_html( ( $index + 1 ) . '. ' . $step['title'] ); ?></b>
+							<i><?php echo esc_html( $step['desc'] ); ?></i>
+						</span>
+					</li>
+				<?php endforeach; ?>
+			</ol>
+		</details>
+		<?php
+	}
+}
+
+if ( ! function_exists( 'franer_render_access_metabox' ) ) {
+	/**
+	 * Render the Access and visibility metabox (slug, status, allowed roles).
+	 *
+	 * @param array  $settings    Typed settings from the repository.
+	 * @param array  $all_roles   All available WordPress roles (raw role data).
+	 * @param string $public_base The public base URL ("…/franer/") for the live preview.
+	 * @return void
+	 */
+	function franer_render_access_metabox( array $settings, array $all_roles, $public_base ) {
+		$slug = (string) $settings['slug'];
 		?>
 		<table class="form-table franer-form-table" role="presentation">
 			<tbody>
@@ -32,8 +83,12 @@ if ( ! function_exists( 'franer_render_settings_metabox' ) ) {
 					</th>
 					<td>
 						<input type="text" id="franer_slug" name="franer_slug" class="regular-text"
-							value="<?php echo esc_attr( $settings['slug'] ); ?>"
-							pattern="[a-z0-9-]+" />
+							value="<?php echo esc_attr( $slug ); ?>" pattern="[a-z0-9-]+"
+							data-franer-url-base="<?php echo esc_attr( $public_base ); ?>" />
+						<span class="franer-urlprev" data-franer-url-preview>
+							<span class="dashicons dashicons-admin-links" aria-hidden="true"></span>
+							<?php echo esc_html( $public_base ); ?><b data-franer-url-slug><?php echo esc_html( '' === $slug ? '…' : $slug ); ?></b>
+						</span>
 						<p class="description">
 							<?php esc_html_e( 'Lowercase letters, numbers and hyphens only. Used in the public URL.', 'franer' ); ?>
 						</p>
@@ -42,13 +97,69 @@ if ( ! function_exists( 'franer_render_settings_metabox' ) ) {
 				<tr>
 					<th scope="row"><?php esc_html_e( 'Status', 'franer' ); ?></th>
 					<td>
-						<label>
+						<label class="franer-toggle">
 							<input type="checkbox" name="franer_enabled" value="1" <?php checked( ! empty( $settings['enabled'] ) ); ?> />
-							<?php esc_html_e( 'Enabled', 'franer' ); ?>
+							<span class="franer-toggle__track" aria-hidden="true"><span class="franer-toggle__thumb"></span></span>
+							<span class="franer-toggle__text">
+								<span><?php esc_html_e( 'Enabled', 'franer' ); ?></span>
+								<span class="franer-toggle__note"><?php esc_html_e( 'When disabled, the activity is unavailable to everyone.', 'franer' ); ?></span>
+							</span>
 						</label>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Allowed roles', 'franer' ); ?></th>
+					<td>
+						<fieldset class="franer-rolewrap">
+							<legend class="screen-reader-text"><?php esc_html_e( 'Allowed roles', 'franer' ); ?></legend>
+							<?php foreach ( $all_roles as $role_key => $role_data ) : ?>
+								<label class="franer-rolechip">
+									<input type="checkbox" name="franer_allowed_roles[]"
+										value="<?php echo esc_attr( $role_key ); ?>"
+										<?php checked( in_array( $role_key, $settings['allowed_roles'], true ) ); ?> />
+									<span><?php echo esc_html( translate_user_role( $role_data['name'] ) ); ?></span>
+								</label>
+							<?php endforeach; ?>
+						</fieldset>
 						<p class="description">
-							<?php esc_html_e( 'When disabled, the activity is unavailable to everyone.', 'franer' ); ?>
+							<?php esc_html_e( 'Only logged-in users with one of these roles may view and submit. Administrators are always allowed.', 'franer' ); ?>
 						</p>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<?php
+	}
+}
+
+if ( ! function_exists( 'franer_render_submissions_settings_metabox' ) ) {
+	/**
+	 * Render the Submissions and availability metabox.
+	 *
+	 * @param array $settings Typed settings from the repository.
+	 * @return void
+	 */
+	function franer_render_submissions_settings_metabox( array $settings ) {
+		$toggles = array(
+			array( 'franer_accepts_submissions', $settings['accepts_submissions'], __( 'Accept new submissions', 'franer' ) ),
+			array( 'franer_allow_multiple_submissions', $settings['allow_multiple'], __( 'Allow multiple submissions per user', 'franer' ) ),
+			array( 'franer_allow_overwrite', $settings['allow_overwrite'], __( 'Allow overwriting the previous submission', 'franer' ) ),
+		);
+		?>
+		<table class="form-table franer-form-table" role="presentation">
+			<tbody>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Reception', 'franer' ); ?></th>
+					<td>
+						<div class="franer-toggle-stack">
+							<?php foreach ( $toggles as $toggle ) : ?>
+								<label class="franer-toggle">
+									<input type="checkbox" name="<?php echo esc_attr( $toggle[0] ); ?>" value="1" <?php checked( $toggle[1] ); ?> />
+									<span class="franer-toggle__track" aria-hidden="true"><span class="franer-toggle__thumb"></span></span>
+									<span class="franer-toggle__text"><span><?php echo esc_html( $toggle[2] ); ?></span></span>
+								</label>
+							<?php endforeach; ?>
+						</div>
 					</td>
 				</tr>
 				<tr>
@@ -63,44 +174,6 @@ if ( ! function_exists( 'franer_render_settings_metabox' ) ) {
 							value="<?php echo esc_attr( '' === $settings['end_date'] ? '' : str_replace( ' ', 'T', substr( $settings['end_date'], 0, 16 ) ) ); ?>" />
 						<p class="description">
 							<?php esc_html_e( 'Optional. Submissions are only accepted within this window (site time). Leave empty for no limit.', 'franer' ); ?>
-						</p>
-					</td>
-				</tr>
-				<tr>
-					<th scope="row"><?php esc_html_e( 'Submissions', 'franer' ); ?></th>
-					<td>
-						<label>
-							<input type="checkbox" name="franer_accepts_submissions" value="1" <?php checked( $settings['accepts_submissions'] ); ?> />
-							<?php esc_html_e( 'Accept new submissions', 'franer' ); ?>
-						</label>
-						<br />
-						<label>
-							<input type="checkbox" name="franer_allow_multiple_submissions" value="1" <?php checked( $settings['allow_multiple'] ); ?> />
-							<?php esc_html_e( 'Allow multiple submissions per user', 'franer' ); ?>
-						</label>
-						<br />
-						<label>
-							<input type="checkbox" name="franer_allow_overwrite" value="1" <?php checked( $settings['allow_overwrite'] ); ?> />
-							<?php esc_html_e( 'Allow overwriting the previous submission', 'franer' ); ?>
-						</label>
-					</td>
-				</tr>
-				<tr>
-					<th scope="row"><?php esc_html_e( 'Allowed roles', 'franer' ); ?></th>
-					<td>
-						<fieldset>
-							<legend class="screen-reader-text"><?php esc_html_e( 'Allowed roles', 'franer' ); ?></legend>
-							<?php foreach ( $all_roles as $role_key => $role_data ) : ?>
-								<label style="display:inline-block;margin-right:1em;">
-									<input type="checkbox" name="franer_allowed_roles[]"
-										value="<?php echo esc_attr( $role_key ); ?>"
-										<?php checked( in_array( $role_key, $settings['allowed_roles'], true ) ); ?> />
-									<?php echo esc_html( translate_user_role( $role_data['name'] ) ); ?>
-								</label>
-							<?php endforeach; ?>
-						</fieldset>
-						<p class="description">
-							<?php esc_html_e( 'Only logged-in users with one of these roles may view and submit. Administrators are always allowed.', 'franer' ); ?>
 						</p>
 					</td>
 				</tr>
@@ -154,6 +227,65 @@ if ( ! function_exists( 'franer_render_prompt_details' ) ) {
 	}
 }
 
+if ( ! function_exists( 'franer_render_ai_prompt_copy' ) ) {
+	/**
+	 * Render a "Copy AI prompt" button with the prompt text held inline.
+	 *
+	 * Lets administrators copy the ready-to-use AI prompt without leaving the
+	 * editor for the Help page. The prompt lives in a visually-hidden, readonly
+	 * textarea so the existing copy-to-clipboard handler can read its value.
+	 *
+	 * @param string $field_id The id of the hidden prompt holder.
+	 * @param string $prompt   The prompt text to copy.
+	 * @return void
+	 */
+	function franer_render_ai_prompt_copy( $field_id, $prompt ) {
+		if ( '' === trim( (string) $prompt ) ) {
+			return;
+		}
+		?>
+		<p class="franer-ai-prompt">
+			<button type="button" class="button button-secondary franer-copy-btn"
+				data-franer-copy-target="<?php echo esc_attr( $field_id ); ?>"
+				data-franer-copy-status="<?php echo esc_attr( $field_id . '_status' ); ?>">
+				<span class="dashicons dashicons-superhero" aria-hidden="true"></span>
+				<?php esc_html_e( 'Copy AI prompt', 'franer' ); ?>
+			</button>
+			<span id="<?php echo esc_attr( $field_id . '_status' ); ?>" class="franer-copy-status" role="status" aria-live="polite"></span>
+			<label for="<?php echo esc_attr( $field_id ); ?>" class="screen-reader-text"><?php esc_html_e( 'Ready-to-use AI prompt', 'franer' ); ?></label>
+			<textarea id="<?php echo esc_attr( $field_id ); ?>" class="screen-reader-text" readonly tabindex="-1"><?php echo esc_textarea( $prompt ); ?></textarea>
+		</p>
+		<?php
+	}
+}
+
+if ( ! function_exists( 'franer_render_security_note' ) ) {
+	/**
+	 * Render a compact security notice with a collapsible "Learn more" section.
+	 *
+	 * Replaces the old always-on yellow warning block with a discreet inline notice
+	 * whose technical detail is tucked behind a native <details> disclosure.
+	 *
+	 * @param string $lead    The short, always-visible message.
+	 * @param string $details The detailed message revealed on "Learn more".
+	 * @return void
+	 */
+	function franer_render_security_note( $lead, $details ) {
+		?>
+		<div class="franer-secnote">
+			<span class="dashicons dashicons-shield-alt" aria-hidden="true"></span>
+			<div class="franer-secnote__body">
+				<span><strong><?php esc_html_e( 'Secure environment.', 'franer' ); ?></strong> <?php echo esc_html( $lead ); ?></span>
+				<details class="franer-secnote__more">
+					<summary><?php esc_html_e( 'Learn more', 'franer' ); ?></summary>
+					<p><?php echo esc_html( $details ); ?></p>
+				</details>
+			</div>
+		</div>
+		<?php
+	}
+}
+
 if ( ! function_exists( 'franer_render_html_metabox' ) ) {
 	/**
 	 * Render the HTML source metabox.
@@ -163,10 +295,12 @@ if ( ! function_exists( 'franer_render_html_metabox' ) ) {
 	 * attempt). Each tab also offers a collapsible field to store the prompt used
 	 * to generate that HTML.
 	 *
-	 * @param array $settings Typed settings from the repository.
+	 * @param array  $settings        Typed settings from the repository.
+	 * @param string $activity_prompt Ready-to-use AI prompt for the activity HTML.
+	 * @param string $view_prompt     Ready-to-use AI prompt for the submission view.
 	 * @return void
 	 */
-	function franer_render_html_metabox( array $settings ) {
+	function franer_render_html_metabox( array $settings, $activity_prompt = '', $view_prompt = '' ) {
 		$view_html              = isset( $settings['view_html'] ) ? $settings['view_html'] : '';
 		$generation_prompt      = isset( $settings['generation_prompt'] ) ? $settings['generation_prompt'] : '';
 		$view_generation_prompt = isset( $settings['view_generation_prompt'] ) ? $settings['view_generation_prompt'] : '';
@@ -180,16 +314,17 @@ if ( ! function_exists( 'franer_render_html_metabox' ) ) {
 				<button type="button" class="franer-tabs__tab" role="tab" id="franer-tab-view"
 					aria-controls="franer-panel-view" aria-selected="false" tabindex="-1">
 					<?php esc_html_e( 'Submission View HTML', 'franer' ); ?>
+					<span class="franer-tab-badge"><?php esc_html_e( 'Optional', 'franer' ); ?></span>
 				</button>
 			</div>
 
 			<div class="franer-tabs__panel" role="tabpanel" id="franer-panel-activity" aria-labelledby="franer-tab-activity">
-				<div class="franer-notice-box">
-					<p>
-						<strong><?php esc_html_e( 'Security note:', 'franer' ); ?></strong>
-						<?php esc_html_e( 'This HTML is stored exactly as entered and is ONLY ever rendered inside a sandboxed iframe (sandbox="allow-scripts allow-forms", without same-origin access). It cannot read cookies/storage or the page DOM. It MAY load external libraries, fonts and images over https, but an injected Content-Security-Policy blocks fetch/XHR/forms so answers can only leave via postMessage. Because remote scripts run in front of your users, paste only activities you trust.', 'franer' ); ?>
-					</p>
-				</div>
+				<?php
+				franer_render_security_note(
+					__( 'This HTML runs isolated in a sandboxed iframe; it cannot read cookies or send data outside.', 'franer' ),
+					__( 'This HTML is stored exactly as entered and is ONLY ever rendered inside a sandboxed iframe (sandbox="allow-scripts allow-forms", without same-origin access). It cannot read cookies/storage or the page DOM. It MAY load external libraries, fonts and images over https, but an injected Content-Security-Policy blocks fetch/XHR/forms so answers can only leave via postMessage. Because remote scripts run in front of your users, paste only activities you trust.', 'franer' )
+				);
+				?>
 				<p>
 					<label for="franer_html" class="screen-reader-text"><?php esc_html_e( 'Activity HTML source', 'franer' ); ?></label>
 				</p>
@@ -197,10 +332,11 @@ if ( ! function_exists( 'franer_render_html_metabox' ) ) {
 					<textarea id="franer_html" name="franer_html" rows="20" class="large-text code franer-code-editor"><?php echo esc_textarea( $settings['html'] ); ?></textarea>
 				</div>
 				<p class="description">
-					<?php esc_html_e( 'A complete, self-contained HTML document implementing window.FranerCollect() and window.FranerSubmit(). See the Help page for a ready-to-use AI prompt.', 'franer' ); ?>
+					<?php esc_html_e( 'A complete, self-contained HTML document implementing window.FranerCollect() and window.FranerSubmit().', 'franer' ); ?>
 					<?php esc_html_e( 'You can also drag and drop an .html file here to load its contents.', 'franer' ); ?>
 				</p>
 				<?php
+				franer_render_ai_prompt_copy( 'franer_ai_prompt_activity', $activity_prompt );
 				franer_render_prompt_details(
 					'franer_generation_prompt',
 					__( 'Prompt used to generate this activity', 'franer' ),
@@ -211,12 +347,12 @@ if ( ! function_exists( 'franer_render_html_metabox' ) ) {
 			</div>
 
 			<div class="franer-tabs__panel" role="tabpanel" id="franer-panel-view" aria-labelledby="franer-tab-view" hidden>
-				<div class="franer-notice-box">
-					<p>
-						<strong><?php esc_html_e( 'Security note:', 'franer' ); ?></strong>
-						<?php esc_html_e( 'Like the activity HTML, this template is stored raw and only ever rendered inside a sandboxed iframe. It is shown only to administrators and receives every submission JSON through postMessage. It never receives REST nonces or admin URLs, and an injected Content-Security-Policy blocks fetch/XHR/forms so the aggregated answers cannot be exfiltrated. It may still load libraries, fonts and images over https — paste only templates you trust.', 'franer' ); ?>
-					</p>
-				</div>
+				<?php
+				franer_render_security_note(
+					__( 'Optional template shown only to administrators; it also runs isolated in a sandboxed iframe.', 'franer' ),
+					__( 'Like the activity HTML, this template is stored raw and only ever rendered inside a sandboxed iframe. It is shown only to administrators and receives every submission JSON through postMessage. It never receives REST nonces or admin URLs, and an injected Content-Security-Policy blocks fetch/XHR/forms so the aggregated answers cannot be exfiltrated. It may still load libraries, fonts and images over https — paste only templates you trust.', 'franer' )
+				);
+				?>
 				<p>
 					<label for="franer_view_html" class="screen-reader-text"><?php esc_html_e( 'Submission view HTML source', 'franer' ); ?></label>
 				</p>
@@ -228,6 +364,7 @@ if ( ! function_exists( 'franer_render_html_metabox' ) ) {
 					<?php esc_html_e( 'You can also drag and drop an .html file here to load its contents.', 'franer' ); ?>
 				</p>
 				<?php
+				franer_render_ai_prompt_copy( 'franer_ai_prompt_view', $view_prompt );
 				franer_render_prompt_details(
 					'franer_view_generation_prompt',
 					__( 'Prompt used to generate this submission view', 'franer' ),
@@ -262,13 +399,13 @@ if ( ! function_exists( 'franer_render_public_url_metabox' ) ) {
 				<?php esc_html_e( 'Copy', 'franer' ); ?>
 			</button>
 		</p>
-		<p>
+		<p class="franer-sharelinks">
 			<a href="<?php echo esc_url( $public_url ); ?>" target="_blank" rel="noopener noreferrer">
+				<span class="dashicons dashicons-visibility" aria-hidden="true"></span>
 				<?php esc_html_e( 'Open public page', 'franer' ); ?>
 			</a>
-		</p>
-		<p>
 			<a href="<?php echo esc_url( add_query_arg( 'fullscreen', '1', $public_url ) ); ?>" target="_blank" rel="noopener noreferrer">
+				<span class="dashicons dashicons-fullscreen-alt" aria-hidden="true"></span>
 				<?php esc_html_e( 'Open in fullscreen', 'franer' ); ?>
 			</a>
 		</p>
@@ -300,15 +437,12 @@ if ( ! function_exists( 'franer_render_submissions_metabox' ) ) {
 	 */
 	function franer_render_submissions_metabox( $count, $list_url, $export_url, $overview_url = '', $export_csv_url = '' ) {
 		?>
-		<p>
-			<?php
-			printf(
-				/* translators: %s: number of submissions. */
-				esc_html( _n( '%s submission collected.', '%s submissions collected.', (int) $count, 'franer' ) ),
-				'<strong>' . esc_html( number_format_i18n( (int) $count ) ) . '</strong>'
-			);
-			?>
-		</p>
+		<div class="franer-enviosmini">
+			<span class="franer-enviosmini__big"><?php echo esc_html( number_format_i18n( (int) $count ) ); ?></span>
+			<span class="franer-enviosmini__txt">
+				<?php echo esc_html( _n( 'response collected', 'responses collected', (int) $count, 'franer' ) ); ?>
+			</span>
+		</div>
 		<p>
 			<a class="button" href="<?php echo esc_url( $list_url ); ?>">
 				<?php esc_html_e( 'View submissions', 'franer' ); ?>
