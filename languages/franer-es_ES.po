@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-06-02T22:21:45+00:00\n"
-"PO-Revision-Date: 2026-06-05T11:04:43+00:00\n"
+"PO-Revision-Date: 2026-06-05T14:14:29+00:00\n"
 "Language: es_ES\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Domain: franer\n"
@@ -59,6 +59,9 @@ msgstr "Ayuda de Franer"
 
 msgid "Help"
 msgstr "Ayuda"
+
+msgid "Author"
+msgstr "Autor"
 
 msgid "Site settings"
 msgstr "Ajustes del sitio"
@@ -150,11 +153,20 @@ msgstr "LOS DATOS NUNCA SALEN DE LA ACTIVIDAD salvo por window.parent.postMessag
 msgid "TABS/PAGES (if requested) must use plain JS, not a framework: buttons with class \"tab-btn\" and data-tab=\"ID\", sections with class \"tab\" (\".tab{display:none}\", \".tab.active{display:block}\"), toggling the \"active\" class on click. Add role=\"tablist\"/\"tab\"/\"tabpanel\" and keyboard support."
 msgstr "PESTAÑAS/PÁGINAS (si se piden) deben usar JS puro, no un framework: botones con clase \"tab-btn\" y data-tab=\"ID\", secciones con clase \"tab\" (\".tab{display:none}\", \".tab.active{display:block}\"), alternando la clase \"active\" al hacer clic. Añade role=\"tablist\"/\"tab\"/\"tabpanel\" y soporte de teclado."
 
-msgid "Make it a quality resource: responsive, accessible (labels, contrast, visible focus), CSS variables for the palette, @media print rules, and show field validation in-page (never with alert)."
-msgstr "Haz un recurso de calidad: responsive, accesible (etiquetas, contraste, foco visible), variables CSS para la paleta, reglas @media print, y muestra la validación de campos en la página (nunca con alert)."
+msgid "Make it a quality resource: responsive, accessible (labels, contrast, visible focus), CSS variables for the palette, @media print rules."
+msgstr "Hazlo un recurso de calidad: adaptable, accesible (etiquetas, contraste, foco visible), variables CSS para la paleta y reglas @media print."
+
+msgid "FIELD VALIDATION: use native HTML5 validation, never alert(). Pick the right input type (email, number, url, tel, date, time) and add required where needed. Constrain values: pattern (with a title that explains the format) for text, min/max/step for number and date, minlength/maxlength for text. In FranerSubmit, call the form's reportValidity() (Constraint Validation API) and stop if it returns false; show any extra messages as in-page HTML."
+msgstr "VALIDACIÓN DE CAMPOS: usa la validación nativa de HTML5, nunca alert(). Elige el tipo de campo adecuado (email, number, url, tel, date, time) y añade required donde haga falta. Restringe los valores: pattern (con un title que explique el formato) para texto, min/max/step para number y date, minlength/maxlength para texto. En FranerSubmit, llama a reportValidity() del formulario (Constraint Validation API) y detente si devuelve false; muestra cualquier mensaje adicional como HTML en la propia página."
+
+msgid "CONFIRMATION: the Franer host shows the \"form submitted\" page and the closed / already-submitted screens after a successful submit. Do NOT build your own thank-you screen — just validate, submit, and (optionally) clear inline errors."
+msgstr "CONFIRMACIÓN: el host de Franer muestra la página de «formulario enviado» y las pantallas de cerrado / ya enviado tras un envío correcto. NO crees tu propia pantalla de agradecimiento: solo valida, envía y (opcionalmente) limpia los errores en línea."
 
 msgid "Replace REPLACE_WITH_SLUG with the activity slug and implement these globals:"
 msgstr "Sustituye REPLACE_WITH_SLUG por el slug de la actividad e implementa estas funciones globales:"
+
+msgid "OPTIONAL — editable forms: if the activity allows editing a submission, implement window.FranerPrefill(data) to repopulate your fields. The host calls it (via a { type:\"franer_prefill\", payload:data } message) with the previously submitted answers when the user chooses \"Edit responses\"."
+msgstr "OPCIONAL — formularios editables: si la actividad permite editar un envío, implementa window.FranerPrefill(data) para rellenar tus campos. El host la llama (mediante un mensaje { type:\"franer_prefill\", payload:data }) con las respuestas enviadas anteriormente cuando la persona usuaria elige «Editar respuestas»."
 
 msgid "Add a clearly visible button that calls FranerSubmit(). Return only the HTML document."
 msgstr "Añade un botón claramente visible que llame a FranerSubmit(). Devuelve solo el documento HTML."
@@ -209,6 +221,36 @@ msgstr "Incluye este prompt como comentario HTML cerca del inicio del documento 
 
 msgid "Return only the complete HTML document. Do not add explanations before or after it."
 msgstr "Devuelve únicamente el documento HTML completo. No añadas explicaciones antes ni después."
+
+msgid "ID"
+msgstr "ID"
+
+msgid "Activity"
+msgstr "Actividad"
+
+msgid "User"
+msgstr "Usuario"
+
+msgid "Created"
+msgstr "Creado"
+
+msgid "Updated"
+msgstr "Actualizado"
+
+msgid "Actions"
+msgstr "Acciones"
+
+msgid "No submissions found for this activity yet."
+msgstr "Todavía no hay envíos para esta actividad."
+
+msgid "View / edit"
+msgstr "Ver / editar"
+
+msgid "Delete this submission? This cannot be undone."
+msgstr "¿Eliminar este envío? Esta acción no se puede deshacer."
+
+msgid "Delete"
+msgstr "Eliminar"
 
 msgid "Franer logo"
 msgstr "Logo de Franer"
@@ -275,6 +317,9 @@ msgstr "valida y envía { type:\"franer_submit\", payload:FranerCollect() } a wi
 
 msgid "A \"message\" listener handling { type:\"franer_submit_result\", ok, result } from the host page."
 msgstr "Un escuchador de «message» que gestiona { type:\"franer_submit_result\", ok, result } de la página anfitriona."
+
+msgid "Optional: window.FranerPrefill(data) to repopulate fields when the host sends { type:\"franer_prefill\", payload:data } for editing a previous submission."
+msgstr "Opcional: window.FranerPrefill(data) para rellenar los campos cuando el host envía { type:\"franer_prefill\", payload:data } al editar un envío anterior."
 
 msgid "AI prompt"
 msgstr "Prompt de IA"
@@ -448,9 +493,6 @@ msgstr "Volver a los envíos"
 msgid "Print"
 msgstr "Imprimir"
 
-msgid "Activity"
-msgstr "Actividad"
-
 msgid "Total submissions"
 msgstr "Total de envíos"
 
@@ -495,32 +537,8 @@ msgstr "JSON conserva todos los datos anidados y es ideal para reimportar. CSV t
 msgid "Choose an activity to view its submissions."
 msgstr "Elige una actividad para ver sus envíos."
 
-msgid "No submissions found for this activity yet."
-msgstr "Todavía no hay envíos para esta actividad."
-
-msgid "ID"
-msgstr "ID"
-
-msgid "User"
-msgstr "Usuario"
-
-msgid "Created"
-msgstr "Creado"
-
-msgid "Updated"
-msgstr "Actualizado"
-
-msgid "Actions"
-msgstr "Acciones"
-
-msgid "View / edit"
-msgstr "Ver / editar"
-
-msgid "Delete this submission? This cannot be undone."
-msgstr "¿Eliminar este envío? Esta acción no se puede deshacer."
-
-msgid "Delete"
-msgstr "Eliminar"
+msgid "Search submissions"
+msgstr "Buscar envíos"
 
 msgid "Edit submission payload"
 msgstr "Editar los datos del envío"
@@ -657,11 +675,35 @@ msgstr "Salir de pantalla completa"
 msgid "Activity: %s"
 msgstr "Actividad: %s"
 
+msgid "Thank you. Your response has been saved."
+msgstr "Gracias. Tu respuesta se ha guardado."
+
 msgid "Ready."
 msgstr "Listo."
 
-msgid "Search submissions"
-msgstr "Buscar envíos"
+msgid "Form submitted"
+msgstr "Formulario enviado"
 
-msgid "Author"
-msgstr "Autor"
+msgid "Edit responses"
+msgstr "Editar respuestas"
+
+msgid "Submit another response"
+msgstr "Enviar otra respuesta"
+
+msgid "This form is closed"
+msgstr "Este formulario está cerrado"
+
+msgid "This activity is no longer accepting submissions."
+msgstr "Esta actividad ya no admite envíos."
+
+msgid "This form is not open yet"
+msgstr "Este formulario aún no está abierto"
+
+msgid "This activity is not open for submissions yet. Please come back later."
+msgstr "Esta actividad todavía no está abierta para envíos. Vuelve más tarde."
+
+msgid "You have already submitted this form"
+msgstr "Ya has enviado este formulario"
+
+msgid "Your response has been recorded. This activity only accepts one submission per person."
+msgstr "Tu respuesta ha quedado registrada. Esta actividad solo admite un envío por persona."

@@ -19,12 +19,18 @@ const SHELL_SOURCE = fs.readFileSync( SHELL_PATH, 'utf8' );
 // this cleanup the IIFE's listener would accumulate across tests.
 let attachedMessageHandlers = [];
 
+// The shell also attaches a delegated 'click' listener on document for the
+// confirmation-page buttons. jsdom keeps one document for the whole file, so we
+// record these too and remove them in afterEach to keep tests isolated.
+let attachedClickHandlers = [];
+
 /**
  * Load the shell script in the current jsdom window.
  *
- * Evaluating the IIFE attaches the 'message' listener and snapshots the
- * current window.FranerShell config. The listener it registers is recorded so
- * it can be removed in afterEach, keeping tests isolated.
+ * Evaluating the IIFE attaches the 'message' (window) and 'click' (document)
+ * listeners and snapshots the current window.FranerShell config. The listeners
+ * it registers are recorded so they can be removed in afterEach, keeping tests
+ * isolated.
  *
  * @return {void}
  */
@@ -38,9 +44,19 @@ function loadShell() {
 			}
 			return realAdd( type, fn, opts );
 		} );
+	const realDocAdd = window.document.addEventListener.bind( window.document );
+	const docSpy = jest
+		.spyOn( window.document, 'addEventListener' )
+		.mockImplementation( ( type, fn, opts ) => {
+			if ( 'click' === type ) {
+				attachedClickHandlers.push( fn );
+			}
+			return realDocAdd( type, fn, opts );
+		} );
 	// eslint-disable-next-line no-eval
 	window.eval( SHELL_SOURCE );
 	spy.mockRestore();
+	docSpy.mockRestore();
 }
 
 /**
@@ -70,8 +86,54 @@ describe( 'Franer parent shell', () => {
 	let fakeIframe;
 	let frameEl;
 
+	/**
+	 * Build a full .franer-shell DOM (frame-wrap + iframe + status + confirm panel
+	 * with edit/again buttons) and register the iframe's contentWindow as a fake so
+	 * dispatched messages can target it by identity. Returns the key elements.
+	 *
+	 * @return {Object} References to the created elements and the fake contentWindow.
+	 */
+	function buildShellDom() {
+		const shell = window.document.createElement( 'div' );
+		shell.className = 'franer-shell';
+		shell.setAttribute( 'data-franer-mode', 'form' );
+
+		const frameWrap = window.document.createElement( 'div' );
+		frameWrap.className = 'franer-shell__frame-wrap';
+
+		const iframe = window.document.createElement( 'iframe' );
+		iframe.className = 'franer-shell__frame';
+		iframe.setAttribute( 'srcdoc', '<!doctype html><title>activity</title>' );
+		const cw = { postMessage: jest.fn() };
+		Object.defineProperty( iframe, 'contentWindow', { value: cw, configurable: true } );
+		frameWrap.appendChild( iframe );
+
+		const status = window.document.createElement( 'div' );
+		status.className = 'franer-shell__status';
+		status.hidden = true;
+
+		const confirmPanel = window.document.createElement( 'div' );
+		confirmPanel.className = 'franer-shell__panel franer-shell__panel--confirm';
+		confirmPanel.hidden = true;
+
+		const editBtn = window.document.createElement( 'button' );
+		editBtn.setAttribute( 'data-franer-action', 'edit' );
+		const againBtn = window.document.createElement( 'button' );
+		againBtn.setAttribute( 'data-franer-action', 'again' );
+		confirmPanel.appendChild( editBtn );
+		confirmPanel.appendChild( againBtn );
+
+		shell.appendChild( frameWrap );
+		shell.appendChild( status );
+		shell.appendChild( confirmPanel );
+		window.document.body.appendChild( shell );
+
+		return { shell, frameWrap, iframe, cw, status, confirmPanel, editBtn, againBtn };
+	}
+
 	beforeEach( () => {
 		attachedMessageHandlers = [];
+		attachedClickHandlers = [];
 		fakeIframe = { postMessage: jest.fn() };
 
 		// The shell only trusts messages whose source is the contentWindow of an
@@ -98,10 +160,20 @@ describe( 'Franer parent shell', () => {
 			window.removeEventListener( 'message', fn );
 		} );
 		attachedMessageHandlers = [];
+		attachedClickHandlers.forEach( ( fn ) => {
+			window.document.removeEventListener( 'click', fn );
+		} );
+		attachedClickHandlers = [];
 		if ( frameEl && frameEl.parentNode ) {
 			frameEl.parentNode.removeChild( frameEl );
 		}
 		frameEl = null;
+		// Remove any .franer-shell instances created by buildShellDom().
+		window.document.querySelectorAll( '.franer-shell' ).forEach( ( el ) => {
+			if ( el.parentNode ) {
+				el.parentNode.removeChild( el );
+			}
+		} );
 		delete window.fetch;
 		jest.restoreAllMocks();
 	} );
@@ -250,5 +322,88 @@ describe( 'Franer parent shell', () => {
 
 		expect( window.fetch ).toHaveBeenCalledTimes( 1 );
 		expect( fakeIframe.postMessage ).toHaveBeenCalledTimes( 1 );
+	} );
+
+	test( 'reveals the host confirmation panel and hides the form on a successful submit', async () => {
+		const dom = buildShellDom();
+		window.fetch = jest.fn().mockResolvedValue( {
+			ok: true,
+			status: 201,
+			json: () => Promise.resolve( { submission_id: 9, status: 'saved' } ),
+		} );
+
+		loadShell();
+
+		dispatchMessage(
+			{ type: 'franer_submit', payload: { schema_version: '1.0', data: { a: 1 } } },
+			dom.cw
+		);
+
+		await flushPromises();
+
+		expect( dom.shell.getAttribute( 'data-franer-mode' ) ).toBe( 'confirm' );
+		expect( dom.frameWrap.hidden ).toBe( true );
+		expect( dom.confirmPanel.hidden ).toBe( false );
+		// The activity iframe still receives the result message for backward compat.
+		expect( dom.cw.postMessage ).toHaveBeenCalledWith(
+			expect.objectContaining( { type: 'franer_submit_result', ok: true } ),
+			'*'
+		);
+	} );
+
+	test( '"Edit responses" returns to the form and prefills it with the cached answers', async () => {
+		const dom = buildShellDom();
+		window.fetch = jest.fn().mockResolvedValue( {
+			ok: true,
+			status: 201,
+			json: () => Promise.resolve( { submission_id: 9, status: 'updated' } ),
+		} );
+
+		loadShell();
+
+		const answers = { name: 'Ada', score: 5 };
+		dispatchMessage(
+			{ type: 'franer_submit', payload: { schema_version: '1.0', data: answers } },
+			dom.cw
+		);
+		await flushPromises();
+
+		dom.cw.postMessage.mockClear();
+		dom.editBtn.click();
+
+		expect( dom.shell.getAttribute( 'data-franer-mode' ) ).toBe( 'form' );
+		expect( dom.frameWrap.hidden ).toBe( false );
+		expect( dom.confirmPanel.hidden ).toBe( true );
+		// The cached answers are re-posted to the iframe as a prefill message.
+		expect( dom.cw.postMessage ).toHaveBeenCalledWith(
+			{ type: 'franer_prefill', payload: answers },
+			'*'
+		);
+	} );
+
+	test( '"Submit another response" resets the iframe and returns to the form', async () => {
+		const dom = buildShellDom();
+		window.fetch = jest.fn().mockResolvedValue( {
+			ok: true,
+			status: 201,
+			json: () => Promise.resolve( { submission_id: 9, status: 'saved' } ),
+		} );
+		const setAttrSpy = jest.spyOn( dom.iframe, 'setAttribute' );
+
+		loadShell();
+
+		dispatchMessage(
+			{ type: 'franer_submit', payload: { schema_version: '1.0', data: { a: 1 } } },
+			dom.cw
+		);
+		await flushPromises();
+
+		dom.againBtn.click();
+
+		expect( dom.shell.getAttribute( 'data-franer-mode' ) ).toBe( 'form' );
+		expect( dom.frameWrap.hidden ).toBe( false );
+		expect( dom.confirmPanel.hidden ).toBe( true );
+		// The iframe srcdoc is re-assigned to force a fresh activity load.
+		expect( setAttrSpy ).toHaveBeenCalledWith( 'srcdoc', expect.any( String ) );
 	} );
 } );

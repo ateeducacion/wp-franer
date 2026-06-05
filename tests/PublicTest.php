@@ -66,8 +66,151 @@ class PublicTest extends WP_UnitTestCase {
 		update_post_meta( $post_id, '_franer_slug', 'comments-demo' );
 		update_post_meta( $post_id, '_franer_enabled', '1' );
 		update_post_meta( $post_id, '_franer_allowed_roles', array( 'subscriber' ) );
+		update_post_meta( $post_id, '_franer_accepts_submissions', '1' );
 
 		return $post_id;
+	}
+
+	/**
+	 * Render the activity for a subscriber via the shortcode and return the markup.
+	 *
+	 * @param int $post_id The Franer site post ID (unused but kept for clarity).
+	 * @return string The rendered shell markup.
+	 */
+	private function render_as_subscriber() {
+		$subscriber = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		wp_set_current_user( $subscriber );
+
+		return do_shortcode( '[franer slug="comments-demo"]' );
+	}
+
+	/**
+	 * An open, never-submitted activity renders the form (the iframe), not a panel.
+	 *
+	 * @return void
+	 */
+	public function test_render_open_form_shows_iframe() {
+		$this->create_viewable_site( '<!doctype html><html><body><div>q</div></body></html>' );
+
+		$output = $this->render_as_subscriber();
+
+		$this->assertStringContainsString( 'data-franer-mode="form"', $output );
+		$this->assertStringContainsString( 'franer-shell__frame-wrap', $output );
+		$this->assertStringNotContainsString( 'franer-shell__panel--closed', $output );
+	}
+
+	/**
+	 * An activity past its end date renders the closed panel and no iframe.
+	 *
+	 * @return void
+	 */
+	public function test_render_closed_activity_shows_closed_panel() {
+		$post_id = $this->create_viewable_site( '<!doctype html><html><body><div>q</div></body></html>' );
+		update_post_meta( $post_id, '_franer_end_date', '2000-01-01 00:00:00' );
+
+		$output = $this->render_as_subscriber();
+
+		$this->assertStringContainsString( 'data-franer-mode="closed"', $output );
+		$this->assertStringContainsString( 'franer-shell__panel--closed', $output );
+		$this->assertStringNotContainsString( 'franer-shell__frame-wrap', $output );
+	}
+
+	/**
+	 * An activity not accepting submissions is treated as closed.
+	 *
+	 * @return void
+	 */
+	public function test_render_not_accepting_submissions_shows_closed_panel() {
+		$post_id = $this->create_viewable_site( '<!doctype html><html><body><div>q</div></body></html>' );
+		update_post_meta( $post_id, '_franer_accepts_submissions', '0' );
+
+		$output = $this->render_as_subscriber();
+
+		$this->assertStringContainsString( 'data-franer-mode="closed"', $output );
+		$this->assertStringContainsString( 'franer-shell__panel--closed', $output );
+	}
+
+	/**
+	 * An activity with a future start date renders the not-yet panel.
+	 *
+	 * @return void
+	 */
+	public function test_render_not_yet_open_shows_notyet_panel() {
+		$post_id = $this->create_viewable_site( '<!doctype html><html><body><div>q</div></body></html>' );
+		update_post_meta( $post_id, '_franer_start_date', '2999-01-01 00:00:00' );
+
+		$output = $this->render_as_subscriber();
+
+		$this->assertStringContainsString( 'data-franer-mode="not_yet"', $output );
+		$this->assertStringContainsString( 'franer-shell__panel--notyet', $output );
+		$this->assertStringNotContainsString( 'franer-shell__frame-wrap', $output );
+	}
+
+	/**
+	 * A single-submission, non-editable activity already submitted shows the
+	 * "already submitted" panel and no iframe.
+	 *
+	 * @return void
+	 */
+	public function test_render_already_submitted_locked_shows_already_panel() {
+		$post_id = $this->create_viewable_site( '<!doctype html><html><body><div>q</div></body></html>' );
+		update_post_meta( $post_id, '_franer_allow_multiple_submissions', '0' );
+		update_post_meta( $post_id, '_franer_allow_overwrite', '0' );
+
+		$subscriber = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		wp_set_current_user( $subscriber );
+		( new Franer_Submissions_Repository() )->save_submission( $post_id, $subscriber, wp_json_encode( array( 'a' => 1 ) ), false, false );
+
+		$output = do_shortcode( '[franer slug="comments-demo"]' );
+
+		$this->assertStringContainsString( 'data-franer-mode="already"', $output );
+		$this->assertStringContainsString( 'franer-shell__panel--already', $output );
+		$this->assertStringNotContainsString( 'franer-shell__frame-wrap', $output );
+	}
+
+	/**
+	 * A single-submission, editable activity already submitted renders the
+	 * confirmation panel (with the iframe present but hidden) and an Edit button.
+	 *
+	 * @return void
+	 */
+	public function test_render_already_submitted_editable_shows_confirm_panel() {
+		$post_id = $this->create_viewable_site( '<!doctype html><html><body><div>q</div></body></html>' );
+		update_post_meta( $post_id, '_franer_allow_multiple_submissions', '0' );
+		update_post_meta( $post_id, '_franer_allow_overwrite', '1' );
+
+		$subscriber = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		wp_set_current_user( $subscriber );
+		( new Franer_Submissions_Repository() )->save_submission( $post_id, $subscriber, wp_json_encode( array( 'a' => 1 ) ), false, true );
+
+		$output = do_shortcode( '[franer slug="comments-demo"]' );
+
+		$this->assertStringContainsString( 'data-franer-mode="confirm"', $output );
+		$this->assertStringContainsString( 'franer-shell__panel--confirm', $output );
+		$this->assertStringContainsString( 'data-franer-action="edit"', $output );
+		// The iframe is rendered (hidden) so Edit can reveal it.
+		$this->assertStringContainsString( 'franer-shell__frame-wrap', $output );
+	}
+
+	/**
+	 * The confirmation message is customizable via the franer_confirmation_message
+	 * filter.
+	 *
+	 * @return void
+	 */
+	public function test_confirmation_message_is_filterable() {
+		$this->create_viewable_site( '<!doctype html><html><body><div>q</div></body></html>' );
+
+		add_filter(
+			'franer_confirmation_message',
+			static function () {
+				return 'Custom thank-you copy';
+			}
+		);
+
+		$output = $this->render_as_subscriber();
+
+		$this->assertStringContainsString( 'Custom thank-you copy', $output );
 	}
 
 	/**

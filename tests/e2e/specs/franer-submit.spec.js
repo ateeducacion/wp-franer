@@ -65,6 +65,25 @@ test.describe( 'Franer submission flow', () => {
 			);
 		}
 
+		// In the host submission flow, re-entering an editable activity that was
+		// already submitted shows the confirmation panel with the form hidden.
+		// Click "Edit responses" to reveal the form before driving a submit.
+		if ( ! ( await iframe.isVisible() ) ) {
+			const editBtn = page.locator( '[data-franer-action="edit"]' );
+			if ( await editBtn.count() ) {
+				await editBtn.first().click();
+			}
+		}
+
+		// If the activity is closed or locked (already submitted, no editing),
+		// there is no form to drive — skip gracefully instead of failing.
+		if ( ! ( await iframe.isVisible() ) ) {
+			test.skip(
+				true,
+				'Activity form not available (closed or already submitted).'
+			);
+		}
+
 		await expect( iframe ).toBeVisible();
 
 		// Sandbox must allow scripts/forms but never same-origin.

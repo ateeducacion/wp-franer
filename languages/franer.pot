@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Franer 0.0.0\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-franer\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/franer\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -153,10 +153,19 @@ msgstr ""
 msgid "TABS/PAGES (if requested) must use plain JS, not a framework: buttons with class \"tab-btn\" and data-tab=\"ID\", sections with class \"tab\" (\".tab{display:none}\", \".tab.active{display:block}\"), toggling the \"active\" class on click. Add role=\"tablist\"/\"tab\"/\"tabpanel\" and keyboard support."
 msgstr ""
 
-msgid "Make it a quality resource: responsive, accessible (labels, contrast, visible focus), CSS variables for the palette, @media print rules, and show field validation in-page (never with alert)."
+msgid "Make it a quality resource: responsive, accessible (labels, contrast, visible focus), CSS variables for the palette, @media print rules."
+msgstr ""
+
+msgid "FIELD VALIDATION: use native HTML5 validation, never alert(). Pick the right input type (email, number, url, tel, date, time) and add required where needed. Constrain values: pattern (with a title that explains the format) for text, min/max/step for number and date, minlength/maxlength for text. In FranerSubmit, call the form's reportValidity() (Constraint Validation API) and stop if it returns false; show any extra messages as in-page HTML."
+msgstr ""
+
+msgid "CONFIRMATION: the Franer host shows the \"form submitted\" page and the closed / already-submitted screens after a successful submit. Do NOT build your own thank-you screen — just validate, submit, and (optionally) clear inline errors."
 msgstr ""
 
 msgid "Replace REPLACE_WITH_SLUG with the activity slug and implement these globals:"
+msgstr ""
+
+msgid "OPTIONAL — editable forms: if the activity allows editing a submission, implement window.FranerPrefill(data) to repopulate your fields. The host calls it (via a { type:\"franer_prefill\", payload:data } message) with the previously submitted answers when the user chooses \"Edit responses\"."
 msgstr ""
 
 msgid "Add a clearly visible button that calls FranerSubmit(). Return only the HTML document."
@@ -307,6 +316,9 @@ msgid "validates and posts { type:\"franer_submit\", payload:FranerCollect() } t
 msgstr ""
 
 msgid "A \"message\" listener handling { type:\"franer_submit_result\", ok, result } from the host page."
+msgstr ""
+
+msgid "Optional: window.FranerPrefill(data) to repopulate fields when the host sends { type:\"franer_prefill\", payload:data } for editing a previous submission."
 msgstr ""
 
 msgid "AI prompt"
@@ -663,5 +675,35 @@ msgstr ""
 msgid "Activity: %s"
 msgstr ""
 
+msgid "Thank you. Your response has been saved."
+msgstr ""
+
 msgid "Ready."
+msgstr ""
+
+msgid "Form submitted"
+msgstr ""
+
+msgid "Edit responses"
+msgstr ""
+
+msgid "Submit another response"
+msgstr ""
+
+msgid "This form is closed"
+msgstr ""
+
+msgid "This activity is no longer accepting submissions."
+msgstr ""
+
+msgid "This form is not open yet"
+msgstr ""
+
+msgid "This activity is not open for submissions yet. Please come back later."
+msgstr ""
+
+msgid "You have already submitted this form"
+msgstr ""
+
+msgid "Your response has been recorded. This activity only accepts one submission per person."
 msgstr ""
