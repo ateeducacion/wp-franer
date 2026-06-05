@@ -210,6 +210,36 @@ msgstr ""
 msgid "Return only the complete HTML document. Do not add explanations before or after it."
 msgstr ""
 
+msgid "ID"
+msgstr ""
+
+msgid "Activity"
+msgstr ""
+
+msgid "User"
+msgstr ""
+
+msgid "Created"
+msgstr ""
+
+msgid "Updated"
+msgstr ""
+
+msgid "Actions"
+msgstr ""
+
+msgid "No submissions found for this activity yet."
+msgstr ""
+
+msgid "View / edit"
+msgstr ""
+
+msgid "Delete this submission? This cannot be undone."
+msgstr ""
+
+msgid "Delete"
+msgstr ""
+
 msgid "Franer logo"
 msgstr ""
 
@@ -448,9 +478,6 @@ msgstr ""
 msgid "Print"
 msgstr ""
 
-msgid "Activity"
-msgstr ""
-
 msgid "Total submissions"
 msgstr ""
 
@@ -495,44 +522,7 @@ msgstr ""
 msgid "Choose an activity to view its submissions."
 msgstr ""
 
-msgid "No submissions found for this activity yet."
-msgstr ""
-
-#. translators: %s: number of submissions.
-#, php-format
-msgid "%s submission"
-msgid_plural "%s submissions"
-msgstr[0] ""
-msgstr[1] ""
-
-msgid "&laquo;"
-msgstr ""
-
-msgid "&raquo;"
-msgstr ""
-
-msgid "ID"
-msgstr ""
-
-msgid "User"
-msgstr ""
-
-msgid "Created"
-msgstr ""
-
-msgid "Updated"
-msgstr ""
-
-msgid "Actions"
-msgstr ""
-
-msgid "View / edit"
-msgstr ""
-
-msgid "Delete this submission? This cannot be undone."
-msgstr ""
-
-msgid "Delete"
+msgid "Search submissions"
 msgstr ""
 
 msgid "Edit submission payload"

@@ -498,19 +498,6 @@ msgstr "Elige una actividad para ver sus envíos."
 msgid "No submissions found for this activity yet."
 msgstr "Todavía no hay envíos para esta actividad."
 
-#. translators: %s: number of submissions.
-#, php-format
-msgid "%s submission"
-msgid_plural "%s submissions"
-msgstr[0] "%s envío"
-msgstr[1] "%s envíos"
-
-msgid "&laquo;"
-msgstr "&laquo;"
-
-msgid "&raquo;"
-msgstr "&raquo;"
-
 msgid "ID"
 msgstr "ID"
 
@@ -672,3 +659,6 @@ msgstr "Actividad: %s"
 
 msgid "Ready."
 msgstr "Listo."
+
+msgid "Search submissions"
+msgstr "Buscar envíos"
