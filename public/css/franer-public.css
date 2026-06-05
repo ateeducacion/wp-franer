@@ -111,6 +111,26 @@
 	color: #7a1d1d;
 }
 
+.franer-shell__notice {
+	margin-top: 1.5rem;
+	font-size: 0.85rem;
+	line-height: 1.5;
+	color: #50575e;
+}
+
+.franer-shell__notice p {
+	margin: 0 0 0.75rem;
+}
+
+.franer-shell__notice p:last-child {
+	margin-bottom: 0;
+}
+
+.franer-shell__notice a {
+	color: inherit;
+	text-decoration: underline;
+}
+
 /*
  * Presentation mode: /franer/{slug}/?fullscreen=1
  *
@@ -141,6 +161,12 @@ body.franer-activity-page--full {
 .franer-activity-page--full .franer-shell__status {
 	margin: 0;
 	border-radius: 0;
+}
+
+.franer-activity-page--full .franer-shell__notice {
+	margin: 0;
+	padding: 1rem;
+	border-top: 1px solid #d0d0d0;
 }
 
 @media ( max-width: 600px ) {

@@ -38,6 +38,15 @@ $franer_slug  = isset( $settings['slug'] ) ? $settings['slug'] : '';
 
 /* translators: %s: Franer activity title. */
 $franer_iframe_title = sprintf( __( 'Activity: %s', 'franer' ), $franer_title );
+
+/*
+ * Data protection (GDPR/LOPD) notice shown below the activity in every view
+ * mode — shortcode, pretty URL and fullscreen all share this partial. It is
+ * filterable so a deployment can localize, replace or remove it; returning an
+ * empty string hides it entirely.
+ */
+$franer_notice = '<p>En cumplimiento del Reglamento General de Protección de Datos, le informamos de que los <strong>datos</strong> serán incorporados al tratamiento denominado &ldquo;<a href="https://www.gobiernodecanarias.org/cmsgob2/export/sites/protecciondedatos/galerias/2024/19.06.2024-Res-421-EFPAFD-Espacios-virtuales.pdf" target="_blank" rel="noreferrer noopener">Espacios virtuales de aprendizaje y colaboración</a>&rdquo;, que es responsabilidad de la <em>Consejería de Educación, Formación Profesional, Actividad Física y Deportes</em> del Gobierno de Canarias.</p> <p>Los datos que se solicitan a continuación serán utilizados para la gestión, publicación y difusión de convocatorias para la participación en programas, proyectos y ejes de la Consejería de Educación. Únicamente se conservarán, a los efectos anteriormente descritos, los datos de las personas usuarias que finalmente cumplimenten el formulario, así como profesorado coordinador y participante en las convocatorias.</p>';
+$franer_notice = apply_filters( 'franer_data_protection_notice', $franer_notice, $settings );
 ?>
 <div class="franer-shell" data-franer-slug="<?php echo esc_attr( $franer_slug ); ?>">
 	<header class="franer-shell__header">
@@ -68,4 +77,8 @@ $franer_iframe_title = sprintf( __( 'Activity: %s', 'franer' ), $franer_title );
 		role="status"
 		aria-live="polite"
 		hidden><?php echo esc_html__( 'Ready.', 'franer' ); ?></div>
+
+	<?php if ( '' !== trim( (string) $franer_notice ) ) : ?>
+	<div class="franer-shell__notice"><?php echo wp_kses_post( $franer_notice ); ?></div>
+	<?php endif; ?>
 </div>
