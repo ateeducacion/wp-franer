@@ -33,6 +33,27 @@ msgstr ""
 msgid "https://www3.gobiernodecanarias.org/medusa/ecoescuela/ate/"
 msgstr ""
 
+msgid "Author"
+msgstr ""
+
+msgid "Activity"
+msgstr ""
+
+msgid "Access and visibility"
+msgstr ""
+
+msgid "Submissions and availability"
+msgstr ""
+
+msgid "Share"
+msgstr ""
+
+msgid "Submissions"
+msgstr ""
+
+msgid "Help"
+msgstr ""
+
 msgid "Submissions overview"
 msgstr ""
 
@@ -51,28 +72,7 @@ msgstr ""
 msgid "Franer Submissions"
 msgstr ""
 
-msgid "Submissions"
-msgstr ""
-
 msgid "Franer Help"
-msgstr ""
-
-msgid "Help"
-msgstr ""
-
-msgid "Author"
-msgstr ""
-
-msgid "Activity"
-msgstr ""
-
-msgid "Access and visibility"
-msgstr ""
-
-msgid "Submissions and availability"
-msgstr ""
-
-msgid "Share"
 msgstr ""
 
 msgid "The slug is invalid. Use only lowercase letters, numbers and hyphens."

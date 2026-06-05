@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-06-02T22:21:45+00:00\n"
-"PO-Revision-Date: 2026-06-05T15:22:11+00:00\n"
+"PO-Revision-Date: 2026-06-05T15:34:19+00:00\n"
 "Language: es_ES\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Domain: franer\n"
@@ -33,6 +33,27 @@ msgstr "Área de Tecnología Educativa"
 msgid "https://www3.gobiernodecanarias.org/medusa/ecoescuela/ate/"
 msgstr "https://www3.gobiernodecanarias.org/medusa/ecoescuela/ate/"
 
+msgid "Author"
+msgstr "Autor"
+
+msgid "Activity"
+msgstr "Actividad"
+
+msgid "Access and visibility"
+msgstr "Acceso y visibilidad"
+
+msgid "Submissions and availability"
+msgstr "Envíos y disponibilidad"
+
+msgid "Share"
+msgstr "Compartir"
+
+msgid "Submissions"
+msgstr "Envíos"
+
+msgid "Help"
+msgstr "Ayuda"
+
 msgid "Submissions overview"
 msgstr "Resumen de envíos"
 
@@ -51,29 +72,8 @@ msgstr "No tienes permiso para gestionar los envíos."
 msgid "Franer Submissions"
 msgstr "Envíos de Franer"
 
-msgid "Submissions"
-msgstr "Envíos"
-
 msgid "Franer Help"
 msgstr "Ayuda de Franer"
-
-msgid "Help"
-msgstr "Ayuda"
-
-msgid "Author"
-msgstr "Autor"
-
-msgid "Activity"
-msgstr "Actividad"
-
-msgid "Access and visibility"
-msgstr "Acceso y visibilidad"
-
-msgid "Submissions and availability"
-msgstr "Envíos y disponibilidad"
-
-msgid "Share"
-msgstr "Compartir"
 
 msgid "The slug is invalid. Use only lowercase letters, numbers and hyphens."
 msgstr "El slug no es válido. Usa solo letras minúsculas, números y guiones."
@@ -469,7 +469,7 @@ msgid "Activity HTML source"
 msgstr "Código HTML de la actividad"
 
 msgid "A complete, self-contained HTML document implementing window.FranerCollect() and window.FranerSubmit()."
-msgstr ""
+msgstr "Un documento HTML completo y autocontenido que implementa window.FranerCollect() y window.FranerSubmit()."
 
 msgid "You can also drag and drop an .html file here to load its contents."
 msgstr "También puedes arrastrar y soltar aquí un archivo .html para cargar su contenido."
