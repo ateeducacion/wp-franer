@@ -141,11 +141,31 @@ Franer uses the classic **loader architecture** (à la WordPress plugin boilerpl
 - Use **TDD** (Test-Driven Development): write or update tests before/with the implementation.
 - Develop inside the **`@wordpress/env`** environment. Development runs on port `8888`, the tests
   environment on port `8889`.
+- **Test factories and base class (reuse these — do not hand-roll fixtures).** Tests live in
+  `tests/*Test.php` and extend either `WP_UnitTestCase` or `Franer_Test_Base`
+  (`tests/includes/class-franer-test-base.php`). `Franer_Test_Base` extends the WordPress factory
+  with Franer-specific factories (the wp-decker convention) and activates the submissions table +
+  registers the CPT in `set_up()`:
+  - `self::factory()->franer_site->create( array( 'slug' => 'x', 'html' => '…', 'allowed_roles' => array( 'subscriber' ), 'enabled' => true, 'accepts_submissions' => true ) )`
+    — a published `franer_site` with its `_franer_*` meta (uses `Franer_Site_Repository::set_raw_html()` for the activity HTML).
+  - `self::factory()->franer_submission->create( array( 'site_id' => $id, 'user_id' => $u, 'payload' => array( … ) ) )`
+    — inserts a row via `Franer_Submissions_Repository::save_submission()` (auto-creates a site/user when omitted).
+  - The factory classes are in `tests/includes/` and are registered in `tests/bootstrap.php`.
+    Array-valued defaults (roles, payload) live in `create_object()`, not in
+    `default_generation_definitions` (WordPress' `generate_args()` only accepts scalars/generators).
+  - Admin/handler patterns used across the suite: `set_current_screen()` for screen-aware code,
+    `ob_start()`/`ob_get_clean()` for render callbacks, `expectException( WPDieException::class )` for
+    `wp_die()` paths, and a `wp_redirect` filter that throws a marker exception to capture
+    `wp_safe_redirect()` targets without terminating PHPUnit (see `tests/AdminSubmissionsTest.php`).
+    Assert against `__()`/`esc_html__()` output — the tests environment runs in es_ES.
 - Makefile targets:
   - `make up` — start the local environment (activates the plugin).
   - `make down` / `make destroy` / `make reset` — stop / destroy / reset the environment.
   - `make lint` — PHPCS (WordPress Coding Standards). `make fix` — PHPCBF auto-fix.
   - `make test` / `make test-php` — PHPUnit tests (accepts `FILE=` and `FILTER=`).
+  - `make test-php-coverage` — PHPUnit with code coverage. (Re)starts wp-env with
+    `--xdebug=coverage` and writes `artifacts/coverage/clover.xml` (consumed by
+    Codecov) plus a browsable `artifacts/coverage/html/` report.
   - `make test-js` — Jest JavaScript unit tests.
   - `make test-e2e` — Playwright end-to-end tests (against port 8889).
   - `make check-plugin` — WordPress Plugin Check.
@@ -153,6 +173,14 @@ Franer uses the classic **loader architecture** (à la WordPress plugin boilerpl
   - `make pot` / `make po` / `make mo` — regenerate translation catalogues.
   - `make check` — runs fix, lint, plugin-check, tests, untranslated and mo together.
   - `make package VERSION=x.y.z` — build the release ZIP.
+- **Code coverage (Codecov).** The CI `lint_and_test` job runs PHPUnit with coverage
+  and uploads `artifacts/coverage/clover.xml` to [Codecov](https://codecov.io/gh/ateeducacion/wp-franer).
+  PHP line coverage is currently **~89%**. `codecov.yml` configures gating status
+  checks: a pull request **fails** if it lowers project coverage or if its changed
+  lines are less covered than the base, so add tests alongside new code. The
+  coverage scope is defined in `phpunit.xml.dist` (`admin/`, `includes/`, `public/`,
+  `franer.php`, `uninstall.php`). Uploads are tokenless: the organization has opted
+  out of requiring a Codecov upload token for public repositories.
 
 ## Environment and tools
 
