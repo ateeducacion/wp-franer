@@ -162,7 +162,8 @@ Franer uses the classic **loader architecture** (à la WordPress plugin boilerpl
   checks: a pull request **fails** if it lowers project coverage or if its changed
   lines are less covered than the base, so add tests alongside new code. The
   coverage scope is defined in `phpunit.xml.dist` (`admin/`, `includes/`, `public/`,
-  `franer.php`, `uninstall.php`). Uploads require a `CODECOV_TOKEN` repository secret.
+  `franer.php`, `uninstall.php`). Uploads are tokenless: the organization has opted
+  out of requiring a Codecov upload token for public repositories.
 
 ## Environment and tools
 

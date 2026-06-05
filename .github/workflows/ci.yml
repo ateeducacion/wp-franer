@@ -160,9 +160,11 @@ jobs:
         with:
           files: artifacts/coverage/clover.xml
           flags: php
-          # Requires a CODECOV_TOKEN repository secret (mandatory for upload).
-          token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: true
+          # Tokenless upload: the organization has opted out of requiring an upload
+          # token for public repositories, so no CODECOV_TOKEN secret is needed.
+          # Kept non-blocking so a transient upload/rate-limit hiccup never fails CI;
+          # the coverage gate is enforced by Codecov's own status checks instead.
+          fail_ci_if_error: false
 
   e2e:
     runs-on: ubuntu-latest
