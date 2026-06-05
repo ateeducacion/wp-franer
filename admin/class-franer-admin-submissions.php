@@ -131,7 +131,14 @@ class Franer_Admin_Submissions {
 			$settings        = $this->sites->get_settings( $selected_site );
 			$has_custom_view = isset( $settings['view_html'] ) && '' !== trim( (string) $settings['view_html'] );
 
-			$list_table = new Franer_Submissions_List_Table( $this->submissions, $selected_site, 50, $fields );
+			// The current form fingerprint, to flag submissions answered against an
+			// older version of the activity HTML.
+			$current_post         = get_post( $selected_site );
+			$current_form_version = $current_post instanceof WP_Post
+				? Franer_Submissions_Repository::form_version_hash( $current_post->post_content )
+				: '';
+
+			$list_table = new Franer_Submissions_List_Table( $this->submissions, $selected_site, 50, $fields, $current_form_version );
 			$list_table->prepare_items();
 
 			$export_url     = wp_nonce_url(

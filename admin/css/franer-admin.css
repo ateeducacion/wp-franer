@@ -827,6 +827,30 @@
 	color: #8c8f94;
 }
 
+/* "Older version" indicator (table cell + drawer notice). */
+.franer-version-badge {
+	display: inline-block;
+	margin-left: 6px;
+	padding: 1px 7px;
+	border-radius: 9px;
+	background: #fcf0e3;
+	color: #8a4b00;
+	font-size: 11px;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.franer-drawer__notice {
+	margin-bottom: 12px;
+	padding: 9px 12px;
+	border-radius: 8px;
+	border: 1px solid #f0d9b5;
+	background: #fcf6ec;
+	color: #8a4b00;
+	font-size: 12px;
+	line-height: 1.5;
+}
+
 .franer-stars {
 	display: inline-flex;
 	gap: 1px;

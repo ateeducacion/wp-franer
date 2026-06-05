@@ -507,7 +507,10 @@
 				eyebrow.textContent = '#' + ( button.getAttribute( 'data-franer-id' ) || '' );
 			}
 			if ( readable ) {
-				readable.innerHTML = renderReadable( payload, schema );
+				var outdated = '1' === button.getAttribute( 'data-franer-outdated' )
+					? '<div class="franer-drawer__notice">' + escapeHtml( messages.outdated || 'Answered against an earlier version of the form.' ) + '</div>'
+					: '';
+				readable.innerHTML = outdated + renderReadable( payload, schema );
 			}
 			showTab( 'summary' );
 

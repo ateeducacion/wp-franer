@@ -55,14 +55,24 @@ class Franer_Submissions_List_Table extends WP_List_Table {
 	private $fields;
 
 	/**
+	 * The current activity's form fingerprint (hash of the activity HTML).
+	 *
+	 * Used to flag submissions answered against an older version of the form.
+	 *
+	 * @var string
+	 */
+	private $current_form_version;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param Franer_Submissions_Repository $submissions The submissions repository.
-	 * @param int                           $site_id     The activity post ID to list.
-	 * @param int                           $per_page    Rows per page. Default 50.
-	 * @param array                         $fields      Inferred field schema. Default empty.
+	 * @param Franer_Submissions_Repository $submissions          The submissions repository.
+	 * @param int                           $site_id              The activity post ID to list.
+	 * @param int                           $per_page             Rows per page. Default 50.
+	 * @param array                         $fields               Inferred field schema. Default empty.
+	 * @param string                        $current_form_version Current activity form hash. Default ''.
 	 */
-	public function __construct( $submissions, $site_id, $per_page = 50, $fields = array() ) {
+	public function __construct( $submissions, $site_id, $per_page = 50, $fields = array(), $current_form_version = '' ) {
 		parent::__construct(
 			array(
 				'singular' => 'franer_submission',
@@ -71,10 +81,26 @@ class Franer_Submissions_List_Table extends WP_List_Table {
 			)
 		);
 
-		$this->submissions = $submissions;
-		$this->site_id     = (int) $site_id;
-		$this->per_page    = max( 1, (int) $per_page );
-		$this->fields      = is_array( $fields ) ? $fields : array();
+		$this->submissions          = $submissions;
+		$this->site_id              = (int) $site_id;
+		$this->per_page             = max( 1, (int) $per_page );
+		$this->fields               = is_array( $fields ) ? $fields : array();
+		$this->current_form_version = (string) $current_form_version;
+	}
+
+	/**
+	 * Whether a row was answered against an older version of the form.
+	 *
+	 * Only true when both fingerprints are known and differ; a missing stored
+	 * version (older submissions, before this was tracked) is never flagged.
+	 *
+	 * @param array $item The current row.
+	 * @return bool
+	 */
+	private function is_outdated( $item ) {
+		$stored = isset( $item['form_version'] ) ? (string) $item['form_version'] : '';
+
+		return '' !== $stored && '' !== $this->current_form_version && $stored !== $this->current_form_version;
 	}
 
 	/**
@@ -252,14 +278,15 @@ class Franer_Submissions_List_Table extends WP_List_Table {
 			$user      = get_userdata( (int) $row['user_id'] );
 			$site_post = get_post( (int) $row['site_id'] );
 			$rows[]    = array(
-				'id'         => (int) $row['id'],
-				'site_id'    => (int) $row['site_id'],
-				'site_title' => $site_post ? $site_post->post_title : '',
-				'user_id'    => (int) $row['user_id'],
-				'user_login' => $user ? $user->user_login : ( '#' . (int) $row['user_id'] ),
-				'created_at' => isset( $row['created_at'] ) ? $row['created_at'] : '',
-				'updated_at' => isset( $row['updated_at'] ) ? $row['updated_at'] : '',
-				'payload'    => isset( $row['payload_json'] ) ? $row['payload_json'] : '{}',
+				'id'           => (int) $row['id'],
+				'site_id'      => (int) $row['site_id'],
+				'site_title'   => $site_post ? $site_post->post_title : '',
+				'user_id'      => (int) $row['user_id'],
+				'user_login'   => $user ? $user->user_login : ( '#' . (int) $row['user_id'] ),
+				'created_at'   => isset( $row['created_at'] ) ? $row['created_at'] : '',
+				'updated_at'   => isset( $row['updated_at'] ) ? $row['updated_at'] : '',
+				'form_version' => isset( $row['form_version'] ) ? (string) $row['form_version'] : '',
+				'payload'      => isset( $row['payload_json'] ) ? $row['payload_json'] : '{}',
 			);
 		}
 
@@ -288,6 +315,23 @@ class Franer_Submissions_List_Table extends WP_List_Table {
 			default:
 				return '';
 		}
+	}
+
+	/**
+	 * Render the Created column, flagging submissions from an older form version.
+	 *
+	 * @param array $item The current row.
+	 * @return string The cell HTML.
+	 */
+	public function column_created_at( $item ) {
+		$out = esc_html( (string) $item['created_at'] );
+
+		if ( $this->is_outdated( $item ) ) {
+			$out .= ' <span class="franer-version-badge" title="' . esc_attr__( 'Answered against an earlier version of the form.', 'franer' ) . '">'
+				. esc_html__( 'older version', 'franer' ) . '</span>';
+		}
+
+		return $out;
 	}
 
 	/**
@@ -386,6 +430,7 @@ class Franer_Submissions_List_Table extends WP_List_Table {
 		<button type="button" class="button button-small franer-view-json"
 			data-franer-payload="<?php echo esc_attr( (string) $pretty ); ?>"
 			data-franer-id="<?php echo esc_attr( (string) $item['id'] ); ?>"
+			data-franer-outdated="<?php echo $this->is_outdated( $item ) ? '1' : '0'; ?>"
 			data-franer-nonce="<?php echo esc_attr( wp_create_nonce( 'franer_update_submission_' . (int) $item['id'] ) ); ?>">
 			<?php esc_html_e( 'View / edit', 'franer' ); ?>
 		</button>

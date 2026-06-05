@@ -132,6 +132,7 @@ class Franer {
 		 * The classes responsible for the admin area.
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-franer-admin.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/class-franer-admin-metaboxes.php';
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-franer-admin-submissions.php';
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-franer-help.php';
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-franer-export-controller.php';
@@ -167,9 +168,11 @@ class Franer {
 
 		$plugin_admin = new Franer_Admin( $this->get_plugin_name(), $this->get_version() );
 
+		$plugin_metaboxes = new Franer_Admin_Metaboxes();
+
 		$this->loader->add_action( 'admin_menu', $plugin_admin, 'add_menu' );
-		$this->loader->add_action( 'add_meta_boxes', $plugin_admin, 'add_meta_boxes' );
-		$this->loader->add_action( 'edit_form_top', $plugin_admin, 'render_guide_strip' );
+		$this->loader->add_action( 'add_meta_boxes', $plugin_metaboxes, 'add_meta_boxes' );
+		$this->loader->add_action( 'edit_form_top', $plugin_metaboxes, 'render_guide_strip' );
 		// Show administrators in the Author metabox dropdown (the CPT's custom caps
 		// otherwise leave it empty) and write the activity HTML during the primary
 		// save so each save records a single revision.

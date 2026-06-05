@@ -242,7 +242,30 @@ class Franer_Submission_Schema {
 			'hist'         => array(),
 		);
 
-		// Keep only present scalar values; nested data leaves the field 'other'.
+		$scalars        = self::present_scalars( $list );
+		$field['count'] = count( $scalars );
+
+		if ( empty( $scalars ) ) {
+			return $field;
+		}
+
+		if ( self::all_numeric( $scalars ) ) {
+			return self::classify_numeric( $field, $scalars );
+		}
+
+		return self::classify_string( $field, $scalars );
+	}
+
+	/**
+	 * Keep only the present scalar values from a field's value list.
+	 *
+	 * Nested data and empty/null values are dropped, so a field made entirely of
+	 * arrays stays 'other'.
+	 *
+	 * @param array $list The values seen across submissions.
+	 * @return array The present scalar values.
+	 */
+	private static function present_scalars( array $list ) {
 		$scalars = array();
 		foreach ( $list as $value ) {
 			if ( is_array( $value ) || null === $value || '' === $value ) {
@@ -251,32 +274,45 @@ class Franer_Submission_Schema {
 			$scalars[] = $value;
 		}
 
-		$field['count'] = count( $scalars );
+		return $scalars;
+	}
 
-		if ( empty( $scalars ) ) {
+	/**
+	 * Classify an all-numeric field as a 1..5 rating or a plain number.
+	 *
+	 * @param array $field   The field descriptor being built.
+	 * @param array $scalars The present scalar values (all numeric).
+	 * @return array The completed field descriptor.
+	 */
+	private static function classify_numeric( array $field, array $scalars ) {
+		$numbers     = array_map( 'floatval', $scalars );
+		$field['avg'] = count( $numbers ) ? array_sum( $numbers ) / count( $numbers ) : 0.0;
+
+		if ( self::looks_like_rating( $numbers ) ) {
+			$field['type'] = 'rating';
+			$field['hist'] = self::rating_histogram( $numbers );
+
 			return $field;
 		}
 
-		// All-numeric ⇒ rating (integers within 1..5) or number.
-		if ( self::all_numeric( $scalars ) ) {
-			$numbers = array_map( 'floatval', $scalars );
-			$sum     = array_sum( $numbers );
-			$avg     = count( $numbers ) ? $sum / count( $numbers ) : 0.0;
+		$field['type']         = 'number';
+		$field['distribution'] = self::distribution( $scalars );
 
-			if ( self::looks_like_rating( $numbers ) ) {
-				$field['type'] = 'rating';
-				$field['avg']  = $avg;
-				$field['hist'] = self::rating_histogram( $numbers );
-				return $field;
-			}
+		return $field;
+	}
 
-			$field['type']         = 'number';
-			$field['avg']          = $avg;
-			$field['distribution'] = self::distribution( $scalars );
-			return $field;
-		}
-
-		// String/bool values: category when few and short, else free text.
+	/**
+	 * Classify a string/bool field as a category or free text.
+	 *
+	 * A field is a useful category only when its values actually cluster (some
+	 * repeat) or are very short tokens. All-distinct, sentence-length values
+	 * (free-text comments) have no aggregate value and stay 'text'.
+	 *
+	 * @param array $field   The field descriptor being built.
+	 * @param array $scalars The present scalar values.
+	 * @return array The completed field descriptor.
+	 */
+	private static function classify_string( array $field, array $scalars ) {
 		$normalized = array();
 		$max_length = 0;
 		foreach ( $scalars as $value ) {
@@ -286,20 +322,20 @@ class Franer_Submission_Schema {
 			$max_length   = max( $max_length, $length );
 		}
 
-		// A field is a useful category only when its values actually cluster
-		// (some repeat) or are very short tokens. All-distinct, sentence-length
-		// values (free-text comments) have no aggregate value and stay 'text'.
 		$distinct      = count( array_unique( $normalized ) );
 		$repeats       = $distinct < count( $normalized );
 		$short_tokens  = $max_length <= self::MAX_SHORT_TOKEN_LENGTH;
 		$within_bounds = $distinct <= self::MAX_CATEGORY_VALUES && $max_length <= self::MAX_CATEGORY_LENGTH;
+
 		if ( $within_bounds && ( $repeats || $short_tokens ) ) {
 			$field['type']         = 'category';
 			$field['distribution'] = self::distribution( $normalized );
+
 			return $field;
 		}
 
 		$field['type'] = 'text';
+
 		return $field;
 	}
 
@@ -401,17 +437,49 @@ class Franer_Submission_Schema {
 			$payloads[] = isset( $row['payload'] ) && is_array( $row['payload'] ) ? $row['payload'] : array();
 		}
 
-		$fields = self::infer_fields( $payloads );
-		$total  = count( $rows );
+		$fields       = self::infer_fields( $payloads );
+		$total        = count( $rows );
+		$last_created = self::latest_created( $rows );
+		$rating       = self::summarize_rating( $fields );
+		$text_field   = self::first_field_of_type( $fields, 'text' );
+		$comments     = self::collect_comments( $rows, $text_field );
 
-		$last_created = '';
+		return array(
+			'total'         => $total,
+			'last_created'  => $last_created,
+			'fields'        => $fields,
+			'distributions' => self::summarize_distributions( $fields ),
+			'rating'        => $rating,
+			'comments'      => $comments,
+			'stats'         => self::build_stats( $total, $rating, null !== $text_field, $comments, $last_created ),
+		);
+	}
+
+	/**
+	 * Find the most recent created_at across the rows.
+	 *
+	 * @param array $rows The decoded rows.
+	 * @return string The latest created_at, or '' when none.
+	 */
+	private static function latest_created( array $rows ) {
+		$last = '';
 		foreach ( $rows as $row ) {
 			$created = isset( $row['created_at'] ) ? (string) $row['created_at'] : '';
-			if ( $created > $last_created ) {
-				$last_created = $created;
+			if ( $created > $last ) {
+				$last = $created;
 			}
 		}
 
+		return $last;
+	}
+
+	/**
+	 * Pick the category/number fields that carry a distribution.
+	 *
+	 * @param array $fields Inferred fields.
+	 * @return array The distribution field descriptors.
+	 */
+	private static function summarize_distributions( array $fields ) {
 		$distributions = array();
 		foreach ( $fields as $field ) {
 			if ( in_array( $field['type'], array( 'category', 'number' ), true ) && ! empty( $field['distribution'] ) ) {
@@ -419,34 +487,69 @@ class Franer_Submission_Schema {
 			}
 		}
 
+		return $distributions;
+	}
+
+	/**
+	 * Build the rating-card summary from the first rating field, if any.
+	 *
+	 * @param array $fields Inferred fields.
+	 * @return array|null { label, avg, count, hist } or null.
+	 */
+	private static function summarize_rating( array $fields ) {
 		$rating_field = self::first_field_of_type( $fields, 'rating' );
-		$rating       = null;
-		if ( null !== $rating_field ) {
-			$rating = array(
-				'label' => $rating_field['label'],
-				'avg'   => $rating_field['avg'],
-				'count' => $rating_field['count'],
-				'hist'  => $rating_field['hist'],
-			);
+		if ( null === $rating_field ) {
+			return null;
 		}
 
-		$text_field = self::first_field_of_type( $fields, 'text' );
-		$comments   = array();
-		if ( null !== $text_field ) {
-			$text_key = $text_field['key'];
-			foreach ( $rows as $row ) {
-				$payload = isset( $row['payload'] ) && is_array( $row['payload'] ) ? self::flatten_payload( $row['payload'] ) : array();
-				$value   = isset( $payload[ $text_key ] ) ? $payload[ $text_key ] : '';
-				if ( is_string( $value ) && '' !== trim( $value ) ) {
-					$comments[] = array(
-						'user'    => isset( $row['user'] ) ? (string) $row['user'] : '',
-						'created' => isset( $row['created_at'] ) ? (string) $row['created_at'] : '',
-						'text'    => trim( $value ),
-					);
-				}
+		return array(
+			'label' => $rating_field['label'],
+			'avg'   => $rating_field['avg'],
+			'count' => $rating_field['count'],
+			'hist'  => $rating_field['hist'],
+		);
+	}
+
+	/**
+	 * Collect non-empty comments for the free-text field, if any.
+	 *
+	 * @param array      $rows       The decoded rows.
+	 * @param array|null $text_field The text field descriptor, or null.
+	 * @return array List of { user, created, text }.
+	 */
+	private static function collect_comments( array $rows, $text_field ) {
+		if ( null === $text_field ) {
+			return array();
+		}
+
+		$text_key = $text_field['key'];
+		$comments = array();
+		foreach ( $rows as $row ) {
+			$payload = isset( $row['payload'] ) && is_array( $row['payload'] ) ? self::flatten_payload( $row['payload'] ) : array();
+			$value   = isset( $payload[ $text_key ] ) ? $payload[ $text_key ] : '';
+			if ( is_string( $value ) && '' !== trim( $value ) ) {
+				$comments[] = array(
+					'user'    => isset( $row['user'] ) ? (string) $row['user'] : '',
+					'created' => isset( $row['created_at'] ) ? (string) $row['created_at'] : '',
+					'text'    => trim( $value ),
+				);
 			}
 		}
 
+		return $comments;
+	}
+
+	/**
+	 * Build the stats-strip cards, adapting to the fields the activity has.
+	 *
+	 * @param int        $total        Total submissions.
+	 * @param array|null $rating       Rating summary, or null.
+	 * @param bool       $has_comments Whether the activity has a free-text field.
+	 * @param array      $comments     Collected comments.
+	 * @param string     $last_created Latest created_at.
+	 * @return array The stat cards ({ key, big, label }).
+	 */
+	private static function build_stats( $total, $rating, $has_comments, array $comments, $last_created ) {
 		$stats = array(
 			array(
 				'key'   => 'total',
@@ -454,6 +557,7 @@ class Franer_Submission_Schema {
 				'label' => _n( 'response', 'responses', $total, 'franer' ),
 			),
 		);
+
 		if ( null !== $rating ) {
 			$stats[] = array(
 				'key'   => 'rating',
@@ -461,28 +565,22 @@ class Franer_Submission_Schema {
 				'label' => __( 'average rating', 'franer' ),
 			);
 		}
-		if ( null !== $text_field ) {
+
+		if ( $has_comments ) {
 			$stats[] = array(
 				'key'   => 'comments',
 				'big'   => (string) count( $comments ),
 				'label' => __( 'with a comment', 'franer' ),
 			);
 		}
+
 		$stats[] = array(
 			'key'   => 'last',
 			'big'   => '' === $last_created ? '—' : self::short_date( $last_created ),
 			'label' => __( 'last response', 'franer' ),
 		);
 
-		return array(
-			'total'         => $total,
-			'last_created'  => $last_created,
-			'fields'        => $fields,
-			'distributions' => $distributions,
-			'rating'        => $rating,
-			'comments'      => $comments,
-			'stats'         => $stats,
-		);
+		return $stats;
 	}
 
 	/**

@@ -102,6 +102,9 @@ msgstr ""
 msgid "No comment"
 msgstr ""
 
+msgid "Answered against an earlier version of the form."
+msgstr ""
+
 msgid "Visit Franer"
 msgstr ""
 
@@ -247,6 +250,9 @@ msgid "Actions"
 msgstr ""
 
 msgid "No submissions found for this activity yet."
+msgstr ""
+
+msgid "older version"
 msgstr ""
 
 msgid "View / edit"

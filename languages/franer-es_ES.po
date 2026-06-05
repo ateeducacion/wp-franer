@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-06-02T22:21:45+00:00\n"
-"PO-Revision-Date: 2026-06-05T15:05:49+00:00\n"
+"PO-Revision-Date: 2026-06-05T15:22:11+00:00\n"
 "Language: es_ES\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Domain: franer\n"
@@ -101,6 +101,9 @@ msgstr "No se pudo leer este envío."
 
 msgid "No comment"
 msgstr "Sin comentario"
+
+msgid "Answered against an earlier version of the form."
+msgstr "Respondido con una versión anterior del formulario."
 
 msgid "Visit Franer"
 msgstr "Ver Franer"
@@ -248,6 +251,9 @@ msgstr "Acciones"
 
 msgid "No submissions found for this activity yet."
 msgstr "Todavía no hay envíos para esta actividad."
+
+msgid "older version"
+msgstr "versión anterior"
 
 msgid "View / edit"
 msgstr "Ver / editar"

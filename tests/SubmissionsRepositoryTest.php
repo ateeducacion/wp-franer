@@ -85,6 +85,62 @@ class SubmissionsRepositoryTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * form_version_hash is deterministic and empty for empty HTML.
+	 *
+	 * @return void
+	 */
+	public function test_form_version_hash() {
+		$this->assertSame( '', Franer_Submissions_Repository::form_version_hash( '' ) );
+
+		$one = Franer_Submissions_Repository::form_version_hash( '<form>v1</form>' );
+		$two = Franer_Submissions_Repository::form_version_hash( '<form>v1</form>' );
+		$alt = Franer_Submissions_Repository::form_version_hash( '<form>v2</form>' );
+
+		$this->assertSame( $one, $two );
+		$this->assertNotSame( $one, $alt );
+		$this->assertSame( 64, strlen( $one ) );
+	}
+
+	/**
+	 * The form version and site-modified date are stored with a submission.
+	 *
+	 * @return void
+	 */
+	public function test_save_stores_form_version() {
+		$hash = Franer_Submissions_Repository::form_version_hash( '<form>v1</form>' );
+
+		$result = $this->repo->save_submission(
+			$this->site_id,
+			$this->user_id,
+			wp_json_encode( array( 'q1' => 'a' ) ),
+			false,
+			false,
+			$hash,
+			'2026-06-05 10:00:00'
+		);
+
+		$row = $this->repo->get_submission( (int) $result['submission_id'] );
+		$this->assertSame( $hash, $row['form_version'] );
+		$this->assertSame( '2026-06-05 10:00:00', $row['site_modified_at'] );
+	}
+
+	/**
+	 * An overwrite refreshes the stored form version to the new one.
+	 *
+	 * @return void
+	 */
+	public function test_overwrite_refreshes_form_version() {
+		$v1 = Franer_Submissions_Repository::form_version_hash( '<form>v1</form>' );
+		$v2 = Franer_Submissions_Repository::form_version_hash( '<form>v2</form>' );
+
+		$first = $this->repo->save_submission( $this->site_id, $this->user_id, wp_json_encode( array( 'n' => 1 ) ), false, false, $v1 );
+		$this->repo->save_submission( $this->site_id, $this->user_id, wp_json_encode( array( 'n' => 2 ) ), false, true, $v2 );
+
+		$row = $this->repo->get_submission( (int) $first['submission_id'] );
+		$this->assertSame( $v2, $row['form_version'] );
+	}
+
+	/**
 	 * delete_submission should remove a single row.
 	 *
 	 * @return void
