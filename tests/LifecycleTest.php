@@ -131,4 +131,36 @@ class LifecycleTest extends WP_UnitTestCase {
 		$regular = self::factory()->post->create( array( 'post_type' => 'post' ) );
 		$this->assertTrue( user_can( $editor, 'edit_post', $regular ) );
 	}
+
+	/**
+	 * A franer_site revision must inherit its parent's access: admins can view and
+	 * restore it, editors cannot.
+	 *
+	 * @return void
+	 */
+	public function test_franer_site_revision_caps_follow_parent() {
+		$admin  = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$editor = self::factory()->user->create( array( 'role' => 'editor' ) );
+		$site   = self::factory()->post->create(
+			array(
+				'post_type'    => 'franer_site',
+				'post_status'  => 'publish',
+				'post_author'  => $admin,
+				'post_content' => '<p>v1</p>',
+			)
+		);
+
+		// Force a revision.
+		wp_update_post( array( 'ID' => $site, 'post_content' => '<p>v2</p>' ) );
+		$revisions = wp_get_post_revisions( $site );
+		$this->assertNotEmpty( $revisions );
+		$revision = (int) array_key_first( $revisions );
+
+		// Admins can view (read) and restore (edit) the revision.
+		$this->assertTrue( user_can( $admin, 'read_post', $revision ) );
+		$this->assertTrue( user_can( $admin, 'edit_post', $revision ) );
+
+		// Editors cannot.
+		$this->assertFalse( user_can( $editor, 'edit_post', $revision ) );
+	}
 }

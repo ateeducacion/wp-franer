@@ -111,6 +111,83 @@ class MetaTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * A metabox save must write the HTML into post_content and record exactly one
+	 * revision (the old flow wrote it with a second wp_update_post(), duplicating it).
+	 *
+	 * @return void
+	 */
+	public function test_admin_save_records_a_single_revision_with_the_html() {
+		wp_set_current_user( $this->admin_id );
+
+		$post_id = self::factory()->post->create(
+			array(
+				'post_type'   => 'franer_site',
+				'post_status' => 'publish',
+			)
+		);
+
+		$admin = new Franer_Admin();
+		add_filter( 'wp_insert_post_data', array( $admin, 'inject_raw_html_into_content' ), 10, 2 );
+
+		$_POST = array(
+			'franer_site_nonce' => wp_create_nonce( 'save_franer_site' ),
+			'franer_slug'       => 'rev-demo',
+			'franer_html'       => '<p>hello <b>world</b></p>',
+		);
+
+		$before = count( wp_get_post_revisions( $post_id ) );
+
+		// Simulate the core edit flow: the primary update (where the filter injects
+		// the HTML into post_content) followed by the save_post meta handler.
+		wp_update_post( array( 'ID' => $post_id, 'post_title' => 'Rev demo' ) );
+		$admin->save_meta( $post_id, get_post( $post_id ) );
+
+		$after = count( wp_get_post_revisions( $post_id ) );
+
+		remove_filter( 'wp_insert_post_data', array( $admin, 'inject_raw_html_into_content' ), 10 );
+		$_POST = array();
+
+		$this->assertSame( '<p>hello <b>world</b></p>', get_post( $post_id )->post_content );
+		$this->assertSame( 1, $after - $before, 'Each save must create exactly one revision.' );
+	}
+
+	/**
+	 * The Author dropdown is populated with administrators on the franer_site edit
+	 * screen, and left untouched elsewhere.
+	 *
+	 * @return void
+	 */
+	public function test_author_dropdown_is_restricted_to_admins_on_franer_screen() {
+		$admin = new Franer_Admin();
+
+		// Off a franer_site screen: returned unchanged.
+		set_current_screen( 'dashboard' );
+		$unchanged = $admin->restrict_author_dropdown_to_admins(
+			array( 'capability' => array( 'edit_franer_sites' ) ),
+			array( 'name' => 'post_author_override' )
+		);
+		$this->assertSame( array( 'edit_franer_sites' ), $unchanged['capability'] );
+
+		// On the franer_site edit screen: queries administrators.
+		set_current_screen( 'post' );
+		get_current_screen()->post_type = 'franer_site';
+		$restricted = $admin->restrict_author_dropdown_to_admins(
+			array( 'capability' => array( 'edit_franer_sites' ) ),
+			array( 'name' => 'post_author_override' )
+		);
+		$this->assertSame( array( 'manage_options' ), $restricted['capability'] );
+
+		// A non-author dropdown on the same screen is left alone.
+		$other = $admin->restrict_author_dropdown_to_admins(
+			array( 'capability' => array( 'x' ) ),
+			array( 'name' => 'something_else' )
+		);
+		$this->assertSame( array( 'x' ), $other['capability'] );
+
+		set_current_screen( 'front' );
+	}
+
+	/**
 	 * The generation prompt must never appear in public activity rendering, and
 	 * the iframe srcdoc must not receive it.
 	 *

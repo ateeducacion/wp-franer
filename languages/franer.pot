@@ -60,6 +60,9 @@ msgstr ""
 msgid "Help"
 msgstr ""
 
+msgid "Author"
+msgstr ""
+
 msgid "Site settings"
 msgstr ""
 

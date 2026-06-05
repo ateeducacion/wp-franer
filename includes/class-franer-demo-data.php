@@ -157,15 +157,27 @@ class Franer_Demo_Data {
 		);
 		$demo_author = ! empty( $admins ) ? (int) $admins[0] : 0;
 
+		// Write the activity HTML straight into post_content on the initial insert
+		// (kses disabled so the AI-generated HTML/JS survives — same as
+		// Franer_Site_Repository::set_raw_html()). Doing it in one insert avoids a
+		// second wp_update_post(), which would create an extra revision — and, since
+		// seeding may run with no current user, an author-less one (revisions take
+		// their author from the current user, not the parent post).
+		$restore_kses = false !== has_filter( 'content_save_pre', 'wp_filter_post_kses' );
+		kses_remove_filters();
 		$post_id = wp_insert_post(
 			array(
-				'post_title'  => $title,
-				'post_type'   => 'franer_site',
-				'post_status' => 'publish',
-				'post_author' => $demo_author,
+				'post_title'   => $title,
+				'post_type'    => 'franer_site',
+				'post_status'  => 'publish',
+				'post_author'  => $demo_author,
+				'post_content' => (string) $activity_html,
 			),
 			true
 		);
+		if ( $restore_kses ) {
+			kses_init_filters();
+		}
 
 		if ( is_wp_error( $post_id ) || ! $post_id ) {
 			return 0;
@@ -196,9 +208,6 @@ class Franer_Demo_Data {
 		if ( '' !== trim( (string) $view_generation_prompt ) ) {
 			update_post_meta( $post_id, '_franer_view_generation_prompt', $view_generation_prompt );
 		}
-
-		// The activity HTML lives in post_content (revisioned, shown in the diff).
-		Franer_Site_Repository::set_raw_html( $post_id, $activity_html );
 
 		return (int) $post_id;
 	}
