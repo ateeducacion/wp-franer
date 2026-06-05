@@ -283,4 +283,86 @@ class SubmissionsRepositoryTest extends WP_UnitTestCase {
 		$this->assertSame( 'tester@example.test', $entry['user_email'] );
 		$this->assertSame( array( 'colour' => 'blue' ), $entry['payload'] );
 	}
+
+	/**
+	 * query_site_submissions should filter by user_login and by payload content.
+	 *
+	 * @return void
+	 */
+	public function test_query_site_submissions_filters_by_search_term() {
+		$other_user = self::factory()->user->create(
+			array(
+				'role'       => 'subscriber',
+				'user_login' => 'needle_user',
+			)
+		);
+
+		$this->repo->save_submission( $this->site_id, $this->user_id, wp_json_encode( array( 'fruit' => 'banana' ) ), true, false );
+		$this->repo->save_submission( $this->site_id, $other_user, wp_json_encode( array( 'fruit' => 'orange' ) ), true, false );
+
+		$by_user = $this->repo->query_site_submissions( $this->site_id, array( 'search' => 'needle_user' ) );
+		$this->assertSame( 1, $by_user['total'] );
+		$this->assertSame( (int) $other_user, (int) $by_user['rows'][0]['user_id'] );
+
+		$by_payload = $this->repo->query_site_submissions( $this->site_id, array( 'search' => 'banana' ) );
+		$this->assertSame( 1, $by_payload['total'] );
+		$this->assertSame( (int) $this->user_id, (int) $by_payload['rows'][0]['user_id'] );
+	}
+
+	/**
+	 * query_site_submissions should sort and paginate the rows.
+	 *
+	 * @return void
+	 */
+	public function test_query_site_submissions_sorts_and_paginates() {
+		$first  = $this->repo->save_submission( $this->site_id, $this->user_id, wp_json_encode( array( 'n' => 1 ) ), true, false );
+		$second = $this->repo->save_submission( $this->site_id, $this->user_id, wp_json_encode( array( 'n' => 2 ) ), true, false );
+		$third  = $this->repo->save_submission( $this->site_id, $this->user_id, wp_json_encode( array( 'n' => 3 ) ), true, false );
+
+		$page1 = $this->repo->query_site_submissions(
+			$this->site_id,
+			array(
+				'orderby'  => 'id',
+				'order'    => 'ASC',
+				'per_page' => 2,
+				'offset'   => 0,
+			)
+		);
+		$this->assertSame( 3, $page1['total'] );
+		$this->assertCount( 2, $page1['rows'] );
+		$this->assertSame( (int) $first['submission_id'], (int) $page1['rows'][0]['id'] );
+		$this->assertSame( (int) $second['submission_id'], (int) $page1['rows'][1]['id'] );
+
+		$page2 = $this->repo->query_site_submissions(
+			$this->site_id,
+			array(
+				'orderby'  => 'id',
+				'order'    => 'ASC',
+				'per_page' => 2,
+				'offset'   => 2,
+			)
+		);
+		$this->assertCount( 1, $page2['rows'] );
+		$this->assertSame( (int) $third['submission_id'], (int) $page2['rows'][0]['id'] );
+	}
+
+	/**
+	 * An unknown orderby/order must be ignored (whitelisted), not injected.
+	 *
+	 * @return void
+	 */
+	public function test_query_site_submissions_rejects_unknown_orderby() {
+		$this->repo->save_submission( $this->site_id, $this->user_id, wp_json_encode( array( 'n' => 1 ) ), true, false );
+
+		$result = $this->repo->query_site_submissions(
+			$this->site_id,
+			array(
+				'orderby' => 'payload_json; DROP TABLE wp_users',
+				'order'   => 'evil',
+			)
+		);
+
+		$this->assertSame( 1, $result['total'] );
+		$this->assertCount( 1, $result['rows'] );
+	}
 }

@@ -4,15 +4,11 @@
  *
  * Expects the following variables from Franer_Admin_Submissions::render_submissions_page():
  *
- * @var array  $site_posts    Array of franer_site WP_Post objects for the filter.
- * @var int    $selected_site Currently selected site ID (0 = none).
- * @var array  $rows           Normalized submission rows for the selected site.
- * @var string $export_url     Nonced JSON export URL (empty when no site selected).
- * @var string $export_csv_url Nonced CSV export URL (empty when no site selected).
- * @var int    $total          Total submissions for the selected site.
- * @var int    $per_page      Rows shown per page.
- * @var int    $paged         Current page number (1-based).
- * @var int    $total_pages   Total number of pages.
+ * @var array                            $site_posts     Array of franer_site WP_Post objects for the filter.
+ * @var int                              $selected_site  Currently selected site ID (0 = none).
+ * @var string                           $export_url     Nonced JSON export URL (empty when no site selected).
+ * @var string                           $export_csv_url Nonced CSV export URL (empty when no site selected).
+ * @var Franer_Submissions_List_Table|null $list_table   Prepared list table (null when no site selected).
  *
  * @package    Franer
  * @subpackage Franer/admin/partials
@@ -90,97 +86,19 @@ if ( ! defined( 'WPINC' ) ) {
 		</div>
 	<?php endif; ?>
 
-	<?php if ( 0 === $selected_site ) : ?>
+	<?php if ( 0 === $selected_site || ! $list_table instanceof Franer_Submissions_List_Table ) : ?>
 		<p><?php esc_html_e( 'Choose an activity to view its submissions.', 'franer' ); ?></p>
-	<?php elseif ( empty( $rows ) ) : ?>
-		<p><?php esc_html_e( 'No submissions found for this activity yet.', 'franer' ); ?></p>
 	<?php else : ?>
-		<div class="tablenav top">
-			<div class="tablenav-pages">
-				<span class="displaying-num">
-					<?php
-					printf(
-						/* translators: %s: number of submissions. */
-						esc_html( _n( '%s submission', '%s submissions', (int) $total, 'franer' ) ),
-						esc_html( number_format_i18n( (int) $total ) )
-					);
-					?>
-				</span>
-				<?php
-				if ( (int) $total_pages > 1 ) {
-					$franer_pager_base = add_query_arg(
-						array(
-							'post_type' => 'franer_site',
-							'page'      => 'franer-submissions',
-							'site_id'   => (int) $selected_site,
-							'paged'     => '%#%',
-						),
-						admin_url( 'edit.php' )
-					);
-					echo wp_kses_post(
-						paginate_links(
-							array(
-								'base'      => $franer_pager_base,
-								'format'    => '',
-								'prev_text' => __( '&laquo;', 'franer' ),
-								'next_text' => __( '&raquo;', 'franer' ),
-								'total'     => (int) $total_pages,
-								'current'   => (int) $paged,
-							)
-						)
-					);
-				}
-				?>
-			</div>
-		</div>
-		<table class="widefat striped franer-submissions-table">
-			<thead>
-				<tr>
-					<th scope="col"><?php esc_html_e( 'ID', 'franer' ); ?></th>
-					<th scope="col"><?php esc_html_e( 'Activity', 'franer' ); ?></th>
-					<th scope="col"><?php esc_html_e( 'User', 'franer' ); ?></th>
-					<th scope="col"><?php esc_html_e( 'Created', 'franer' ); ?></th>
-					<th scope="col"><?php esc_html_e( 'Updated', 'franer' ); ?></th>
-					<th scope="col"><?php esc_html_e( 'Actions', 'franer' ); ?></th>
-				</tr>
-			</thead>
-			<tbody>
-				<?php
-				foreach ( $rows as $franer_row ) :
-					$franer_decoded = json_decode( $franer_row['payload'], true );
-					$franer_pretty  = ( null === $franer_decoded )
-						? $franer_row['payload']
-						: wp_json_encode( $franer_decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
-					?>
-					<tr>
-						<td><?php echo esc_html( (string) $franer_row['id'] ); ?></td>
-						<td><?php echo esc_html( $franer_row['site_title'] ); ?></td>
-						<td><?php echo esc_html( $franer_row['user_login'] ); ?></td>
-						<td><?php echo esc_html( $franer_row['created_at'] ); ?></td>
-						<td><?php echo esc_html( $franer_row['updated_at'] ? $franer_row['updated_at'] : '—' ); ?></td>
-						<td>
-							<button type="button" class="button button-small franer-view-json"
-								data-franer-payload="<?php echo esc_attr( $franer_pretty ); ?>"
-								data-franer-id="<?php echo esc_attr( (string) $franer_row['id'] ); ?>"
-								data-franer-nonce="<?php echo esc_attr( wp_create_nonce( 'franer_update_submission_' . (int) $franer_row['id'] ) ); ?>">
-								<?php esc_html_e( 'View / edit', 'franer' ); ?>
-							</button>
-							<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
-								class="franer-inline-form"
-								onsubmit="return confirm( '<?php echo esc_js( __( 'Delete this submission? This cannot be undone.', 'franer' ) ); ?>' );">
-								<input type="hidden" name="action" value="franer_delete_submission" />
-								<input type="hidden" name="submission_id" value="<?php echo esc_attr( (string) $franer_row['id'] ); ?>" />
-								<input type="hidden" name="site_id" value="<?php echo esc_attr( (string) $selected_site ); ?>" />
-								<?php wp_nonce_field( 'franer_delete_submission_' . (int) $franer_row['id'] ); ?>
-								<button type="submit" class="button button-small button-link-delete">
-									<?php esc_html_e( 'Delete', 'franer' ); ?>
-								</button>
-							</form>
-						</td>
-					</tr>
-				<?php endforeach; ?>
-			</tbody>
-		</table>
+		<?php // GET form so the search box keeps the page/post_type/site context. ?>
+		<form method="get" class="franer-submissions-list-form">
+			<input type="hidden" name="post_type" value="franer_site" />
+			<input type="hidden" name="page" value="franer-submissions" />
+			<input type="hidden" name="site_id" value="<?php echo esc_attr( (string) $selected_site ); ?>" />
+			<?php
+			$list_table->search_box( __( 'Search submissions', 'franer' ), 'franer-submission' );
+			$list_table->display();
+			?>
+		</form>
 	<?php endif; ?>
 
 	<!-- JSON view / edit modal. -->

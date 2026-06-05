@@ -94,7 +94,6 @@ class Franer_Admin_Submissions {
 		}
 
 		$selected_site = isset( $_GET['site_id'] ) ? absint( wp_unslash( $_GET['site_id'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only filter.
-		$paged         = isset( $_GET['paged'] ) ? max( 1, absint( wp_unslash( $_GET['paged'] ) ) ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only pager.
 
 		// Build the list of available sites for the filter dropdown.
 		$site_posts = get_posts(
@@ -109,21 +108,14 @@ class Franer_Admin_Submissions {
 			)
 		);
 
-		$rows           = array();
 		$export_url     = '';
 		$export_csv_url = '';
-		$per_page       = 50;
-		$total          = 0;
-		$total_pages    = 0;
+		$list_table     = null;
 		if ( $selected_site > 0 ) {
-			$total       = $this->submissions->count_site_submissions( $selected_site );
-			$total_pages = (int) ceil( $total / $per_page );
-			// Clamp the requested page to the available range.
-			if ( $total_pages > 0 && $paged > $total_pages ) {
-				$paged = $total_pages;
-			}
-			$offset         = ( $paged - 1 ) * $per_page;
-			$rows           = $this->map_submission_rows( $this->submissions->get_site_submissions( $selected_site, $per_page, $offset ) );
+			require_once plugin_dir_path( __FILE__ ) . 'class-franer-submissions-list-table.php';
+			$list_table = new Franer_Submissions_List_Table( $this->submissions, $selected_site );
+			$list_table->prepare_items();
+
 			$export_url     = wp_nonce_url(
 				add_query_arg(
 					array(
@@ -147,32 +139,6 @@ class Franer_Admin_Submissions {
 		}
 
 		require plugin_dir_path( __FILE__ ) . 'partials/franer-admin-submissions.php';
-	}
-
-	/**
-	 * Shape raw submission rows for the Submissions list table template.
-	 *
-	 * @param array $raw_rows Rows from the submissions repository.
-	 * @return array The list rows, each with a resolved site title and user login.
-	 */
-	private function map_submission_rows( $raw_rows ) {
-		$rows = array();
-		foreach ( $raw_rows as $row ) {
-			$user      = get_userdata( (int) $row['user_id'] );
-			$site_post = get_post( (int) $row['site_id'] );
-			$rows[]    = array(
-				'id'         => (int) $row['id'],
-				'site_id'    => (int) $row['site_id'],
-				'site_title' => $site_post ? $site_post->post_title : '',
-				'user_id'    => (int) $row['user_id'],
-				'user_login' => $user ? $user->user_login : ( '#' . (int) $row['user_id'] ),
-				'created_at' => isset( $row['created_at'] ) ? $row['created_at'] : '',
-				'updated_at' => isset( $row['updated_at'] ) ? $row['updated_at'] : '',
-				'payload'    => isset( $row['payload_json'] ) ? $row['payload_json'] : '{}',
-			);
-		}
-
-		return $rows;
 	}
 
 	/**
