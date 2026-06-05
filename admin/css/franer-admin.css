@@ -35,6 +35,40 @@
 	width: 100%;
 }
 
+/* Drag-and-drop HTML upload zone (wraps each code editor). */
+.franer-drop {
+	position: relative;
+}
+
+.franer-drop.is-dragover::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	border: 2px dashed #2271b1;
+	border-radius: 4px;
+	background: rgba(34, 113, 177, 0.08);
+	pointer-events: none;
+	z-index: 10;
+}
+
+/* Grouped download options (submissions list + per-site metabox). */
+.franer-download-options {
+	margin: 12px 0;
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.franer-download-options__label {
+	margin-right: 4px;
+}
+
+.franer-download-options__hint {
+	flex: 1 0 100%;
+	margin: 4px 0 0;
+}
+
 /* Submissions table. */
 .franer-submissions-filter {
 	margin: 12px 0;

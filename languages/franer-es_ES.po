@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-06-02T22:21:45+00:00\n"
-"PO-Revision-Date: 2026-06-03T13:15:34+00:00\n"
+"PO-Revision-Date: 2026-06-05T11:04:43+00:00\n"
 "Language: es_ES\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Domain: franer\n"
@@ -80,6 +80,15 @@ msgstr "Copiado al portapapeles."
 
 msgid "Could not copy. Please copy manually."
 msgstr "No se pudo copiar. Cópialo manualmente."
+
+msgid "Replace the current content with the dropped file?"
+msgstr "¿Reemplazar el contenido actual con el archivo soltado?"
+
+msgid "Please drop an .html file."
+msgstr "Suelta un archivo .html."
+
+msgid "The file could not be read."
+msgstr "No se pudo leer el archivo."
 
 msgid "Visit Franer"
 msgstr "Ver Franer"
@@ -366,6 +375,9 @@ msgstr "Código HTML de la actividad"
 msgid "A complete, self-contained HTML document implementing window.FranerCollect() and window.FranerSubmit(). See the Help page for a ready-to-use AI prompt."
 msgstr "Un documento HTML completo y autocontenido que implemente window.FranerCollect() y window.FranerSubmit(). Consulta la página de Ayuda para obtener un prompt de IA listo para usar."
 
+msgid "You can also drag and drop an .html file here to load its contents."
+msgstr "También puedes arrastrar y soltar aquí un archivo .html para cargar su contenido."
+
 msgid "Prompt used to generate this activity"
 msgstr "Prompt utilizado para generar esta actividad"
 
@@ -406,8 +418,17 @@ msgstr[1] "%s envíos recogidos."
 msgid "View submissions"
 msgstr "Ver envíos"
 
+msgid "Download submissions:"
+msgstr "Descargar respuestas:"
+
 msgid "Export JSON"
 msgstr "Exportar JSON"
+
+msgid "Export CSV"
+msgstr "Exportar CSV"
+
+msgid "JSON keeps the full nested data; CSV gives one row per submission with each answer in its own column for spreadsheets."
+msgstr "JSON conserva todos los datos anidados; CSV ofrece una fila por respuesta con cada dato en su propia columna para hojas de cálculo."
 
 msgid "View overview"
 msgstr "Ver resumen"
@@ -468,8 +489,8 @@ msgstr "— Selecciona una actividad —"
 msgid "Filter"
 msgstr "Filtrar"
 
-msgid "Export all submissions (JSON)"
-msgstr "Exportar todos los envíos (JSON)"
+msgid "JSON keeps the full nested data and is best for re-import. CSV has one row per submission with each answer in its own column and opens directly in a spreadsheet (Excel, LibreOffice, Google Sheets)."
+msgstr "JSON conserva todos los datos anidados y es ideal para reimportar. CSV tiene una fila por respuesta con cada dato en su propia columna y se abre directamente en una hoja de cálculo (Excel, LibreOffice, Google Sheets)."
 
 msgid "Choose an activity to view its submissions."
 msgstr "Elige una actividad para ver sus envíos."

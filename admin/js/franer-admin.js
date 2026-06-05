@@ -114,6 +114,131 @@
 	}
 
 	/**
+	 * Whether a dropped file looks like HTML (by MIME type or extension).
+	 *
+	 * @param {File} file The dropped file.
+	 * @return {boolean} True when the file is treated as HTML.
+	 */
+	function isHtmlFile( file ) {
+		if ( ! file ) {
+			return false;
+		}
+		if ( 'text/html' === file.type ) {
+			return true;
+		}
+		var name = ( file.name || '' ).toLowerCase();
+		return /\.html?$/.test( name );
+	}
+
+	/**
+	 * Load the given text into a code editor (textarea + CodeMirror, if present).
+	 *
+	 * @param {HTMLTextAreaElement} area The target textarea.
+	 * @param {string}              text The HTML text to load.
+	 */
+	function setEditorValue( area, text ) {
+		if ( area.id && editors[ area.id ] ) {
+			editors[ area.id ].setValue( text );
+		} else {
+			area.value = text;
+			// Notify any listeners (and WordPress) that the value changed.
+			var event;
+			try {
+				event = new Event( 'input', { bubbles: true } );
+			} catch ( err ) {
+				event = document.createEvent( 'Event' );
+				event.initEvent( 'input', true, false );
+			}
+			area.dispatchEvent( event );
+		}
+	}
+
+	/**
+	 * Current value of a code editor (CodeMirror takes precedence over textarea).
+	 *
+	 * @param {HTMLTextAreaElement} area The target textarea.
+	 * @return {string} The current editor value.
+	 */
+	function getEditorValue( area ) {
+		if ( area.id && editors[ area.id ] ) {
+			return editors[ area.id ].getValue();
+		}
+		return area.value;
+	}
+
+	/**
+	 * Read a dropped HTML file into the zone's textarea.
+	 *
+	 * Replaces the current content; when the editor is not empty the user is asked
+	 * to confirm first, so pasted work is not lost by accident.
+	 *
+	 * @param {HTMLTextAreaElement} area The target textarea.
+	 * @param {File}                file The dropped file.
+	 */
+	function loadDroppedFile( area, file ) {
+		if ( ! isHtmlFile( file ) ) {
+			window.alert( messages.dropInvalidType || 'Please drop an .html file.' );
+			return;
+		}
+		if ( '' !== getEditorValue( area ).trim() ) {
+			var confirmMsg = messages.dropConfirm || 'Replace the current content with the dropped file?';
+			if ( ! window.confirm( confirmMsg ) ) {
+				return;
+			}
+		}
+		var reader = new FileReader();
+		reader.onload = function () {
+			setEditorValue( area, String( reader.result ) );
+		};
+		reader.onerror = function () {
+			window.alert( messages.dropReadError || 'The file could not be read.' );
+		};
+		reader.readAsText( file );
+	}
+
+	/**
+	 * Wire drag-and-drop HTML loading on `[data-franer-drop]` zones.
+	 *
+	 * Dragging an .html file onto the activity or submission-view editor loads its
+	 * contents into the corresponding textarea/CodeMirror instance.
+	 */
+	function initHtmlDropZones() {
+		var zones = document.querySelectorAll( '[data-franer-drop]' );
+		Array.prototype.forEach.call( zones, function ( zone ) {
+			var area = zone.querySelector( 'textarea' );
+			if ( ! area ) {
+				return;
+			}
+
+			function stop( event ) {
+				event.preventDefault();
+				event.stopPropagation();
+			}
+
+			zone.addEventListener( 'dragenter', function ( event ) {
+				stop( event );
+				zone.classList.add( 'is-dragover' );
+			} );
+			zone.addEventListener( 'dragover', function ( event ) {
+				stop( event );
+				zone.classList.add( 'is-dragover' );
+			} );
+			zone.addEventListener( 'dragleave', function ( event ) {
+				stop( event );
+				zone.classList.remove( 'is-dragover' );
+			} );
+			zone.addEventListener( 'drop', function ( event ) {
+				stop( event );
+				zone.classList.remove( 'is-dragover' );
+				var files = event.dataTransfer && event.dataTransfer.files;
+				if ( files && files.length ) {
+					loadDroppedFile( area, files[ 0 ] );
+				}
+			} );
+		} );
+	}
+
+	/**
 	 * Copy a value to the clipboard, with a graceful fallback.
 	 *
 	 * @param {string} text The text to copy.
@@ -258,6 +383,7 @@
 	ready( function () {
 		initTabs();
 		initCodeEditor();
+		initHtmlDropZones();
 		initCopyButtons();
 		initJsonModal();
 	} );

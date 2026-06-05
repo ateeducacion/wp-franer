@@ -232,7 +232,7 @@ class Franer_Admin {
 			),
 			admin_url( 'edit.php' )
 		);
-		$export_url   = wp_nonce_url(
+		$export_url     = wp_nonce_url(
 			add_query_arg(
 				array(
 					'action'  => 'franer_export',
@@ -242,7 +242,17 @@ class Franer_Admin {
 			),
 			'franer_export_' . $post->ID
 		);
-		$overview_url = add_query_arg(
+		$export_csv_url = wp_nonce_url(
+			add_query_arg(
+				array(
+					'action'  => 'franer_export_csv',
+					'site_id' => $post->ID,
+				),
+				admin_url( 'admin-post.php' )
+			),
+			'franer_export_csv_' . $post->ID
+		);
+		$overview_url   = add_query_arg(
 			array(
 				'post_type' => 'franer_site',
 				'page'      => 'franer-submission-view',
@@ -251,7 +261,7 @@ class Franer_Admin {
 			admin_url( 'edit.php' )
 		);
 		require_once plugin_dir_path( __FILE__ ) . 'partials/franer-admin-metaboxes.php';
-		franer_render_submissions_metabox( $count, $list_url, $export_url, $overview_url );
+		franer_render_submissions_metabox( $count, $list_url, $export_url, $overview_url, $export_csv_url );
 	}
 
 	/**
@@ -555,8 +565,11 @@ class Franer_Admin {
 				'editorSettings' => $editor_settings,
 				'textareaId'     => 'franer_html',
 				'messages'       => array(
-					'copied'    => __( 'Copied to clipboard.', 'franer' ),
-					'copyError' => __( 'Could not copy. Please copy manually.', 'franer' ),
+					'copied'          => __( 'Copied to clipboard.', 'franer' ),
+					'copyError'       => __( 'Could not copy. Please copy manually.', 'franer' ),
+					'dropConfirm'     => __( 'Replace the current content with the dropped file?', 'franer' ),
+					'dropInvalidType' => __( 'Please drop an .html file.', 'franer' ),
+					'dropReadError'   => __( 'The file could not be read.', 'franer' ),
 				),
 			)
 		);

@@ -81,6 +81,15 @@ msgstr ""
 msgid "Could not copy. Please copy manually."
 msgstr ""
 
+msgid "Replace the current content with the dropped file?"
+msgstr ""
+
+msgid "Please drop an .html file."
+msgstr ""
+
+msgid "The file could not be read."
+msgstr ""
+
 msgid "Visit Franer"
 msgstr ""
 
@@ -366,6 +375,9 @@ msgstr ""
 msgid "A complete, self-contained HTML document implementing window.FranerCollect() and window.FranerSubmit(). See the Help page for a ready-to-use AI prompt."
 msgstr ""
 
+msgid "You can also drag and drop an .html file here to load its contents."
+msgstr ""
+
 msgid "Prompt used to generate this activity"
 msgstr ""
 
@@ -406,7 +418,16 @@ msgstr[1] ""
 msgid "View submissions"
 msgstr ""
 
+msgid "Download submissions:"
+msgstr ""
+
 msgid "Export JSON"
+msgstr ""
+
+msgid "Export CSV"
+msgstr ""
+
+msgid "JSON keeps the full nested data; CSV gives one row per submission with each answer in its own column for spreadsheets."
 msgstr ""
 
 msgid "View overview"
@@ -468,7 +489,7 @@ msgstr ""
 msgid "Filter"
 msgstr ""
 
-msgid "Export all submissions (JSON)"
+msgid "JSON keeps the full nested data and is best for re-import. CSV has one row per submission with each answer in its own column and opens directly in a spreadsheet (Excel, LibreOffice, Google Sheets)."
 msgstr ""
 
 msgid "Choose an activity to view its submissions."
