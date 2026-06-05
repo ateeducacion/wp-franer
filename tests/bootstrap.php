@@ -45,3 +45,9 @@ tests_add_filter(
 
 // Start up the WP testing environment.
 WPIntegration\bootstrap_it();
+
+// Register the custom factories and the shared base test case. These depend on
+// the WordPress test factory classes, so they are loaded after bootstrap_it().
+require_once __DIR__ . '/includes/class-wp-unittest-factory-for-franer-site.php';
+require_once __DIR__ . '/includes/class-wp-unittest-factory-for-franer-submission.php';
+require_once __DIR__ . '/includes/class-franer-test-base.php';
