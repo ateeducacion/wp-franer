@@ -160,8 +160,12 @@ jobs:
         with:
           files: artifacts/coverage/clover.xml
           flags: php
-          # Tokenless upload: the organization has opted out of requiring an upload
-          # token for public repositories, so no CODECOV_TOKEN secret is needed.
+          slug: ateeducacion/wp-franer
+          # Uploads on the protected `main` branch require a token even though the
+          # organization opted out of tokens for public repos (the opt-out only
+          # covers unprotected branches and fork PRs). CODECOV_TOKEN is an
+          # organization secret shared with this repository.
+          token: ${{ secrets.CODECOV_TOKEN }}
           # Kept non-blocking so a transient upload/rate-limit hiccup never fails CI;
           # the coverage gate is enforced by Codecov's own status checks instead.
           fail_ci_if_error: false
