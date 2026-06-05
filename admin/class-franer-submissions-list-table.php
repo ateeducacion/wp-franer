@@ -425,26 +425,29 @@ class Franer_Submissions_List_Table extends WP_List_Table {
 			? $item['payload']
 			: wp_json_encode( $decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 
+		$id = (int) $item['id'];
+
+		// Note: delete is wired to a single hidden form rendered outside the list's
+		// own GET <form> (see the partial). A per-row <form> here would be an invalid
+		// nested form and the browser would submit the search form instead.
 		ob_start();
 		?>
-		<button type="button" class="button button-small franer-view-json"
+		<button type="button" class="franer-iconbtn franer-view-json"
+			title="<?php esc_attr_e( 'View / edit', 'franer' ); ?>"
 			data-franer-payload="<?php echo esc_attr( (string) $pretty ); ?>"
-			data-franer-id="<?php echo esc_attr( (string) $item['id'] ); ?>"
+			data-franer-id="<?php echo esc_attr( (string) $id ); ?>"
 			data-franer-outdated="<?php echo $this->is_outdated( $item ) ? '1' : '0'; ?>"
-			data-franer-nonce="<?php echo esc_attr( wp_create_nonce( 'franer_update_submission_' . (int) $item['id'] ) ); ?>">
-			<?php esc_html_e( 'View / edit', 'franer' ); ?>
+			data-franer-nonce="<?php echo esc_attr( wp_create_nonce( 'franer_update_submission_' . $id ) ); ?>">
+			<span class="dashicons dashicons-visibility" aria-hidden="true"></span>
+			<span class="screen-reader-text"><?php esc_html_e( 'View / edit', 'franer' ); ?></span>
 		</button>
-		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
-			class="franer-inline-form"
-			onsubmit="return confirm( '<?php echo esc_js( __( 'Delete this submission? This cannot be undone.', 'franer' ) ); ?>' );">
-			<input type="hidden" name="action" value="franer_delete_submission" />
-			<input type="hidden" name="submission_id" value="<?php echo esc_attr( (string) $item['id'] ); ?>" />
-			<input type="hidden" name="site_id" value="<?php echo esc_attr( (string) $this->site_id ); ?>" />
-			<?php wp_nonce_field( 'franer_delete_submission_' . (int) $item['id'] ); ?>
-			<button type="submit" class="button button-small button-link-delete">
-				<?php esc_html_e( 'Delete', 'franer' ); ?>
-			</button>
-		</form>
+		<button type="button" class="franer-iconbtn franer-iconbtn--danger franer-delete-btn"
+			title="<?php esc_attr_e( 'Delete', 'franer' ); ?>"
+			data-franer-id="<?php echo esc_attr( (string) $id ); ?>"
+			data-franer-delete-nonce="<?php echo esc_attr( wp_create_nonce( 'franer_delete_submission_' . $id ) ); ?>">
+			<span class="dashicons dashicons-trash" aria-hidden="true"></span>
+			<span class="screen-reader-text"><?php esc_html_e( 'Delete', 'franer' ); ?></span>
+		</button>
 		<?php
 		return (string) ob_get_clean();
 	}

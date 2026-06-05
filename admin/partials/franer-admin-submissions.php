@@ -125,6 +125,14 @@ if ( ! defined( 'WPINC' ) ) {
 	?>
 	<script type="application/json" id="franer-fields-schema"><?php echo wp_json_encode( $franer_fields_for_js ); ?></script>
 
+	<?php // Standalone delete form, kept outside the list's GET form (no nested forms). ?>
+	<form id="franer-delete-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="franer-hidden-form">
+		<input type="hidden" name="action" value="franer_delete_submission" />
+		<input type="hidden" name="site_id" value="<?php echo esc_attr( (string) $selected_site ); ?>" />
+		<input type="hidden" name="submission_id" id="franer-delete-id" value="" />
+		<input type="hidden" name="_wpnonce" id="franer-delete-nonce" value="" />
+	</form>
+
 	<!-- Submission detail drawer (readable view + editable JSON). -->
 	<div id="franer-json-modal" class="franer-drawer" role="dialog" aria-modal="true"
 		aria-labelledby="franer-drawer-title" hidden>

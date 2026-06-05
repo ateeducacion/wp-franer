@@ -105,6 +105,9 @@ msgstr ""
 msgid "Answered against an earlier version of the form."
 msgstr ""
 
+msgid "Delete this submission? This cannot be undone."
+msgstr ""
+
 msgid "Visit Franer"
 msgstr ""
 
@@ -256,9 +259,6 @@ msgid "older version"
 msgstr ""
 
 msgid "View / edit"
-msgstr ""
-
-msgid "Delete this submission? This cannot be undone."
 msgstr ""
 
 msgid "Delete"

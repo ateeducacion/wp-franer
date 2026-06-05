@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-06-02T22:21:45+00:00\n"
-"PO-Revision-Date: 2026-06-05T15:34:19+00:00\n"
+"PO-Revision-Date: 2026-06-05T15:44:37+00:00\n"
 "Language: es_ES\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Domain: franer\n"
@@ -104,6 +104,9 @@ msgstr "Sin comentario"
 
 msgid "Answered against an earlier version of the form."
 msgstr "Respondido con una versión anterior del formulario."
+
+msgid "Delete this submission? This cannot be undone."
+msgstr "¿Eliminar este envío? Esta acción no se puede deshacer."
 
 msgid "Visit Franer"
 msgstr "Ver Franer"
@@ -257,9 +260,6 @@ msgstr "versión anterior"
 
 msgid "View / edit"
 msgstr "Ver / editar"
-
-msgid "Delete this submission? This cannot be undone."
-msgstr "¿Eliminar este envío? Esta acción no se puede deshacer."
 
 msgid "Delete"
 msgstr "Eliminar"

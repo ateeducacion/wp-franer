@@ -464,6 +464,7 @@ class Franer_Admin {
 					'invalidJson'     => __( 'Could not read this submission.', 'franer' ),
 					'noComment'       => __( 'No comment', 'franer' ),
 					'outdated'        => __( 'Answered against an earlier version of the form.', 'franer' ),
+					'deleteConfirm'   => __( 'Delete this submission? This cannot be undone.', 'franer' ),
 				),
 			)
 		);

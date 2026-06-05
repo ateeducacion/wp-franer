@@ -827,6 +827,63 @@
 	color: #8c8f94;
 }
 
+/* Row action icon buttons (view / delete). */
+.franer-hidden-form {
+	display: none;
+}
+
+.franer-iconbtn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+	padding: 0;
+	border: 1px solid #c3c4c7;
+	border-radius: 6px;
+	background: #fff;
+	color: #3c434a;
+	cursor: pointer;
+	vertical-align: middle;
+}
+
+.franer-iconbtn + .franer-iconbtn {
+	margin-left: 5px;
+}
+
+.franer-iconbtn .dashicons {
+	font-size: 17px;
+	width: 17px;
+	height: 17px;
+	line-height: 1;
+}
+
+.franer-iconbtn:hover {
+	border-color: #2271b1;
+	color: #2271b1;
+}
+
+.franer-iconbtn:focus {
+	outline: none;
+	border-color: #2271b1;
+	box-shadow: 0 0 0 1px #2271b1;
+}
+
+.franer-iconbtn--danger {
+	color: #d63638;
+}
+
+.franer-iconbtn--danger:hover {
+	border-color: #d63638;
+	color: #d63638;
+	background: #fcf0f1;
+}
+
+.franer-iconbtn--danger:focus {
+	border-color: #d63638;
+	box-shadow: 0 0 0 1px #d63638;
+}
+
 /* "Older version" indicator (table cell + drawer notice). */
 .franer-version-badge {
 	display: inline-block;

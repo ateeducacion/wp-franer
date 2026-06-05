@@ -573,6 +573,38 @@
 	}
 
 	/**
+	 * Wire the per-row delete buttons to the standalone delete form.
+	 *
+	 * The form lives outside the list's own GET form (nested forms are invalid),
+	 * so each trash button fills its hidden fields and submits it after confirming.
+	 */
+	function initDeleteButtons() {
+		var form = document.getElementById( 'franer-delete-form' );
+		if ( ! form ) {
+			return;
+		}
+		var idField = document.getElementById( 'franer-delete-id' );
+		var nonceField = document.getElementById( 'franer-delete-nonce' );
+
+		var buttons = document.querySelectorAll( '.franer-delete-btn' );
+		Array.prototype.forEach.call( buttons, function ( button ) {
+			button.addEventListener( 'click', function () {
+				var message = messages.deleteConfirm || 'Delete this submission? This cannot be undone.';
+				if ( ! window.confirm( message ) ) {
+					return;
+				}
+				if ( idField ) {
+					idField.value = button.getAttribute( 'data-franer-id' ) || '';
+				}
+				if ( nonceField ) {
+					nonceField.value = button.getAttribute( 'data-franer-delete-nonce' ) || '';
+				}
+				form.submit();
+			} );
+		} );
+	}
+
+	/**
 	 * Live-update the public URL preview as the slug is typed (edit screen).
 	 */
 	function initSlugPreview() {
@@ -607,6 +639,7 @@
 		initHtmlDropZones();
 		initCopyButtons();
 		initDetailDrawer();
+		initDeleteButtons();
 		initSlugPreview();
 	} );
 } )();
