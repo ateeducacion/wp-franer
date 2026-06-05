@@ -363,6 +363,96 @@ class Franer_Submissions_Repository {
 	}
 
 	/**
+	 * Query a page of submissions for a site with optional search and sorting.
+	 *
+	 * Backs the WP_List_Table on the Submissions admin screen. Searching matches
+	 * the submission ID, the submitter's user_login or the raw JSON payload; the
+	 * sort column is restricted to a whitelist. Returns both the requested page of
+	 * rows and the total number of matching rows so the caller can paginate.
+	 *
+	 * @param int   $site_id The site post ID.
+	 * @param array $args {
+	 *     Optional. Query arguments.
+	 *
+	 *     @type string $search   Term matched against id, user_login and payload. Default ''.
+	 *     @type string $orderby  Column key: 'id', 'user', 'created_at' or 'updated_at'. Default 'id'.
+	 *     @type string $order    'ASC' or 'DESC'. Default 'DESC'.
+	 *     @type int    $per_page Maximum rows to return. Default 50.
+	 *     @type int    $offset   Row offset. Default 0.
+	 * }
+	 * @return array {
+	 *     @type array $rows  The page of submission rows (ARRAY_A).
+	 *     @type int   $total Total number of matching rows.
+	 * }
+	 */
+	public function query_site_submissions( $site_id, $args = array() ) {
+		global $wpdb;
+
+		$args = array_merge(
+			array(
+				'search'   => '',
+				'orderby'  => 'id',
+				'order'    => 'DESC',
+				'per_page' => 50,
+				'offset'   => 0,
+			),
+			$args
+		);
+
+		$site_id = (int) $site_id;
+		$table   = self::get_table_name();
+		$users   = $wpdb->users;
+
+		// Whitelist the sort column; anything else falls back to the primary key.
+		$orderby_map = array(
+			'id'         => 's.id',
+			'user'       => 'u.user_login',
+			'created_at' => 's.created_at',
+			'updated_at' => 's.updated_at',
+		);
+		$orderby_sql = isset( $orderby_map[ $args['orderby'] ] ) ? $orderby_map[ $args['orderby'] ] : 's.id';
+		$order_sql   = ( 'ASC' === strtoupper( (string) $args['order'] ) ) ? 'ASC' : 'DESC';
+
+		$where  = 's.site_id = %d';
+		$params = array( $site_id );
+
+		$search = trim( (string) $args['search'] );
+		if ( '' !== $search ) {
+			$like     = '%' . $wpdb->esc_like( $search ) . '%';
+			$where   .= ' AND ( u.user_login LIKE %s OR s.payload_json LIKE %s OR CAST( s.id AS CHAR ) LIKE %s )';
+			$params[] = $like;
+			$params[] = $like;
+			$params[] = $like;
+		}
+
+		$join = "LEFT JOIN {$users} u ON u.ID = s.user_id";
+
+		$total = (int) $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.SlowDBQuery
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$table} s {$join} WHERE {$where}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table/$users are internal identifiers; the WHERE placeholders are bound below.
+				$params
+			)
+		);
+
+		$page_params   = $params;
+		$page_params[] = (int) $args['per_page'];
+		$page_params[] = (int) $args['offset'];
+
+		$rows = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.SlowDBQuery
+			$wpdb->prepare(
+				"SELECT s.* FROM {$table} s {$join} WHERE {$where} ORDER BY {$orderby_sql} {$order_sql}, s.id DESC LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $orderby_sql/$order_sql are whitelisted; identifiers are internal; values are bound.
+				$page_params
+			),
+			ARRAY_A
+		);
+
+		return array(
+			'rows'  => is_array( $rows ) ? $rows : array(),
+			'total' => $total,
+		);
+	}
+
+	/**
 	 * Delete all submissions for a site.
 	 *
 	 * @param int $site_id The site post ID.
