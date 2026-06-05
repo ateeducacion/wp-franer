@@ -108,6 +108,7 @@ class Franer {
 		/**
 		 * Helper classes for sanitization and permissions.
 		 */
+		require_once plugin_dir_path( __DIR__ ) . 'includes/class-franer-comment-stripper.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-franer-sanitizer.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-franer-permissions.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-franer-submission-schema.php';
