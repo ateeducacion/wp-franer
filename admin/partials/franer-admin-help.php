@@ -63,6 +63,7 @@ if ( ! defined( 'WPINC' ) ) {
 		<li><code>window.FranerCollect()</code> — <?php esc_html_e( 'returns the structured submission object.', 'franer' ); ?></li>
 		<li><code>window.FranerSubmit()</code> — <?php esc_html_e( 'validates and posts { type:"franer_submit", payload:FranerCollect() } to window.parent.', 'franer' ); ?></li>
 		<li><?php esc_html_e( 'A "message" listener handling { type:"franer_submit_result", ok, result } from the host page.', 'franer' ); ?></li>
+		<li><?php esc_html_e( 'Optional: window.FranerPrefill(data) to repopulate fields when the host sends { type:"franer_prefill", payload:data } for editing a previous submission.', 'franer' ); ?></li>
 	</ul>
 
 	<h2><?php esc_html_e( 'AI prompt', 'franer' ); ?></h2>

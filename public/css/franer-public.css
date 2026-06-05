@@ -111,6 +111,75 @@
 	color: #7a1d1d;
 }
 
+/*
+ * Host state panels: the "form submitted" confirmation page and the
+ * closed / not-open-yet / already-submitted screens. They reuse the status
+ * palette so the success/closed cues match the rest of the shell.
+ */
+.franer-shell__panel {
+	margin-top: 1rem;
+	padding: 1.5rem;
+	border: 1px solid #d0d0d0;
+	border-radius: 6px;
+	background: #f7f7f7;
+	text-align: center;
+}
+
+.franer-shell__panel--confirm {
+	border-color: #46946b;
+	background: #e9f6ee;
+	color: #1f5c3c;
+}
+
+.franer-shell__panel--closed,
+.franer-shell__panel--already {
+	border-color: #b32d2e;
+	background: #fbeaea;
+	color: #7a1d1d;
+}
+
+.franer-shell__panel--notyet {
+	border-color: #b88a00;
+	background: #fcf6e6;
+	color: #6a5200;
+}
+
+.franer-shell__panel-title {
+	margin: 0 0 0.5rem;
+	font-size: 1.3rem;
+	line-height: 1.3;
+}
+
+.franer-shell__panel-text {
+	margin: 0 0 1rem;
+	font-size: 1rem;
+	line-height: 1.5;
+}
+
+.franer-shell__panel-text:last-child {
+	margin-bottom: 0;
+}
+
+.franer-shell__panel-button {
+	display: inline-block;
+	margin: 0.25rem;
+	padding: 0.55rem 1.1rem;
+	border: 1px solid #1f5c3c;
+	border-radius: 6px;
+	background: #1f5c3c;
+	color: #fff;
+	font: inherit;
+	font-size: 0.95rem;
+	line-height: 1.2;
+	cursor: pointer;
+}
+
+.franer-shell__panel-button:hover,
+.franer-shell__panel-button:focus-visible {
+	background: #154a30;
+	border-color: #154a30;
+}
+
 .franer-shell__notice {
 	margin-top: 1.5rem;
 	font-size: 0.85rem;
