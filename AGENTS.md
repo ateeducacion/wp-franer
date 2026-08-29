@@ -255,3 +255,64 @@ Activity HTML must implement two globals and a result listener:
 
 The **Help** admin page exposes a ready-to-use AI prompt (with a Copy prompt button) that produces
 compliant activities.
+
+## Skills
+
+Recurring procedures live as skills under:
+
+- `.agents/skills/` — GitHub Copilot, Codex, Cursor, Grok Build and the other agents that share this path
+- `.claude/skills/` — Claude Code
+
+Grok Build scans `.agents/skills/` natively, so this repository does not keep a
+separate `.grok/skills/` copy.
+
+Install and refresh them with the GitHub CLI (`gh skill add` is an alias of
+`gh skill install`). Repeat for each host directory you care about:
+
+```bash
+gh skill add WordPress/agent-skills wp-performance --agent github-copilot
+gh skill add WordPress/agent-skills wp-performance --agent claude-code
+gh skill update --all
+```
+
+`gh skill` copies the skill into each host directory and injects source
+metadata into the `SKILL.md` frontmatter so later updates work. Do not
+reformat or duplicate a skill by copying `SKILL.md` yourself.
+
+### Skill compatibility
+
+Project compatibility requirements always take precedence over generic skill
+recommendations. This plugin supports WordPress 6.1+, while some vendored
+WordPress agent skills target WordPress 7.0+.
+
+Do not introduce APIs or behavior that require a newer WordPress version unless
+the project minimum version is intentionally being raised in the same change.
+When following a skill, verify that every suggested WordPress API is available
+in the plugin's supported version range.
+
+This plugin stores activity HTML raw and renders it only inside a sandboxed
+iframe without `allow-same-origin`. That security model takes precedence over
+generic `wp-plugin-security` advice about sanitizing or KSES'ing stored HTML.
+Do not "fix" raw HTML storage, the KSES bypass in `set_raw_html()`, or the
+iframe sandbox flags unless the change is an intentional redesign of that model.
+
+| Skill | Read it before | Origin |
+| --- | --- | --- |
+| `wp-plugin-development` | Touching hooks, activation/uninstall, the Settings API, options, cron or release packaging | [`WordPress/agent-skills`](https://github.com/WordPress/agent-skills), GPL-2.0-or-later |
+| `wp-rest-api` | Adding or debugging routes: `register_rest_route`, `permission_callback`, schema/args, `register_meta`, `show_in_rest` (`Franer_Rest_Controller`) | idem |
+| `wp-plugin-directory-guidelines` | Editing `readme.txt`, license headers or plugin naming — this is what `make check-plugin` enforces | idem |
+| `blueprint` | Editing `blueprint.json` or the Playground preview | idem |
+| `wp-performance` | Profiling or improving backend performance (WP-CLI profile/doctor, autoload, object cache, cron, HTTP API) | idem |
+| `wp-project-triage` | Inspecting what kind of WordPress repo this is before changing tooling or layout | idem |
+| `wp-plugin-security` | Writing or reviewing code that handles input, output, AJAX/REST, capabilities or files | [`fernandotellado/ai-skills`](https://github.com/fernandotellado/ai-skills), GPL-2.0-or-later |
+| `security-audit` | Hunting vulnerabilities and validating findings | [`cloudflare/security-audit-skill`](https://github.com/cloudflare/security-audit-skill) |
+
+All of them are **third party and vendored verbatim**. Do not reformat or edit
+them: diverging from upstream makes `gh skill update` harder. Fix the problem
+upstream and re-install instead.
+
+Provenance lives in each `SKILL.md` frontmatter (`metadata.github-repo`,
+`github-path`, `github-tree-sha`).
+
+Skills, `AGENTS.md` and `CLAUDE.md` are excluded from the release ZIP via
+`.distignore` and from the Playground source ZIP via `.gitattributes`.

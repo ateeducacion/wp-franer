@@ -88,6 +88,17 @@ This starts a Dockerized WordPress instance at [http://localhost:8888](http://lo
 (default admin user `admin`, password `password`). The tests environment runs on port `8889`.
 Run `make help` to list every available target.
 
+### Working with AI coding agents
+
+Project conventions for agents live in [`AGENTS.md`](AGENTS.md), which
+[`CLAUDE.md`](CLAUDE.md) points at so every assistant reads the same rules.
+
+Reusable procedures ship as agent skills in `.agents/skills/` and
+`.claude/skills/`, installed with `gh skill add`. They cover plugin
+development, the REST API, WordPress.org directory guidelines, Playground
+blueprints, performance, project triage, plugin security and security auditing.
+None of it is included in the release ZIP.
+
 ## Creating a Franer site
 
 1. In the WordPress admin, open **Franer > Add New**.
