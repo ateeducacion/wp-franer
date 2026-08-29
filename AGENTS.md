@@ -260,11 +260,12 @@ compliant activities.
 
 Recurring procedures live as skills under:
 
-- `.agents/skills/` — GitHub Copilot, Codex, Cursor, Grok Build and the other agents that share this path
+- `.agents/skills/` — GitHub Copilot, Codex, Cursor and the other agents that share this path
 - `.claude/skills/` — Claude Code
 
-Grok Build scans `.agents/skills/` natively, so this repository does not keep a
-separate `.grok/skills/` copy.
+Grok Build does not need a third copy under `.grok/skills/`: it automatically
+reads Claude Code skills alongside `.grok/`
+([Skills, Plugins & Marketplaces](https://docs.x.ai/build/features/skills-plugins-marketplaces)).
 
 Install and refresh them with the GitHub CLI (`gh skill add` is an alias of
 `gh skill install`). Repeat for each host directory you care about:

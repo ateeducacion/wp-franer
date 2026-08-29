@@ -8,8 +8,8 @@ add it there.
 
 `CONVENTIONS.md` holds the longer-form style guide.
 
-Skills live in `.agents/skills/` and `.claude/skills/` (Grok Build reads
-`.agents/skills/` too). They are third-party and installed with `gh skill add`:
+Skills live in `.agents/skills/` and `.claude/skills/` (Grok Build reads the
+Claude Code skills automatically). They are third-party and installed with `gh skill add`:
 read them, do not reformat them. Consult the relevant one before touching hooks or admin UI
 (`wp-plugin-development`), the REST API (`wp-rest-api`), the WordPress.org
 `readme.txt` (`wp-plugin-directory-guidelines`), `blueprint.json` (`blueprint`),
