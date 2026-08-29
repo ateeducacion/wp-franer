@@ -93,8 +93,8 @@ Run `make help` to list every available target.
 Project conventions for agents live in [`AGENTS.md`](AGENTS.md), which
 [`CLAUDE.md`](CLAUDE.md) points at so every assistant reads the same rules.
 
-Reusable procedures ship as agent skills in `.agents/skills/`, `.claude/skills/`
-and `.grok/skills/`, installed with `gh skill add`. They cover plugin
+Reusable procedures ship as agent skills in `.agents/skills/` and
+`.claude/skills/`, installed with `gh skill add`. They cover plugin
 development, the REST API, WordPress.org directory guidelines, Playground
 blueprints, performance, project triage, plugin security and security auditing.
 None of it is included in the release ZIP.

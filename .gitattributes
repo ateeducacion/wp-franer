@@ -3,7 +3,6 @@
 # and its exclusion list is `.distignore`.
 /.agents        export-ignore
 /.claude        export-ignore
-/.grok          export-ignore
 /.gitattributes export-ignore
 /AGENTS.md      export-ignore
 /CLAUDE.md      export-ignore
