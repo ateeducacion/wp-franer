@@ -1,0 +1,9 @@
+# Nothing below feeds the Playground source ZIP that GitHub serves at
+# archive/refs/heads/*.zip. The release ZIP is built by `wp dist-archive`
+# and its exclusion list is `.distignore`.
+/.agents        export-ignore
+/.claude        export-ignore
+/.grok          export-ignore
+/.gitattributes export-ignore
+/AGENTS.md      export-ignore
+/CLAUDE.md      export-ignore

@@ -1,5 +1,8 @@
 # Directories
 .git
+.agents
+.claude
+.grok
 .github
 .idea
 .vscode
@@ -37,4 +40,6 @@ phpmd.xml
 phpunit.xml
 phpunit.xml.dist
 README.md
+AGENTS.md
+CLAUDE.md
 .franer-build-workflow.js
