@@ -2,6 +2,7 @@
 .git
 .agents
 .claude
+.grok
 .github
 .idea
 .vscode
