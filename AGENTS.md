@@ -85,3 +85,7 @@ Preserve existing Claude copies; the workflow updates both host directories.
 installed skills, and opens a review PR on `main`. It never merges updates.
 Review prompt diffs as behavior changes. PRs made with the default GitHub token
 may not trigger CI; do not assume green checks will appear automatically.
+
+Maintainer preference: use `actions/checkout@v7` and
+`devantler-tech/actions/update-agent-skills@v13.3.3`; prefer the floating major
+`v13` when upstream provides it. Use `peter-evans/create-pull-request@v8` too. Keep all actions in the skill-update workflow on version tags, not SHAs.

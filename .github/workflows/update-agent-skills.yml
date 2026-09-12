@@ -19,25 +19,25 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@v7
         with:
           ref: main
           persist-credentials: false
 
       - id: update
-        uses: devantler-tech/actions/update-agent-skills@c2fedbf700c14a03c7a8acb80958f5505fc57a7d # v13.3.3
+        uses: devantler-tech/actions/update-agent-skills@v13.3.3
         with:
           dir: .agents/skills
 
       # Preserve existing host-specific copies and refresh their provenance too.
       - id: claude
-        uses: devantler-tech/actions/update-agent-skills@c2fedbf700c14a03c7a8acb80958f5505fc57a7d # v13.3.3
+        uses: devantler-tech/actions/update-agent-skills@v13.3.3
         with:
           dir: .claude/skills
 
       - name: Open pull request
         if: steps.update.outputs.changed == 'true' || steps.claude.outputs.changed == 'true'
-        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        uses: peter-evans/create-pull-request@v8
         with:
           base: main
           branch: feature/update-agent-skills
