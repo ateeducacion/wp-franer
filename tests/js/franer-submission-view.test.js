@@ -1,5 +1,5 @@
 /**
- * Jest tests for the Franer submission-view bridge
+ * Tests for the Franer submission-view bridge
  * (admin/js/franer-submission-view.js).
  *
  * The bridge is a framework-free IIFE that reads window.FranerSubmissionView at
@@ -9,8 +9,9 @@
  *
  * @package Franer
  */
-const fs = require( 'fs' );
-const path = require( 'path' );
+import { afterEach, describe, expect, test, vi } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
 
 const SRC_PATH = path.join(
 	__dirname,
@@ -29,7 +30,7 @@ const SRC = fs.readFileSync( SRC_PATH, 'utf8' );
  * @return {Object} The fake contentWindow with a postMessage spy.
  */
 function makeFrame( id ) {
-	const fakeWindow = { postMessage: jest.fn() };
+	const fakeWindow = { postMessage: vi.fn() };
 	const frame = window.document.createElement( 'iframe' );
 	frame.id = id;
 	Object.defineProperty( frame, 'contentWindow', {
@@ -44,7 +45,7 @@ describe( 'Franer submission-view bridge', () => {
 	afterEach( () => {
 		window.document.body.innerHTML = '';
 		delete window.FranerSubmissionView;
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	} );
 
 	test( 'posts franer_view_payload to the iframe with the localized payload', () => {

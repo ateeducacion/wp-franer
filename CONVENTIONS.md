@@ -33,7 +33,7 @@ Embedded foRms). These conventions are enforced by PHPCS and CI.
 - `admin/` — admin classes, assets and partials.
 - `public/` — public-facing classes, the parent shell JS, assets and partials.
 - `languages/` — translation files (`franer.pot`, `franer-es_ES.po`, `franer-es_ES.mo`).
-- `tests/` — PHPUnit, Jest and Playwright tests.
+- `tests/` — PHPUnit, Vitest and Playwright tests.
 
 ## Constants and Configuration
 
@@ -67,7 +67,7 @@ Embedded foRms). These conventions are enforced by PHPCS and CI.
 ## Test-Driven Development (TDD)
 
 - Use a TDD approach: write or update tests alongside the implementation.
-- Unit tests use **PHPUnit** for PHP and **Jest** for JavaScript; **Playwright** for E2E.
+- Unit tests use **PHPUnit** for PHP and **Vitest** for JavaScript; **Playwright** for E2E.
 - Tests are **required** for new behavior. Run `make test`, `make test-js` and `make test-e2e`.
 - Integrate testing into the workflow: `make check` runs fix, lint, plugin-check, tests,
   untranslated and mo before merging.

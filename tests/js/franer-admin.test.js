@@ -1,5 +1,5 @@
 /**
- * Jest tests for the Franer admin scripts (admin/js/franer-admin.js).
+ * Tests for the Franer admin scripts (admin/js/franer-admin.js).
  *
  * Focuses on the new accessible tabbed editor and the copy-to-clipboard
  * buttons. The script is a framework-free IIFE that runs its initializers on
@@ -8,8 +8,9 @@
  *
  * @package Franer
  */
-const fs = require( 'fs' );
-const path = require( 'path' );
+import { afterEach, describe, expect, test, vi } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
 
 const SRC_PATH = path.join( __dirname, '..', '..', 'admin', 'js', 'franer-admin.js' );
 const SRC = fs.readFileSync( SRC_PATH, 'utf8' );
@@ -51,7 +52,7 @@ describe( 'Franer admin tabs', () => {
 	afterEach( () => {
 		window.document.body.innerHTML = '';
 		delete window.FranerAdmin;
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	} );
 
 	test( 'activating the second tab shows its panel and hides the first', () => {
@@ -96,11 +97,11 @@ describe( 'Franer admin copy buttons', () => {
 	afterEach( () => {
 		window.document.body.innerHTML = '';
 		delete window.FranerAdmin;
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	} );
 
 	test( 'copy button writes the target value to the clipboard and reports status', async () => {
-		const writeText = jest.fn().mockResolvedValue();
+		const writeText = vi.fn().mockResolvedValue();
 		Object.defineProperty( window.navigator, 'clipboard', {
 			value: { writeText },
 			configurable: true,

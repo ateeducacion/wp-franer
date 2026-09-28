@@ -38,6 +38,7 @@ package-lock.json
 phpmd.xml
 phpunit.xml
 phpunit.xml.dist
+vitest.config.mjs
 README.md
 AGENTS.md
 CLAUDE.md

@@ -6,9 +6,10 @@
   "devDependencies": {
     "@playwright/test": "^1.63.0",
     "@wordpress/env": "^11.15.0",
-    "@wordpress/scripts": "^35.0.0",
-    "jest": "^30.5.2",
-    "jest-environment-jsdom": "^30.5.2"
+    "@wordpress/scripts": "^36.0.0",
+    "jsdom": "^26.1.0",
+    "vite": "^8.3.1",
+    "vitest": "^5.0.2"
   },
   "comment:overrides": "Force patched versions of transitive dev/build dependencies flagged by GitHub Dependabot. None of these ship with the plugin (PHP runtime); they only run at build/test time. Remove entries once @wordpress/scripts and @wordpress/env upgrade upstream.",
   "overrides": {
@@ -29,7 +30,7 @@
     "composer": "wp-env run cli --env-cwd=wp-content/plugins/franer composer",
     "composer:tests-cli": "wp-env run tests-cli --env-cwd=wp-content/plugins/franer composer",
     "test:unit": "wp-env run tests-cli --env-cwd=wp-content/plugins/franer ./vendor/bin/phpunit",
-    "test:js": "jest --config tests/js/jest.config.js",
+    "test:js": "wp-scripts test-unit-js",
     "test:e2e": "playwright test --config tests/e2e/playwright.config.js",
     "test:e2e:ui": "playwright test --config tests/e2e/playwright.config.js --ui"
   }

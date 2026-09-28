@@ -327,7 +327,7 @@ add_filter(
 
 ```bash
 make test-php    # PHPUnit tests (wp-env tests environment)
-make test-js     # JavaScript unit tests (Jest)
+make test-js     # JavaScript unit tests (Vitest)
 make test-e2e    # End-to-end tests (Playwright against port 8889)
 ```
 

@@ -51,7 +51,7 @@ through a nonced, authenticated REST call made by the parent page.
 * **Public URL and shortcode** — publish at `/franer/{slug}/` or embed with `[franer slug="..."]`.
 * **Built-in AI prompts** — the Help page provides ready-to-use prompts for generating activities
   and submissions-overview templates.
-* **WordPress Coding Standards compliant** and covered by PHPUnit, Jest and Playwright tests.
+* **WordPress Coding Standards compliant** and covered by PHPUnit, Vitest and Playwright tests.
 
 == Installation ==
 
