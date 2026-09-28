@@ -1,5 +1,5 @@
 /**
- * Jest tests for the Franer fullscreen toggle (public/js/franer-fullscreen.js).
+ * Tests for the Franer fullscreen toggle (public/js/franer-fullscreen.js).
  *
  * The script is a framework-free IIFE that reads window.FranerShell at load
  * time, finds the toggle button and wires it to the Fullscreen API on the
@@ -9,8 +9,9 @@
  *
  * @package Franer
  */
-const fs = require( 'fs' );
-const path = require( 'path' );
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
 
 const SCRIPT_PATH = path.join( __dirname, '..', '..', 'public', 'js', 'franer-fullscreen.js' );
 const SCRIPT_SOURCE = fs.readFileSync( SCRIPT_PATH, 'utf8' );
@@ -53,7 +54,7 @@ function buildShell() {
  */
 function loadScript() {
 	const realAdd = window.document.addEventListener.bind( window.document );
-	const spy = jest
+	const spy = vi
 		.spyOn( window.document, 'addEventListener' )
 		.mockImplementation( ( type, fn, opts ) => {
 			if ( 'fullscreenchange' === type || 'webkitfullscreenchange' === type ) {
@@ -101,7 +102,7 @@ describe( 'Franer fullscreen toggle', () => {
 		}
 		dom = null;
 		delete window.FranerShell;
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	} );
 
 	test( 'keeps the button hidden where the Fullscreen API is unavailable', () => {
@@ -112,7 +113,7 @@ describe( 'Franer fullscreen toggle', () => {
 	} );
 
 	test( 'reveals the button and requests fullscreen on click when supported', () => {
-		dom.frameWrap.requestFullscreen = jest.fn().mockResolvedValue( undefined );
+		dom.frameWrap.requestFullscreen = vi.fn().mockResolvedValue( undefined );
 
 		loadScript();
 
@@ -124,8 +125,8 @@ describe( 'Franer fullscreen toggle', () => {
 	} );
 
 	test( 'exits fullscreen on click when the wrapper is already fullscreen', () => {
-		dom.frameWrap.requestFullscreen = jest.fn().mockResolvedValue( undefined );
-		window.document.exitFullscreen = jest.fn().mockResolvedValue( undefined );
+		dom.frameWrap.requestFullscreen = vi.fn().mockResolvedValue( undefined );
+		window.document.exitFullscreen = vi.fn().mockResolvedValue( undefined );
 
 		loadScript();
 
@@ -137,7 +138,7 @@ describe( 'Franer fullscreen toggle', () => {
 	} );
 
 	test( 'syncs label and aria-pressed on fullscreenchange', () => {
-		dom.frameWrap.requestFullscreen = jest.fn().mockResolvedValue( undefined );
+		dom.frameWrap.requestFullscreen = vi.fn().mockResolvedValue( undefined );
 
 		loadScript();
 
@@ -162,7 +163,7 @@ describe( 'Franer fullscreen toggle', () => {
 	} );
 
 	test( 'swallows a rejected requestFullscreen promise', async () => {
-		dom.frameWrap.requestFullscreen = jest
+		dom.frameWrap.requestFullscreen = vi
 			.fn()
 			.mockRejectedValue( new Error( 'denied' ) );
 

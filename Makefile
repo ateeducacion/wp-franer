@@ -152,7 +152,7 @@ test-php-coverage:
 		--coverage-clover artifacts/coverage/clover.xml \
 		--coverage-html artifacts/coverage/html
 
-# Run JavaScript unit tests (Jest)
+# Run JavaScript unit tests (Vitest)
 test-js:
 	npm run test:js
 
@@ -235,7 +235,7 @@ help:
 	@echo "                       FILTER=<pattern> (run tests matching the pattern)"
 	@echo "                       FILE=<path>      (run tests in specific file)"
 	@echo "  test-php-coverage  - Run PHPUnit with code coverage (Clover + HTML in artifacts/)"
-	@echo "  test-js            - Run JavaScript unit tests (Jest)"
+	@echo "  test-js            - Run JavaScript unit tests (Vitest)"
 	@echo "  test-e2e           - Run E2E tests (non-interactive)"
 	@echo "  test-e2e-visual    - Run E2E tests with visual test UI"
 	@echo ""

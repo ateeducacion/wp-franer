@@ -169,8 +169,20 @@ jobs:
       - name: Run code linting (PHPCS)
         run: composer phpcs
 
+      # Vitest 5 and @wordpress/scripts 36 need a recent Node 22 (see their
+      # engines), which the runner's preinstalled Node does not guarantee.
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
       - name: Install npm dependencies
         run: npm ci
+
+      # Runs before wp-env so a JS regression fails in seconds rather than
+      # after the container boot and the PHP suite.
+      - name: Run JavaScript unit tests
+        run: npm run test:js
 
       - name: Start wp-env
         run: |

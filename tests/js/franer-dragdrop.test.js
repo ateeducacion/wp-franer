@@ -1,5 +1,5 @@
 /**
- * Jest tests for the drag-and-drop HTML loader in admin/js/franer-admin.js.
+ * Tests for the drag-and-drop HTML loader in admin/js/franer-admin.js.
  *
  * The script is a framework-free IIFE that wires `[data-franer-drop]` zones on
  * DOM ready; in jsdom document.readyState is "complete", so evaluating the
@@ -7,8 +7,9 @@
  *
  * @package Franer
  */
-const fs = require( 'fs' );
-const path = require( 'path' );
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
 
 const SRC_PATH = path.join( __dirname, '..', '..', 'admin', 'js', 'franer-admin.js' );
 const SRC = fs.readFileSync( SRC_PATH, 'utf8' );
@@ -67,7 +68,7 @@ describe( 'Franer HTML drag-and-drop', () => {
 	afterEach( () => {
 		window.document.body.innerHTML = '';
 		delete window.FranerAdmin;
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	} );
 
 	test( 'dropping an HTML file fills an empty editor', () => {
@@ -95,7 +96,7 @@ describe( 'Franer HTML drag-and-drop', () => {
 		area.value = '<html>existing</html>';
 
 		// Declined: content is preserved.
-		const confirmSpy = jest
+		const confirmSpy = vi
 			.spyOn( window, 'confirm' )
 			.mockReturnValue( false );
 		dropFiles( zone, [ { name: 'a.html', type: 'text/html' } ] );
@@ -118,7 +119,7 @@ describe( 'Franer HTML drag-and-drop', () => {
 		const area = window.document.getElementById( 'franer_html' );
 		area.value = 'keep me';
 
-		const alertSpy = jest.spyOn( window, 'alert' ).mockImplementation( () => {} );
+		const alertSpy = vi.spyOn( window, 'alert' ).mockImplementation( () => {} );
 		dropFiles( zone, [ { name: 'notes.txt', type: 'text/plain' } ] );
 
 		expect( alertSpy ).toHaveBeenCalledWith( 'Only .html' );

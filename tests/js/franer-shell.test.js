@@ -1,15 +1,16 @@
 /**
- * Jest tests for the Franer parent shell (public/js/franer-shell.js).
+ * Tests for the Franer parent shell (public/js/franer-shell.js).
  *
  * The shell is a framework-free IIFE that reads window.FranerShell at load
  * time and attaches a 'message' listener. Because of that, each test resets
  * jsdom globals, sets up window.FranerShell and a fake iframe (event.source),
- * then loads the script fresh via jest.isolateModules + a manual eval.
+ * then loads the script fresh via a manual eval.
  *
  * @package Franer
  */
-const fs = require( 'fs' );
-const path = require( 'path' );
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
 
 const SHELL_PATH = path.join( __dirname, '..', '..', 'public', 'js', 'franer-shell.js' );
 const SHELL_SOURCE = fs.readFileSync( SHELL_PATH, 'utf8' );
@@ -36,7 +37,7 @@ let attachedClickHandlers = [];
  */
 function loadShell() {
 	const realAdd = window.addEventListener.bind( window );
-	const spy = jest
+	const spy = vi
 		.spyOn( window, 'addEventListener' )
 		.mockImplementation( ( type, fn, opts ) => {
 			if ( 'message' === type ) {
@@ -45,7 +46,7 @@ function loadShell() {
 			return realAdd( type, fn, opts );
 		} );
 	const realDocAdd = window.document.addEventListener.bind( window.document );
-	const docSpy = jest
+	const docSpy = vi
 		.spyOn( window.document, 'addEventListener' )
 		.mockImplementation( ( type, fn, opts ) => {
 			if ( 'click' === type ) {
@@ -104,7 +105,7 @@ describe( 'Franer parent shell', () => {
 		const iframe = window.document.createElement( 'iframe' );
 		iframe.className = 'franer-shell__frame';
 		iframe.setAttribute( 'srcdoc', '<!doctype html><title>activity</title>' );
-		const cw = { postMessage: jest.fn() };
+		const cw = { postMessage: vi.fn() };
 		Object.defineProperty( iframe, 'contentWindow', { value: cw, configurable: true } );
 		frameWrap.appendChild( iframe );
 
@@ -134,7 +135,7 @@ describe( 'Franer parent shell', () => {
 	beforeEach( () => {
 		attachedMessageHandlers = [];
 		attachedClickHandlers = [];
-		fakeIframe = { postMessage: jest.fn() };
+		fakeIframe = { postMessage: vi.fn() };
 
 		// The shell only trusts messages whose source is the contentWindow of an
 		// <iframe class="franer-shell__frame"> in the document. Register fakeIframe
@@ -175,11 +176,11 @@ describe( 'Franer parent shell', () => {
 			}
 		} );
 		delete window.fetch;
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	} );
 
 	test( 'ignores unrelated message events', () => {
-		window.fetch = jest.fn();
+		window.fetch = vi.fn();
 		loadShell();
 
 		dispatchMessage( { type: 'something_else', payload: {} }, fakeIframe );
@@ -192,7 +193,7 @@ describe( 'Franer parent shell', () => {
 	} );
 
 	test( 'posts to restUrl with X-WP-Nonce and same-origin credentials on valid submit', async () => {
-		window.fetch = jest.fn().mockResolvedValue( {
+		window.fetch = vi.fn().mockResolvedValue( {
 			ok: true,
 			status: 201,
 			json: () => Promise.resolve( { submission_id: 123, status: 'saved' } ),
@@ -219,7 +220,7 @@ describe( 'Franer parent shell', () => {
 	} );
 
 	test( 'posts back franer_submit_result ok:true on a 201 response', async () => {
-		window.fetch = jest.fn().mockResolvedValue( {
+		window.fetch = vi.fn().mockResolvedValue( {
 			ok: true,
 			status: 201,
 			json: () => Promise.resolve( { submission_id: 123, status: 'saved' } ),
@@ -242,7 +243,7 @@ describe( 'Franer parent shell', () => {
 	} );
 
 	test( 'posts back franer_submit_result ok:false on an error response', async () => {
-		window.fetch = jest.fn().mockResolvedValue( {
+		window.fetch = vi.fn().mockResolvedValue( {
 			ok: false,
 			status: 409,
 			json: () => Promise.resolve( { code: 'franer_duplicate', message: 'Duplicate submission not allowed' } ),
@@ -266,7 +267,7 @@ describe( 'Franer parent shell', () => {
 	} );
 
 	test( 'posts back ok:false with a network code when fetch rejects', async () => {
-		window.fetch = jest.fn().mockRejectedValue( new Error( 'boom' ) );
+		window.fetch = vi.fn().mockRejectedValue( new Error( 'boom' ) );
 
 		loadShell();
 
@@ -285,12 +286,12 @@ describe( 'Franer parent shell', () => {
 	} );
 
 	test( 'ignores a franer_submit from a source that is not our activity iframe', async () => {
-		window.fetch = jest.fn();
+		window.fetch = vi.fn();
 		loadShell();
 
 		// A foreign window/frame spoofing the franer_submit shape. It is NOT the
 		// contentWindow of a .franer-shell__frame iframe, so it must be ignored.
-		const spoofSource = { postMessage: jest.fn() };
+		const spoofSource = { postMessage: vi.fn() };
 		dispatchMessage(
 			{ type: 'franer_submit', payload: { schema_version: '1.0', data: { evil: 1 } } },
 			spoofSource
@@ -305,7 +306,7 @@ describe( 'Franer parent shell', () => {
 	} );
 
 	test( 'still accepts a franer_submit from the real activity iframe', async () => {
-		window.fetch = jest.fn().mockResolvedValue( {
+		window.fetch = vi.fn().mockResolvedValue( {
 			ok: true,
 			status: 201,
 			json: () => Promise.resolve( { submission_id: 7, status: 'saved' } ),
@@ -326,7 +327,7 @@ describe( 'Franer parent shell', () => {
 
 	test( 'reveals the host confirmation panel and hides the form on a successful submit', async () => {
 		const dom = buildShellDom();
-		window.fetch = jest.fn().mockResolvedValue( {
+		window.fetch = vi.fn().mockResolvedValue( {
 			ok: true,
 			status: 201,
 			json: () => Promise.resolve( { submission_id: 9, status: 'saved' } ),
@@ -353,7 +354,7 @@ describe( 'Franer parent shell', () => {
 
 	test( '"Edit responses" returns to the form and prefills it with the cached answers', async () => {
 		const dom = buildShellDom();
-		window.fetch = jest.fn().mockResolvedValue( {
+		window.fetch = vi.fn().mockResolvedValue( {
 			ok: true,
 			status: 201,
 			json: () => Promise.resolve( { submission_id: 9, status: 'updated' } ),
@@ -383,12 +384,12 @@ describe( 'Franer parent shell', () => {
 
 	test( '"Submit another response" resets the iframe and returns to the form', async () => {
 		const dom = buildShellDom();
-		window.fetch = jest.fn().mockResolvedValue( {
+		window.fetch = vi.fn().mockResolvedValue( {
 			ok: true,
 			status: 201,
 			json: () => Promise.resolve( { submission_id: 9, status: 'saved' } ),
 		} );
-		const setAttrSpy = jest.spyOn( dom.iframe, 'setAttribute' );
+		const setAttrSpy = vi.spyOn( dom.iframe, 'setAttribute' );
 
 		loadShell();
 
