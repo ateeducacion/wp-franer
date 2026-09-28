@@ -13,6 +13,10 @@ on:
       - '**.md'
       - 'docs/**'
       - '.github/*.md'
+  # Pull requests are squash-merged by auto-merge.yml with GITHUB_TOKEN, and
+  # pushes made with that token trigger no workflows, so main gets no CI run
+  # after such a merge. This lets one be started by hand.
+  workflow_dispatch:
 
 # Cancel previous runs on the same branch
 concurrency:
