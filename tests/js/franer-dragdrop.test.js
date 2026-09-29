@@ -2,17 +2,12 @@
  * Tests for the drag-and-drop HTML loader in admin/js/franer-admin.js.
  *
  * The script is a framework-free IIFE that wires `[data-franer-drop]` zones on
- * DOM ready; in jsdom document.readyState is "complete", so evaluating the
- * source runs the initializers immediately against the prepared DOM.
+ * DOM ready; in jsdom document.readyState is "complete", so importing the
+ * script runs the initializers immediately against the prepared DOM.
  *
  * @package Franer
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import fs from 'node:fs';
-import path from 'node:path';
-
-const SRC_PATH = path.join( __dirname, '..', '..', 'admin', 'js', 'franer-admin.js' );
-const SRC = fs.readFileSync( SRC_PATH, 'utf8' );
 
 // Content returned by the mocked FileReader for the next read.
 let fileContent = '<html>dropped</html>';
@@ -32,11 +27,11 @@ function renderDropZone() {
 /**
  * Load the admin script fresh in the current jsdom window.
  *
- * @return {void}
+ * @return {Promise<void>}
  */
-function loadAdmin() {
-	// eslint-disable-next-line no-eval
-	window.eval( SRC );
+async function loadAdmin() {
+	vi.resetModules();
+	await import( '../../admin/js/franer-admin.js' );
 }
 
 /**
@@ -71,11 +66,11 @@ describe( 'Franer HTML drag-and-drop', () => {
 		vi.restoreAllMocks();
 	} );
 
-	test( 'dropping an HTML file fills an empty editor', () => {
+	test( 'dropping an HTML file fills an empty editor', async () => {
 		window.FranerAdmin = { messages: {} };
 		fileContent = '<html>activity</html>';
 		renderDropZone();
-		loadAdmin();
+		await loadAdmin();
 
 		const zone = window.document.querySelector( '[data-franer-drop]' );
 		const area = window.document.getElementById( 'franer_html' );
@@ -85,11 +80,11 @@ describe( 'Franer HTML drag-and-drop', () => {
 		expect( area.value ).toBe( '<html>activity</html>' );
 	} );
 
-	test( 'dropping onto a non-empty editor asks for confirmation', () => {
+	test( 'dropping onto a non-empty editor asks for confirmation', async () => {
 		window.FranerAdmin = { messages: { dropConfirm: 'Replace?' } };
 		fileContent = '<html>new</html>';
 		renderDropZone();
-		loadAdmin();
+		await loadAdmin();
 
 		const zone = window.document.querySelector( '[data-franer-drop]' );
 		const area = window.document.getElementById( 'franer_html' );
@@ -109,11 +104,11 @@ describe( 'Franer HTML drag-and-drop', () => {
 		expect( area.value ).toBe( '<html>new</html>' );
 	} );
 
-	test( 'dropping a non-HTML file is rejected and leaves the editor unchanged', () => {
+	test( 'dropping a non-HTML file is rejected and leaves the editor unchanged', async () => {
 		window.FranerAdmin = { messages: { dropInvalidType: 'Only .html' } };
 		fileContent = 'IGNORED';
 		renderDropZone();
-		loadAdmin();
+		await loadAdmin();
 
 		const zone = window.document.querySelector( '[data-franer-drop]' );
 		const area = window.document.getElementById( 'franer_html' );

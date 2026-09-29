@@ -213,6 +213,9 @@ jobs:
           files: artifacts/coverage/clover.xml
           flags: php
           slug: ateeducacion/wp-franer
+          # Only this file: otherwise the action searches the repository and would
+          # also upload the JavaScript report, which goes up on its own below.
+          disable_search: true
           # Uploads on the protected `main` branch require a token even though the
           # organization opted out of tokens for public repos (the opt-out only
           # covers unprotected branches and fork PRs). CODECOV_TOKEN is an
@@ -220,6 +223,19 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           # Kept non-blocking so a transient upload/rate-limit hiccup never fails CI;
           # the coverage gate is enforced by Codecov's own status checks instead.
+          fail_ci_if_error: false
+
+      # JavaScript coverage from the Vitest run above, under its own flag.
+      # Codecov sums both uploads of the commit, so the project and patch
+      # statuses count PHP and JavaScript together.
+      - name: Upload JavaScript coverage to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          files: artifacts/coverage-js/lcov.info
+          flags: js
+          slug: ateeducacion/wp-franer
+          disable_search: true
+          token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
 
   e2e:

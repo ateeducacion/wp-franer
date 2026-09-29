@@ -4,16 +4,11 @@
  * The shell is a framework-free IIFE that reads window.FranerShell at load
  * time and attaches a 'message' listener. Because of that, each test resets
  * jsdom globals, sets up window.FranerShell and a fake iframe (event.source),
- * then loads the script fresh via a manual eval.
+ * then imports the script fresh (`vi.resetModules()` first, so it runs again).
  *
  * @package Franer
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import fs from 'node:fs';
-import path from 'node:path';
-
-const SHELL_PATH = path.join( __dirname, '..', '..', 'public', 'js', 'franer-shell.js' );
-const SHELL_SOURCE = fs.readFileSync( SHELL_PATH, 'utf8' );
 
 // Tracks the 'message' listeners attached by loadShell so they can be removed
 // after each test. jsdom keeps a single window for the whole file, so without
@@ -33,9 +28,9 @@ let attachedClickHandlers = [];
  * it registers are recorded so they can be removed in afterEach, keeping tests
  * isolated.
  *
- * @return {void}
+ * @return {Promise<void>}
  */
-function loadShell() {
+async function loadShell() {
 	const realAdd = window.addEventListener.bind( window );
 	const spy = vi
 		.spyOn( window, 'addEventListener' )
@@ -54,8 +49,8 @@ function loadShell() {
 			}
 			return realDocAdd( type, fn, opts );
 		} );
-	// eslint-disable-next-line no-eval
-	window.eval( SHELL_SOURCE );
+	vi.resetModules();
+	await import( '../../public/js/franer-shell.js' );
 	spy.mockRestore();
 	docSpy.mockRestore();
 }
@@ -179,9 +174,9 @@ describe( 'Franer parent shell', () => {
 		vi.restoreAllMocks();
 	} );
 
-	test( 'ignores unrelated message events', () => {
+	test( 'ignores unrelated message events', async () => {
 		window.fetch = vi.fn();
-		loadShell();
+		await loadShell();
 
 		dispatchMessage( { type: 'something_else', payload: {} }, fakeIframe );
 		dispatchMessage( 'a plain string', fakeIframe );
@@ -199,7 +194,7 @@ describe( 'Franer parent shell', () => {
 			json: () => Promise.resolve( { submission_id: 123, status: 'saved' } ),
 		} );
 
-		loadShell();
+		await loadShell();
 
 		const payload = {
 			schema_version: '1.0',
@@ -226,7 +221,7 @@ describe( 'Franer parent shell', () => {
 			json: () => Promise.resolve( { submission_id: 123, status: 'saved' } ),
 		} );
 
-		loadShell();
+		await loadShell();
 
 		dispatchMessage(
 			{ type: 'franer_submit', payload: { schema_version: '1.0', data: { a: 1 } } },
@@ -249,7 +244,7 @@ describe( 'Franer parent shell', () => {
 			json: () => Promise.resolve( { code: 'franer_duplicate', message: 'Duplicate submission not allowed' } ),
 		} );
 
-		loadShell();
+		await loadShell();
 
 		dispatchMessage(
 			{ type: 'franer_submit', payload: { schema_version: '1.0', data: { a: 1 } } },
@@ -269,7 +264,7 @@ describe( 'Franer parent shell', () => {
 	test( 'posts back ok:false with a network code when fetch rejects', async () => {
 		window.fetch = vi.fn().mockRejectedValue( new Error( 'boom' ) );
 
-		loadShell();
+		await loadShell();
 
 		dispatchMessage(
 			{ type: 'franer_submit', payload: { schema_version: '1.0', data: { a: 1 } } },
@@ -287,7 +282,7 @@ describe( 'Franer parent shell', () => {
 
 	test( 'ignores a franer_submit from a source that is not our activity iframe', async () => {
 		window.fetch = vi.fn();
-		loadShell();
+		await loadShell();
 
 		// A foreign window/frame spoofing the franer_submit shape. It is NOT the
 		// contentWindow of a .franer-shell__frame iframe, so it must be ignored.
@@ -312,7 +307,7 @@ describe( 'Franer parent shell', () => {
 			json: () => Promise.resolve( { submission_id: 7, status: 'saved' } ),
 		} );
 
-		loadShell();
+		await loadShell();
 
 		dispatchMessage(
 			{ type: 'franer_submit', payload: { schema_version: '1.0', data: { a: 1 } } },
@@ -333,7 +328,7 @@ describe( 'Franer parent shell', () => {
 			json: () => Promise.resolve( { submission_id: 9, status: 'saved' } ),
 		} );
 
-		loadShell();
+		await loadShell();
 
 		dispatchMessage(
 			{ type: 'franer_submit', payload: { schema_version: '1.0', data: { a: 1 } } },
@@ -360,7 +355,7 @@ describe( 'Franer parent shell', () => {
 			json: () => Promise.resolve( { submission_id: 9, status: 'updated' } ),
 		} );
 
-		loadShell();
+		await loadShell();
 
 		const answers = { name: 'Ada', score: 5 };
 		dispatchMessage(
@@ -391,7 +386,7 @@ describe( 'Franer parent shell', () => {
 		} );
 		const setAttrSpy = vi.spyOn( dom.iframe, 'setAttribute' );
 
-		loadShell();
+		await loadShell();
 
 		dispatchMessage(
 			{ type: 'franer_submit', payload: { schema_version: '1.0', data: { a: 1 } } },

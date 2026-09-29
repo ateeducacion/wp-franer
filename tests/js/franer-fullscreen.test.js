@@ -5,16 +5,11 @@
  * time, finds the toggle button and wires it to the Fullscreen API on the
  * iframe wrapper. jsdom does not implement the Fullscreen API, so each test
  * stubs requestFullscreen/exitFullscreen and document.fullscreenElement, then
- * loads the script fresh via a manual eval.
+ * imports the script fresh (`vi.resetModules()` first, so it runs again).
  *
  * @package Franer
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import fs from 'node:fs';
-import path from 'node:path';
-
-const SCRIPT_PATH = path.join( __dirname, '..', '..', 'public', 'js', 'franer-fullscreen.js' );
-const SCRIPT_SOURCE = fs.readFileSync( SCRIPT_PATH, 'utf8' );
 
 // Document-level listeners attached by the IIFE (fullscreenchange), tracked so
 // they can be removed after each test — jsdom keeps one document for the file.
@@ -50,9 +45,9 @@ function buildShell() {
  * Records the document 'fullscreenchange'/'webkitfullscreenchange' listeners so
  * they can be removed in afterEach, keeping tests isolated.
  *
- * @return {void}
+ * @return {Promise<void>}
  */
-function loadScript() {
+async function loadScript() {
 	const realAdd = window.document.addEventListener.bind( window.document );
 	const spy = vi
 		.spyOn( window.document, 'addEventListener' )
@@ -62,8 +57,8 @@ function loadScript() {
 			}
 			return realAdd( type, fn, opts );
 		} );
-	// eslint-disable-next-line no-eval
-	window.eval( SCRIPT_SOURCE );
+	vi.resetModules();
+	await import( '../../public/js/franer-fullscreen.js' );
 	spy.mockRestore();
 }
 
@@ -105,17 +100,17 @@ describe( 'Franer fullscreen toggle', () => {
 		vi.restoreAllMocks();
 	} );
 
-	test( 'keeps the button hidden where the Fullscreen API is unavailable', () => {
+	test( 'keeps the button hidden where the Fullscreen API is unavailable', async () => {
 		// No requestFullscreen on the wrapper => unsupported.
-		loadScript();
+		await loadScript();
 
 		expect( dom.btn.hidden ).toBe( true );
 	} );
 
-	test( 'reveals the button and requests fullscreen on click when supported', () => {
+	test( 'reveals the button and requests fullscreen on click when supported', async () => {
 		dom.frameWrap.requestFullscreen = vi.fn().mockResolvedValue( undefined );
 
-		loadScript();
+		await loadScript();
 
 		expect( dom.btn.hidden ).toBe( false );
 
@@ -124,11 +119,11 @@ describe( 'Franer fullscreen toggle', () => {
 		expect( dom.frameWrap.requestFullscreen ).toHaveBeenCalledTimes( 1 );
 	} );
 
-	test( 'exits fullscreen on click when the wrapper is already fullscreen', () => {
+	test( 'exits fullscreen on click when the wrapper is already fullscreen', async () => {
 		dom.frameWrap.requestFullscreen = vi.fn().mockResolvedValue( undefined );
 		window.document.exitFullscreen = vi.fn().mockResolvedValue( undefined );
 
-		loadScript();
+		await loadScript();
 
 		setFullscreenElement( dom.frameWrap );
 		dom.btn.click();
@@ -137,10 +132,10 @@ describe( 'Franer fullscreen toggle', () => {
 		expect( dom.frameWrap.requestFullscreen ).not.toHaveBeenCalled();
 	} );
 
-	test( 'syncs label and aria-pressed on fullscreenchange', () => {
+	test( 'syncs label and aria-pressed on fullscreenchange', async () => {
 		dom.frameWrap.requestFullscreen = vi.fn().mockResolvedValue( undefined );
 
-		loadScript();
+		await loadScript();
 
 		// Initial (not fullscreen) state.
 		expect( dom.btn.getAttribute( 'aria-pressed' ) ).toBe( 'false' );
@@ -167,7 +162,7 @@ describe( 'Franer fullscreen toggle', () => {
 			.fn()
 			.mockRejectedValue( new Error( 'denied' ) );
 
-		loadScript();
+		await loadScript();
 
 		// Must not throw synchronously nor leave an unhandled rejection.
 		expect( () => dom.btn.click() ).not.toThrow();
