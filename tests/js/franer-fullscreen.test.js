@@ -168,4 +168,51 @@ describe( 'Franer fullscreen toggle', () => {
 		expect( () => dom.btn.click() ).not.toThrow();
 		await Promise.resolve();
 	} );
+
+	test( 'uses the webkit-prefixed API on older Safari, both ways', async () => {
+		dom.frameWrap.webkitRequestFullscreen = vi.fn();
+		window.document.webkitExitFullscreen = vi.fn();
+		const exitFullscreen = window.document.exitFullscreen;
+		delete window.document.exitFullscreen;
+
+		try {
+			await loadScript();
+			expect( dom.btn.hidden ).toBe( false );
+
+			dom.btn.click();
+			expect( dom.frameWrap.webkitRequestFullscreen ).toHaveBeenCalledTimes( 1 );
+
+			Object.defineProperty( window.document, 'webkitFullscreenElement', {
+				value: dom.frameWrap,
+				configurable: true,
+			} );
+			window.document.dispatchEvent( new window.Event( 'webkitfullscreenchange' ) );
+			expect( dom.btn.getAttribute( 'aria-pressed' ) ).toBe( 'true' );
+
+			dom.btn.click();
+			expect( window.document.webkitExitFullscreen ).toHaveBeenCalledTimes( 1 );
+		} finally {
+			delete window.document.webkitFullscreenElement;
+			delete window.document.webkitExitFullscreen;
+			if ( exitFullscreen ) {
+				window.document.exitFullscreen = exitFullscreen;
+			}
+		}
+	} );
+
+	test( 'does nothing on a page without the shell', async () => {
+		dom.shell.remove();
+
+		await expect( loadScript() ).resolves.toBeUndefined();
+		expect( attachedDocHandlers ).toEqual( [] );
+	} );
+
+	test( 'does nothing when the shell has no fullscreen button', async () => {
+		dom.frameWrap.requestFullscreen = vi.fn();
+		dom.btn.remove();
+
+		await loadScript();
+
+		expect( attachedDocHandlers ).toEqual( [] );
+	} );
 } );
