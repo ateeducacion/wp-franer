@@ -180,6 +180,11 @@ jobs:
         with:
           node-version: '22'
 
+      # jsdom 30 introduces an optional peer dependency graph that npm 10 can
+      # reject even when the lockfile is otherwise valid. npm 11 handles it.
+      - name: Set up npm
+        run: npm install --global npm@11
+
       - name: Install npm dependencies
         run: npm ci
 
@@ -246,6 +251,14 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
+      - name: Set up npm
+        run: npm install --global npm@11
 
       - name: Cache npm dependencies
         uses: actions/cache@v6
