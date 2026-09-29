@@ -4,9 +4,10 @@
  * Run through `npm run test:js` (`wp-scripts test-unit-js`, which starts the
  * Vitest installed in this project).
  *
- * No coverage is collected: the tests evaluate the browser scripts with
- * `window.eval( source )`, which the coverage provider cannot attribute to the
- * source files, so a report would show 0 % for code the suite does exercise.
+ * Each test loads the browser script it exercises with `vi.resetModules()` +
+ * `await import()`, so the script runs again from scratch and the coverage
+ * report attributes it to its source file. The report lands in
+ * artifacts/coverage-js/ and CI uploads it to Codecov under the `js` flag.
  */
 import { defineConfig } from 'vitest/config';
 
@@ -21,5 +22,12 @@ export default defineConfig( {
 		mockReset: false,
 		restoreMocks: false,
 		reporters: [ 'verbose' ],
+		coverage: {
+			enabled: true,
+			provider: 'v8',
+			include: [ 'admin/js/*.js', 'public/js/*.js' ],
+			reportsDirectory: 'artifacts/coverage-js',
+			reporter: [ 'lcov', 'text-summary' ],
+		},
 	},
 } );

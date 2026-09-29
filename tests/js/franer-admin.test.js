@@ -3,17 +3,12 @@
  *
  * Focuses on the new accessible tabbed editor and the copy-to-clipboard
  * buttons. The script is a framework-free IIFE that runs its initializers on
- * DOM ready; in jsdom document.readyState is "complete", so evaluating the
- * source runs them immediately against the prepared DOM.
+ * DOM ready; in jsdom document.readyState is "complete", so importing the
+ * script runs them immediately against the prepared DOM.
  *
  * @package Franer
  */
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import fs from 'node:fs';
-import path from 'node:path';
-
-const SRC_PATH = path.join( __dirname, '..', '..', 'admin', 'js', 'franer-admin.js' );
-const SRC = fs.readFileSync( SRC_PATH, 'utf8' );
 
 /**
  * Render the tabbed-editor markup used by the franer_site editor.
@@ -41,11 +36,11 @@ function renderTabs() {
 /**
  * Load the admin script fresh in the current jsdom window.
  *
- * @return {void}
+ * @return {Promise<void>}
  */
-function loadAdmin() {
-	// eslint-disable-next-line no-eval
-	window.eval( SRC );
+async function loadAdmin() {
+	vi.resetModules();
+	await import( '../../admin/js/franer-admin.js' );
 }
 
 describe( 'Franer admin tabs', () => {
@@ -55,10 +50,10 @@ describe( 'Franer admin tabs', () => {
 		vi.restoreAllMocks();
 	} );
 
-	test( 'activating the second tab shows its panel and hides the first', () => {
+	test( 'activating the second tab shows its panel and hides the first', async () => {
 		window.FranerAdmin = { messages: {} };
 		renderTabs();
-		loadAdmin();
+		await loadAdmin();
 
 		const activityTab = window.document.getElementById( 't-activity' );
 		const viewTab = window.document.getElementById( 't-view' );
@@ -77,10 +72,10 @@ describe( 'Franer admin tabs', () => {
 		expect( activityPanel.hidden ).toBe( true );
 	} );
 
-	test( 'ArrowRight moves selection to the next tab', () => {
+	test( 'ArrowRight moves selection to the next tab', async () => {
 		window.FranerAdmin = { messages: {} };
 		renderTabs();
-		loadAdmin();
+		await loadAdmin();
 
 		const activityTab = window.document.getElementById( 't-activity' );
 		const viewTab = window.document.getElementById( 't-view' );
@@ -113,7 +108,7 @@ describe( 'Franer admin copy buttons', () => {
 			<textarea id="src">PROMPT BODY</textarea>
 			<span id="st"></span>`;
 
-		loadAdmin();
+		await loadAdmin();
 
 		window.document.querySelector( '[data-franer-copy-target]' ).click();
 		await Promise.resolve();

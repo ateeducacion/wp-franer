@@ -1,9 +1,11 @@
 # Codecov configuration for wp-franer.
 #
-# Coverage is produced by PHPUnit (Clover XML) in the CI `lint_and_test` job and
-# uploaded with the Codecov action. The status checks below GATE pull requests:
-# a PR fails if it lowers project coverage or if its changed lines are less
-# covered than the current base. Make these checks "Required" in the branch
+# Coverage is produced in the CI `lint_and_test` job by PHPUnit (Clover XML,
+# flag `php`) and by Vitest (LCOV for admin/js and public/js, flag `js`), and
+# uploaded with the Codecov action. Codecov sums both reports, so the statuses
+# below count PHP and JavaScript together. The status checks GATE pull
+# requests: a PR fails if it lowers project coverage or if its changed lines are
+# less covered than the current base. Make these checks "Required" in the branch
 # protection rules for `main` to enforce the gate on merge.
 #
 # Docs: https://docs.codecov.com/docs/codecovyml-reference
@@ -30,9 +32,10 @@ coverage:
         threshold: 0%
         if_ci_failed: error
 
-# Post a coverage summary comment on every pull request.
+# Post a coverage summary comment on every pull request. `header` prints the
+# combined project total and its variation; `flags` breaks it down by php/js.
 comment:
-  layout: "condensed_header, diff, files, components"
+  layout: "header, diff, flags, files, footer"
   behavior: default
   require_changes: false
 
@@ -43,5 +46,4 @@ ignore:
   - "vendor"
   - "node_modules"
   - "languages"
-  - "**/*.js"
   - "**/*.css"
