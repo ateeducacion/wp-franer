@@ -85,7 +85,7 @@ jobs:
           tools: phpmd
 
       - name: Run PHPMD
-        run: phpmd . sarif phpmd.xml --reportfile phpmd-results.sarif --ignore-violations-on-exit
+        run: phpmd analyze --format sarif --ruleset phpmd.xml --reportfile-sarif phpmd-results.sarif --ignore-violations-on-exit .
         continue-on-error: true
 
       - name: Upload analysis results to GitHub
