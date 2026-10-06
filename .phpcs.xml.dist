@@ -24,6 +24,9 @@
 	<exclude-pattern>*/assets/*</exclude-pattern>
 	<exclude-pattern>*/examples/*</exclude-pattern>
 	<exclude-pattern>*/languages/*</exclude-pattern>
+	<!-- Installed agent skills, including intentional non-compliant fixtures. -->
+	<exclude-pattern>*/.agents/skills/*</exclude-pattern>
+	<exclude-pattern>*/.claude/skills/*</exclude-pattern>
 
 	<!-- Use the WordPress standard. -->
 	<rule ref="WordPress"/>
