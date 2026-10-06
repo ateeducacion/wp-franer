@@ -10,7 +10,7 @@
     "@wordpress/scripts": "^36.0.0",
     "jsdom": "^30.1.1",
     "vite": "^8.3.1",
-    "vitest": "^5.0.2"
+    "vitest": "^5.0.3"
   },
   "comment:overrides": "Force patched versions of transitive dev/build dependencies flagged by GitHub Dependabot. None of these ship with the plugin (PHP runtime); they only run at build/test time. Remove entries once @wordpress/scripts and @wordpress/env upgrade upstream.",
   "overrides": {
