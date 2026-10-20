@@ -4,7 +4,7 @@
   "description": "Franer: a secure environment to publish AI-generated forms.",
   "license": "GPL-3.0-or-later",
   "devDependencies": {
-    "@playwright/test": "^1.64.0",
+    "@playwright/test": "^1.64.1",
     "@vitest/coverage-v8": "^5.0.5",
     "@wordpress/env": "^11.17.0",
     "@wordpress/scripts": "^36.1.0",
