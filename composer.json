@@ -21,7 +21,7 @@
         "yoast/phpunit-polyfills": "*",
         "yoast/wp-test-utils": "*",
         "wp-cli/i18n-command": "*",
-        "phpmd/phpmd": "^2.15"
+        "phpmd/phpmd": "^3.0"
     },
     "scripts": {
         "phpcs": "phpcs --standard=.phpcs.xml.dist",
