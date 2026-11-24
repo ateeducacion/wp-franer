@@ -5,7 +5,7 @@
   "license": "GPL-3.0-or-later",
   "devDependencies": {
     "@playwright/test": "^1.65.1",
-    "@vitest/coverage-v8": "^5.0.5",
+    "@vitest/coverage-v8": "^5.1.1",
     "@wordpress/env": "^12.1.0",
     "@wordpress/scripts": "^37.1.0",
     "jsdom": "^31.0.1",
